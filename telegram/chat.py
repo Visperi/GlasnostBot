@@ -1,4 +1,57 @@
-from .types.chat import Chat as ChatPayload
+from .message import Message
+from .location import Location
+from .types.chat import (
+    Chat as ChatPayload,
+    ChatPhoto as ChatPhotoPayload,
+    ChatLocation as ChatLocationPayload,
+    ChatPermissions as ChatPermissionsPayload)
+
+
+class ChatPhoto:
+
+    __slots__ = (
+        "small_file_id",
+        "small_file_unique_id",
+        "big_file_id",
+        "big_file_unique_id"
+    )
+
+    def __init__(self, payload: ChatPhotoPayload):
+        self.small_file_id = payload["small_file_id"]
+        self.small_file_unique_id = payload["small_file_unique_id"]
+        self.big_file_id = payload["big_file_id"]
+        self.big_file_unique_id = payload["big_file_unique_id"]
+
+
+class ChatLocation:
+
+    def __init__(self, payload: ChatLocationPayload):
+        self.location = Location(payload["location"])
+        self.address = payload["address"]
+
+
+class ChatPermissions:
+
+    __slots__ = (
+        "can_send_messages",
+        "can_send_media_messages",
+        "can_send_polls",
+        "can_send_other_messages",
+        "can_add_web_page_previews",
+        "can_change_info",
+        "can_invite_users",
+        "can_pin_messages"
+    )
+
+    def __init__(self, payload: ChatPermissionsPayload):
+        self.can_send_messages = payload.get("can_send_messages", False)
+        self.can_send_media_messages = payload.get("can_send_media_messages", False)
+        self.can_send_polls = payload.get("can_send_polls", False)
+        self.can_send_other_messages = payload.get("can_send_other_messages", False)
+        self.can_add_web_page_previews = payload.get("can_add_web_page_previews", False)
+        self.can_change_info = payload.get("can_change_info", False)
+        self.can_invite_users = payload.get("can_invite_users", False)
+        self.can_pin_messages = payload.get("can_pin_messages", False)
 
 
 class Chat:
@@ -56,3 +109,22 @@ class Chat:
         self.can_set_sticker_set = payload.get("can_set_sticker_set", False)
         self.linked_chat_id = payload.get("linked_chat_id", -1)
         self.location = payload.get("location")
+
+        for slot in ("photo", "pinned_message", "permissions", "location"):
+            try:
+                value = payload[slot]
+                getattr(self, f"__handle_{slot}")(value)
+            except KeyError:
+                continue
+
+    def __handle_photo(self, value):
+        self.photo = ChatPhoto(value)
+
+    def __handle_pinned_message(self, value):
+        self.pinned_message = Message(value)
+
+    def __handle_permissions(self, value):
+        self.permissions = ChatPermissions(value)
+
+    def __handle_location(self, value):
+        self.location = ChatLocation(value)
