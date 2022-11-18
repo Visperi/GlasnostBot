@@ -1,3 +1,4 @@
+from .user import User
 from .types.payments import (
     ShippingAddress as ShippingAddressPayload,
     OrderInfo as OrderInfoPayload,
@@ -44,7 +45,11 @@ class OrderInfo:
         self.name = payload.get("name")
         self.phone_number = payload.get("phone_number")
         self.email = payload.get("email")
-        self.shipping_address = payload.get("shipping_address")
+
+        try:
+            self.shipping_address = ShippingAddress(payload["shipping_address"])
+        except KeyError:
+            self.shipping_address = None
 
 
 class PreCheckoutQuery:
@@ -62,11 +67,16 @@ class PreCheckoutQuery:
     def __init__(self, payload: PreCheckoutQueryPayload):
         self.__update(payload)
 
+    # TODO: Figure out how to read variable 'from' to 'from_' from payload!
     def __update(self, payload: PreCheckoutQueryPayload):
         self.id = payload["id"]
-        self.from_ = payload["from_"]
+        self.from_ = User(payload["from_"])
         self.currency = payload["currency"]
         self.total_amount = payload["total_amount"]
         self.invoice_payload = payload["invoice_payload"]
         self.shipping_option_id = payload.get("shipping_option_id")
-        self.order_info = payload.get("order_info")
+
+        try:
+            self.order_info = OrderInfo(payload["order_info"])
+        except KeyError:
+            self.order_info = None

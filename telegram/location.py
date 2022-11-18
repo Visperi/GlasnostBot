@@ -43,7 +43,7 @@ class Venue:
         self.__update(payload)
 
     def __update(self, payload: VenuePayload):
-        self.location = payload["location"]
+        self.location = Location(payload["location"])
         self.title = payload["title"]
         self.address = payload["address"]
         self.foursquare_id = payload.get("foursquare_id")

@@ -1,10 +1,20 @@
-from .message import Message
+from typing_extensions import TYPE_CHECKING
 from .location import Location
+from .user import User
 from .types.chat import (
     Chat as ChatPayload,
     ChatPhoto as ChatPhotoPayload,
+    ChatMember as ChatMemberPayload,
     ChatLocation as ChatLocationPayload,
-    ChatPermissions as ChatPermissionsPayload)
+    ChatInviteLink as ChatInviteLinkPayload,
+    ChatPermissions as ChatPermissionsPayload,
+    ChatJoinRequest as ChatJoinRequestPayload,
+    ChatMemberUpdated as ChatMemberUpdatedPayload
+)
+
+
+if TYPE_CHECKING:
+    from .message import Message
 
 
 class ChatPhoto:
@@ -55,7 +65,7 @@ class ChatPermissions:
 
 
 class Chat:
-    
+
     __slots__ = (
         "id",
         "type",
@@ -92,6 +102,7 @@ class Chat:
         self.username = payload.get("username")
         self.first_name = payload.get("first_name")
         self.last_name = payload.get("last_name")
+        self.photo = payload.get("photo")
         self.bio = payload.get("bio")
         self.has_private_forwards = payload.get("has_private_forwards", False)
         self.has_restricted_voice_and_video_messages = payload.get("has_restricted_voice_and_video_messages", False)
@@ -99,17 +110,19 @@ class Chat:
         self.join_by_request = payload.get("join_by_request", False)
         self.description = payload.get("description")
         self.invite_link = payload.get("invite_link")
+        self.pinned_message = payload.get("pinned_message")
+        self.permissions = payload.get("permissions")
         self.slow_mode_delay = payload.get("slow_mode_delay", -1)
         self.message_auto_delete_time = payload.get("message_auto_delete_time", -1)
         self.has_protected_content = payload.get("has_protected_content", False)
         self.sticker_set_name = payload.get("sticker_set_name")
         self.can_set_sticker_set = payload.get("can_set_sticker_set", False)
         self.linked_chat_id = payload.get("linked_chat_id", -1)
+        self.location = payload.get("location")
 
         for slot in ("photo", "pinned_message", "permissions", "location"):
             try:
-                value = payload[slot]
-                getattr(self, f"__handle_{slot}")(value)
+                getattr(self, f"__handle_{slot}")(payload[slot])  # type: ignore
             except KeyError:
                 continue
 
@@ -124,3 +137,86 @@ class Chat:
 
     def __handle_location(self, value):
         self.location = ChatLocation(value)
+
+
+class ChatInviteLink:
+
+    __slots__ = (
+        "invite_link",
+        "creator",
+        "creates_join_request",
+        "is_primary",
+        "is_revoked",
+        "name",
+        "expire_date",
+        "member_limit",
+        "pending_join_request_count"
+    )
+
+    def __init__(self, payload: ChatInviteLinkPayload):
+        self.invite_link = payload["invite_link"]
+        self.creator = User(payload["creator"])
+        self.creates_join_request = payload["creates_join_request"]
+        self.is_primary = payload["is_primary"]
+        self.is_revoked = payload["is_revoked"]
+        self.name = payload.get("name")
+        self.expire_date = payload.get("expire_date", -1)
+        self.member_limit = payload.get("member_limit", -1)
+        self.pending_join_request_count = payload.get("pending_join_request_count", -1)
+
+
+class ChatJoinRequest:
+
+    __slots__ = (
+        "chat",
+        "from_",
+        "date",
+        "bio",
+        "invite_link"
+    )
+
+    # TODO: Figure out how to read variable 'from' to 'from_' from payload!
+    def __init__(self, payload: ChatJoinRequestPayload):
+        self.chat = Chat(payload["chat"])
+        self.from_ = User(payload["from_"])
+        self.date = payload["date"]
+        self.bio = payload.get("bio")
+        self.invite_link = ChatInviteLink(payload["invite_link"])
+
+
+class ChatMember:
+
+    __slots__ = (
+        "status",
+        "user"
+    )
+
+    def __init__(self, payload: ChatMemberPayload):
+        self.status = payload["status"]
+        self.user = User(payload["user"])
+
+
+class ChatMemberUpdated:
+
+    __slots__ = (
+        "chat",
+        "from_",
+        "date",
+        "old_chat_member",
+        "new_chat_member",
+        "invite_link"
+    )
+
+    # TODO: Figure out how to read variable 'from' to 'from_' from payload!
+
+    def __init__(self, payload: ChatMemberUpdatedPayload):
+        self.chat = Chat(payload["chat"])
+        self.from_ = User(payload["from_"])
+        self.date = payload["date"]
+        self.old_chat_member = ChatMember(payload["old_chat_member"])
+        self.new_chat_member = ChatMember(payload["old_chat_member"])
+
+        try:
+            self.invite_link = ChatInviteLink(payload["invite_link"])
+        except KeyError:
+            self.invite_link = None

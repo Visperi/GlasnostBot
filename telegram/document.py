@@ -56,8 +56,12 @@ class Document(DocumentBase):
         self.__update(payload)
 
     def __update(self, payload: DocumentPayload):
-        self.thumb = payload.get("thumb")
         self.file_name = payload.get("file_name")
+
+        try:
+            self.thumb = PhotoSize(payload["thumb"])
+        except KeyError:
+            self.thumb = None
 
 
 class PlaybackDocument(Document):
@@ -181,3 +185,15 @@ class Sticker(Document):
         self.premium_animation = payload.get("premium_animation")
         self.mask_position = payload.get("mask_position")
         self.custom_emoji_id = payload.get("custom_emoji_id")
+
+        for slot in ("premium_animation", "mask_position"):
+            try:
+                getattr(self, f"__handle_{slot}")(payload[slot])  # type: ignore
+            except KeyError:
+                continue
+
+    def __handle_premium_animation(self, value):
+        self.premium_animation = Document(value)
+
+    def __handle_mask_position(self, value):
+        self.mask_position = MaskPosition(value)

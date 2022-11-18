@@ -18,4 +18,3 @@ class Venue(TypedDict):
     foursquare_type: NotRequired[str]
     google_place_id: NotRequired[str]
     google_place_type: NotRequired[str]
-

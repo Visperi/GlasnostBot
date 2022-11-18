@@ -6,6 +6,10 @@ from .types.inline_query import (
     PreCheckoutQuery as PreCheckoutQueryPayload,
     ChosenInlineResult as ChosenInlineResultPayload
 )
+from .user import User
+from .location import Location
+from .message import Message
+from .payments import OrderInfo
 
 
 class InlineQueryBase:
@@ -17,7 +21,7 @@ class InlineQueryBase:
 
     def __init__(self, payload: InlineQueryBasePayload):
         self.id = payload["id"]
-        self.from_ = payload["from_"]
+        self.from_ = User(payload["from_"])
 
 
 class InlineQuery(InlineQueryBase):
@@ -37,7 +41,11 @@ class InlineQuery(InlineQueryBase):
         self.query = payload["query"]
         self.offset = payload["offset"]
         self.chat_type = payload.get("chat_type")
-        self.location = payload.get("location")
+
+        try:
+            self.location = Location(payload["location"])
+        except KeyError:
+            self.location = None
 
 
 class CallbackQuery(InlineQueryBase):
@@ -55,11 +63,15 @@ class CallbackQuery(InlineQueryBase):
         self.__update(payload)
 
     def __update(self, payload: CallbackQueryPayload):
-        self.message = payload.get("message")
         self.inline_message_id = payload.get("inline_message_id")
         self.chat_instance = payload["chat_instance"]
         self.data = payload.get("data")
         self.game_short_name = payload.get("game_short_name")
+
+        try:
+            self.message = Message(payload["message"])
+        except KeyError:
+            self.message = None
 
 
 class ShippingQuery(InlineQueryBase):
@@ -97,7 +109,11 @@ class PreCheckoutQuery(InlineQueryBase):
         self.total_amount = payload["total_amount"]
         self.invoice_payload = payload["invoice_payload"]
         self.shipping_option_id = payload.get("shipping_option_id")
-        self.order_info = payload.get("order_info")
+
+        try:
+            self.order_info = OrderInfo(payload["order_info"])
+        except KeyError:
+            self.order_info = None
 
 
 class ChosenInlineResult:
@@ -116,6 +132,10 @@ class ChosenInlineResult:
     def __update(self, payload: ChosenInlineResultPayload):
         self.result_id = payload["result_id"]
         self.from_ = payload["from_"]
-        self.location = payload.get("location")
         self.inline_message_id = payload.get("inline_message_id")
         self.query = payload.get("query")
+
+        try:
+            self.location = Location(payload["location"])
+        except KeyError:
+            self.location = None

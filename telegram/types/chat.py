@@ -19,7 +19,7 @@ class ChatPermissions(TypedDict):
     can_send_messages: NotRequired[bool]
     can_send_media_messages: NotRequired[bool]
     can_send_polls: NotRequired[bool]
-    can_send_other_Messages: NotRequired[bool]
+    can_send_other_messages: NotRequired[bool]
     can_add_web_page_previews: NotRequired[bool]
     can_change_info: NotRequired[bool]
     can_invite_users: NotRequired[bool]
@@ -29,18 +29,6 @@ class ChatPermissions(TypedDict):
 class ChatLocation(TypedDict):
     location: Location
     address: str
-
-
-class ChatInviteLink(TypedDict):
-    invite_link: str
-    creator: User
-    creates_join_request: bool
-    is_primary: bool
-    is_revoked: bool
-    name: NotRequired[str]
-    expire_date: NotRequired[int]
-    member_limit: NotRequired[int]
-    pending_join_request_count: NotRequired[int]
 
 
 class Chat(TypedDict):
@@ -67,6 +55,18 @@ class Chat(TypedDict):
     can_set_sticker_set: NotRequired[bool]
     linked_chat_id: NotRequired[int]
     location: NotRequired[ChatLocation]
+
+
+class ChatInviteLink(TypedDict):
+    invite_link: str
+    creator: User
+    creates_join_request: bool
+    is_primary: bool
+    is_revoked: bool
+    name: NotRequired[str]
+    expire_date: NotRequired[int]
+    member_limit: NotRequired[int]
+    pending_join_request_count: NotRequired[int]
 
 
 class ChatJoinRequest(TypedDict):

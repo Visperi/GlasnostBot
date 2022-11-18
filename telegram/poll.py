@@ -1,8 +1,13 @@
+from typing_extensions import TYPE_CHECKING
 from .types.poll import (
     PollOption as PollOptionPayload,
     PollAnswer as PollAnswerPayload,
     Poll as PollPayload
 )
+
+
+if TYPE_CHECKING:
+    from .message import MessageEntity
 
 
 class PollOption:
@@ -55,7 +60,7 @@ class Poll:
     def __update(self, payload: PollPayload):
         self.id = payload["id"]
         self.question = payload["question"]
-        self.options = payload["options"]
+        self.options = [PollOption(o) for o in payload["options"]]
         self.total_voter_count = payload["total_voter_count"]
         self.is_closed = payload["is_closed"]
         self.is_anonymous = payload["is_anonymous"]
@@ -63,6 +68,10 @@ class Poll:
         self.allows_multiple_answers = payload["allows_multiple_answers"]
         self.correct_option_id = payload.get("correct_option_id", -1)
         self.explanation = payload.get("explanation")
-        self.explanation_entities = payload.get("explanation_entities", [])
         self.open_period = payload.get("open_period", -1)
         self.close_date = payload.get("close_date", -1)
+
+        try:
+            self.explanation_entities = [MessageEntity(e) for e in payload["explanation_entities"]]
+        except KeyError:
+            self.explanation_entities = []
