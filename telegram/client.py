@@ -27,11 +27,13 @@ import aiohttp
 import asyncio
 import logging
 from .api_response import ApiResponse
+from .update import Update
+from typing import Coroutine
 
 _logger = logging.getLogger(__name__)
 
 
-class TgMethod:
+class _TgMethod:
     """ Methods supported by Telegram API """
 
     getUpdates = "/getUpdates"
@@ -46,6 +48,7 @@ class Client:
         self._client_session: aiohttp.ClientSession = client_session
         self.loop = asyncio.new_event_loop()
         self.updates_offset = -1
+        self.listeners = {}
         asyncio.set_event_loop(self.loop)
 
         if not self._client_session:
@@ -108,14 +111,36 @@ class Client:
 
         while True:
             params = {"timeout": 200, "offset": self.updates_offset}
-            resp = await self._get(TgMethod.getUpdates, request_timeout=200, params=params)
+            resp = await self._get(_TgMethod.getUpdates, request_timeout=200, params=params)
             # TODO: Do something here with non-OK response?
 
             if resp.result:
-                # Trigger all received messages read
-                self.updates_offset = resp.result[-1].update_id + 1
+                latest = resp.result[-1]
+                # Trigger all received messages read next time updates are received
+                self.updates_offset = latest.update_id + 1
+
+                for listener in self.listeners.get("on_update", []):
+                    await listener(latest)
+
+                await self.on_update(latest)
 
             await asyncio.sleep(1)
+
+    def event(self, coroutine: Coroutine) -> Coroutine:
+        if not asyncio.iscoroutinefunction(coroutine):
+            raise ValueError("Event listener must be a coroutine function.")
+
+        try:
+            self.listeners[coroutine.__name__].append(coroutine)
+        except KeyError:
+            self.listeners[coroutine.__name__] = []
+            self.listeners[coroutine.__name__].append(coroutine)
+
+        _logger.debug(f"Registered listener for event '{coroutine.__name__}'")
+        return coroutine
+
+    async def on_update(self, update: Update):
+        pass
 
     def start(self) -> None:
         if not self._secret:
