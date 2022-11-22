@@ -155,6 +155,7 @@ class Client:
         return self.add_listener(coroutine)
 
     async def on_update(self, update: Update) -> None:
+        # TODO: Handle commands etc. here by default
         pass
 
     def start(self, secret: str) -> None:
