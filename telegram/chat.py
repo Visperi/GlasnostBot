@@ -36,6 +36,7 @@ from .types.chat import (
     ChatJoinRequest as ChatJoinRequestPayload,
     ChatMemberUpdated as ChatMemberUpdatedPayload
 )
+from .utils import flatten_handlers
 
 
 if TYPE_CHECKING:
@@ -89,6 +90,7 @@ class ChatPermissions:
         self.can_pin_messages = payload.get("can_pin_messages", False)
 
 
+@flatten_handlers
 class Chat:
 
     __slots__ = (
@@ -145,11 +147,13 @@ class Chat:
         self.linked_chat_id = payload.get("linked_chat_id", -1)
         self.location = payload.get("location")
 
-        for slot in ("photo", "pinned_message", "permissions", "location"):
+        for key, func in self._HANDLERS:
             try:
-                getattr(self, f"__handle_{slot}")(payload[slot])  # type: ignore
+                value = payload[key]  # type: ignore
             except KeyError:
                 continue
+            else:
+                func(self, value)
 
     def __handle_photo(self, value):
         self.photo = ChatPhoto(value)

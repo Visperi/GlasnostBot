@@ -44,6 +44,7 @@ from .types.message import (
     MessageEntity as MessageEntityPayload,
     MessageAutoDeleteTimerChanged as MessageAutoDeleteTimerChangedPayload
 )
+from .utils import flatten_handlers
 
 
 class MessageEntity:
@@ -79,6 +80,7 @@ class MessageAutoDeleteTimerChanged:
         self.message_auto_delete_time = payload["message_auto_delete_time"]
 
 
+@flatten_handlers
 class Message:
 
     __slots__ = (
@@ -184,39 +186,13 @@ class Message:
         self.migrate_to_chat_id = payload.get("migrate_to_chat_id", -1)
         self.pinned_message = payload.get("pinned_message")
 
-        for slot in (
-                "from_",
-                "sender_chat",
-                "forward_from",
-                "forward_from_chat",
-                "reply_to_message",
-                "via_bot",
-                "entities",
-                "animation",
-                "audio",
-                "document",
-                "photo",
-                "sticker",
-                "video",
-                "video_note",
-                "voice",
-                "caption_entities",
-                "contact",
-                "dice",
-                "game",
-                "poll",
-                "venue",
-                "location",
-                "new_chat_members",
-                "left_chat_member",
-                "new_chat_photo",
-                "message_auto_delete_timer_changed",
-                "pinned_message"
-        ):
+        for key, func in self._HANDLERS:
             try:
-                getattr(self, f"__handle_{slot}")(payload[slot])  # type: ignore
+                value = payload[key]  # type: ignore
             except KeyError:
                 continue
+            else:
+                func(self, value)
 
     def __handle_from_(self, value):
         self.from_ = User(value)

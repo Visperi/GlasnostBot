@@ -34,8 +34,10 @@ from .inline_query import (
     PreCheckoutQuery,
     ShippingQuery
 )
+from .utils import flatten_handlers
 
 
+@flatten_handlers
 class Update:
 
     __slots__ = (
@@ -76,26 +78,13 @@ class Update:
         self.chat_member = payload.get("chat_member")
         self.chat_join_request = payload.get("chat_join_request")
 
-        for slot in (
-                "message",
-                "edited_message",
-                "channel_post",
-                "edited_channel_post",
-                "inline_query",
-                "chosen_inline_result",
-                "callback_query",
-                "shipping_query",
-                "pre_checkout_query",
-                "poll",
-                "poll_answer",
-                "my_chat_member",
-                "chat_member",
-                "chat_join_request"
-        ):
+        for key, func in self._HANDLERS:
             try:
-                getattr(self, f"__handle_{slot}")(payload[slot])  # type: ignore
+                value = payload[key]  # type: ignore
             except KeyError:
-                pass
+                continue
+            else:
+                func(self, value)
 
     def __handle_message(self, value):
         self.message = Message(value)
