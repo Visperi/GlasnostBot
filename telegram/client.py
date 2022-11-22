@@ -139,7 +139,7 @@ class Client:
         _logger.debug(f"Registered listener for event '{coroutine.__name__}'")
         return coroutine
 
-    async def on_update(self, update: Update):
+    async def on_update(self, update: Update) -> None:
         pass
 
     def start(self) -> None:
