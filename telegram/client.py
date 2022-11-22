@@ -32,7 +32,8 @@ from .utils import replace_builtin_keywords
 _logger = logging.getLogger(__name__)
 
 
-class TelegramMethod:
+class TgMethod:
+    """ Methods supported by Telegram API """
 
     getUpdates = "/getUpdates"
 
@@ -57,24 +58,59 @@ class Client:
     def __build_url(self, method_path: str) -> str:
         return self.API_BASE_URL + f"bot{self.__secret}" + method_path
 
-    async def __get(self, method_path: str, request_timeout: int = 10, params: dict = None) -> dict:
-        url = self.__build_url(method_path)
-        async with self.__client_session.get(url, timeout=request_timeout, params=params) as response:
-            response.raise_for_status()
-            return await response.json(encoding="utf-8")
+    async def __request(
+            self,
+            http_method: str,
+            method_path: str,
+            request_timeout: float = 10,
+            params: dict = None,
+            headers: dict = None
+    ) -> dict:
+        url = self.API_BASE_URL + f"bot{self.__secret}" + method_path
+        async with self.__client_session.request(
+                http_method,
+                url,
+                timeout=request_timeout,
+                params=params,
+                headers=headers
+        ) as resp:
+            content = await resp.json(encoding="utf-8")
 
-    async def __post(self, method_path: str, timeout: int = 10) -> dict:
-        url = self.__build_url(method_path)
-        async with self.__client_session.post(url, timeout=timeout) as response:
-            response.raise_for_status()
-            return await response.json(encoding="utf-8")
+            try:
+                resp.raise_for_status()
+
+            except aiohttp.ClientResponseError:
+                error_code = content["error_code"]
+                description = content["description"]
+                _logger.exception(f"Error {error_code}: {description}")
+
+            else:
+                return content
+
+    async def __get(
+            self,
+            method_path: str,
+            request_timeout: int = 10,
+            params: dict = None,
+            headers: dict = None
+    ) -> dict:
+        return await self.__request("GET", method_path, request_timeout, params, headers)
+
+    async def __post(
+            self,
+            method_path: str,
+            request_timeout: int = 10,
+            params: dict = None,
+            headers: dict = None
+    ) -> dict:
+        return await self.__request("POST", method_path, request_timeout, params, headers)
 
     async def __get_updates_loop(self) -> None:
         _logger.info("Now long polling messages")
 
         while True:
             params = {"timeout": 200, "offset": self.updates_offset}
-            resp = await self.__get(TelegramMethod.getUpdates, request_timeout=200, params=params)
+            resp = await self.__get(TgMethod.getUpdates, request_timeout=200, params=params)
             # TODO: Try-catch here in case of not-OK status
             results = replace_builtin_keywords(resp["result"])
 
