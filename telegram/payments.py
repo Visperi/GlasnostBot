@@ -43,9 +43,9 @@ class ShippingAddress:
     )
 
     def __init__(self, payload: ShippingAddressPayload):
-        self.__update(payload)
+        self._update(payload)
 
-    def __update(self, payload: ShippingAddressPayload):
+    def _update(self, payload: ShippingAddressPayload):
         self.country_code = payload["country_code"]
         self.state = payload["state"]
         self.city = payload["city"]
@@ -64,9 +64,9 @@ class OrderInfo:
     )
 
     def __init__(self, payload: OrderInfoPayload):
-        self.__update(payload)
+        self._update(payload)
 
-    def __update(self, payload: OrderInfoPayload):
+    def _update(self, payload: OrderInfoPayload):
         self.name = payload.get("name")
         self.phone_number = payload.get("phone_number")
         self.email = payload.get("email")
@@ -90,10 +90,10 @@ class PreCheckoutQuery:
     )
 
     def __init__(self, payload: PreCheckoutQueryPayload):
-        self.__update(payload)
+        self._update(payload)
 
     # TODO: Figure out how to read variable 'from' to 'from_' from payload!
-    def __update(self, payload: PreCheckoutQueryPayload):
+    def _update(self, payload: PreCheckoutQueryPayload):
         self.id = payload["id"]
         self.from_ = User(payload["from_"])
         self.currency = payload["currency"]

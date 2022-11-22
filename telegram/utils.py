@@ -94,7 +94,7 @@ def configure_logging(
 
 
 def flatten_handlers(cls):
-    prefix = f"_{cls.__name__}__handle_"
+    prefix = f"_handle_"
     handlers = [(key[len(prefix):], value) for key, value in cls.__dict__.items() if key.startswith(prefix)]
 
     cls._HANDLERS = handlers

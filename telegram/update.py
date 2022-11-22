@@ -59,9 +59,9 @@ class Update:
     )
 
     def __init__(self, payload: UpdatePayload) -> None:
-        self.__update(payload)
+        self._update(payload)
 
-    def __update(self, payload: UpdatePayload) -> None:
+    def _update(self, payload: UpdatePayload) -> None:
         self.update_id = payload["update_id"]  # ID is the only required value
         self.message = payload.get("message")
         self.edited_message = payload.get("edited_message")
@@ -86,44 +86,44 @@ class Update:
             else:
                 func(self, value)
 
-    def __handle_message(self, value):
+    def _handle_message(self, value):
         self.message = Message(value)
 
-    def __handle_edited_message(self, value):
+    def _handle_edited_message(self, value):
         self.edited_message = Message(value)
 
-    def __handle_channel_post(self, value):
+    def _handle_channel_post(self, value):
         self.channel_post = Message(value)
 
-    def __handle_edited_channel_post(self, value):
+    def _handle_edited_channel_post(self, value):
         self.edited_channel_post = Message(value)
 
-    def __handle_inline_query(self, value):
+    def _handle_inline_query(self, value):
         self.inline_query = InlineQuery(value)
 
-    def __handle_chosen_inline_result(self, value):
+    def _handle_chosen_inline_result(self, value):
         self.chosen_inline_result = ChosenInlineResult(value)
 
-    def __handle_callback_query(self, value):
+    def _handle_callback_query(self, value):
         self.callback_query = CallbackQuery(value)
 
-    def __handle_shipping_query(self, value):
+    def _handle_shipping_query(self, value):
         self.shipping_query = ShippingQuery(value)
 
-    def __handle_pre_checkout_query(self, value):
+    def _handle_pre_checkout_query(self, value):
         self.pre_checkout_query = PreCheckoutQuery(value)
 
-    def __handle_poll(self, value):
+    def _handle_poll(self, value):
         self.poll = Poll(value)
 
-    def __handle_poll_answer(self, value):
+    def _handle_poll_answer(self, value):
         self.poll_answer = PollAnswer(value)
 
-    def __handle_my_chat_member(self, value):
+    def _handle_my_chat_member(self, value):
         self.my_chat_member = ChatMemberUpdated(value)
 
-    def __handle_chat_member(self, value):
+    def _handle_chat_member(self, value):
         self.chat_member = ChatMemberUpdated(value)
 
-    def __handle_chat_join_request(self, value):
+    def _handle_chat_join_request(self, value):
         self.chat_join_request = ChatJoinRequest(value)

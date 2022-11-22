@@ -41,9 +41,9 @@ class Location:
     )
 
     def __init__(self, payload: LocationPayload):
-        self.__update(payload)
+        self._update(payload)
 
-    def __update(self, payload: LocationPayload):
+    def _update(self, payload: LocationPayload):
         self.longitude = payload["longitude"]
         self.latitude = payload["latitude"]
         self.horizontal_accuracy = payload.get("horizontal_accuracy", -1)
@@ -65,9 +65,9 @@ class Venue:
     )
 
     def __init__(self, payload: VenuePayload):
-        self.__update(payload)
+        self._update(payload)
 
-    def __update(self, payload: VenuePayload):
+    def _update(self, payload: VenuePayload):
         self.location = Location(payload["location"])
         self.title = payload["title"]
         self.address = payload["address"]

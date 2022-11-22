@@ -62,9 +62,9 @@ class PhotoSize(DocumentBase):
 
     def __init__(self, payload: PhotoSizePayload):
         super().__init__(payload)
-        self.__update(payload)
+        self._update(payload)
 
-    def __update(self, payload: PhotoSizePayload):
+    def _update(self, payload: PhotoSizePayload):
         self.width = payload["width"]
         self.height = payload["height"]
 
@@ -78,9 +78,9 @@ class Document(DocumentBase):
 
     def __init__(self, payload: DocumentPayload):
         super().__init__(payload)
-        self.__update(payload)
+        self._update(payload)
 
-    def __update(self, payload: DocumentPayload):
+    def _update(self, payload: DocumentPayload):
         self.file_name = payload.get("file_name")
 
         try:
@@ -98,9 +98,9 @@ class PlaybackDocument(Document):
 
     def __init__(self, payload: PlaybackDocumentPayload):
         super().__init__(payload)
-        self.__update(payload)
+        self._update(payload)
 
-    def __update(self, payload: PlaybackDocumentPayload):
+    def _update(self, payload: PlaybackDocumentPayload):
         self.duration = payload["duration"]
         self.mime_type = payload.get("mime_type")
 
@@ -114,9 +114,9 @@ class Audio(PlaybackDocument):
 
     def __init__(self, payload: AudioPayload):
         super().__init__(payload)
-        self.__update(payload)
+        self._update(payload)
 
-    def __update(self, payload: AudioPayload):
+    def _update(self, payload: AudioPayload):
         self.performer = payload.get("performer")
         self.title = payload.get("title")
 
@@ -171,9 +171,9 @@ class MaskPosition:
     )
 
     def __init__(self, payload: MaskPositionPayload):
-        self.__update(payload)
+        self._update(payload)
 
-    def __update(self, payload: MaskPositionPayload):
+    def _update(self, payload: MaskPositionPayload):
         self.point = payload["point"]
         self.x_shift = payload["x_shift"]
         self.y_shift = payload["y_shift"]
@@ -197,9 +197,9 @@ class Sticker(Document):
 
     def __init__(self, payload: StickerPayload):
         super().__init__(payload)
-        self.__update(payload)
+        self._update(payload)
 
-    def __update(self, payload: StickerPayload):
+    def _update(self, payload: StickerPayload):
         self.type = payload["type"]
         self.width = payload["width"]
         self.height = payload["height"]
@@ -213,12 +213,12 @@ class Sticker(Document):
 
         for slot in ("premium_animation", "mask_position"):
             try:
-                getattr(self, f"__handle_{slot}")(payload[slot])  # type: ignore
+                getattr(self, f"_handle_{slot}")(payload[slot])  # type: ignore
             except KeyError:
                 continue
 
-    def __handle_premium_animation(self, value):
+    def _handle_premium_animation(self, value):
         self.premium_animation = Document(value)
 
-    def __handle_mask_position(self, value):
+    def _handle_mask_position(self, value):
         self.mask_position = MaskPosition(value)

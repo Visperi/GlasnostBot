@@ -60,9 +60,9 @@ class MessageEntity:
     )
 
     def __init__(self, payload: MessageEntityPayload):
-        self.__update(payload)
+        self._update(payload)
 
-    def __update(self, payload: MessageEntityPayload):
+    def _update(self, payload: MessageEntityPayload):
         self.type = payload["type"]
         self.offset = payload["offset"]
         self.length = payload["length"]
@@ -134,10 +134,10 @@ class Message:
     )
 
     def __init__(self, payload: MessagePayload) -> None:
-        self.__update(payload)
+        self._update(payload)
 
     # TODO: Figure out how to read variable 'from' to 'from_' from payload!
-    def __update(self, payload: MessagePayload) -> None:
+    def _update(self, payload: MessagePayload) -> None:
         self.message_id = payload["message_id"]
         self.date = payload["date"]
         self.chat = Chat(payload["chat"])
@@ -194,83 +194,83 @@ class Message:
             else:
                 func(self, value)
 
-    def __handle_from_(self, value):
+    def _handle_from_(self, value):
         self.from_ = User(value)
 
-    def __handle_sender_chat(self, value):
+    def _handle_sender_chat(self, value):
         self.sender_chat = Chat(value)
 
-    def __handle_forward_from(self, value):
+    def _handle_forward_from(self, value):
         self.forward_from = User(value)
 
-    def __handle_forward_from_chat(self, value):
+    def _handle_forward_from_chat(self, value):
         self.forward_from_chat = Chat(value)
 
-    def __handle_reply_to_message(self, value):
+    def _handle_reply_to_message(self, value):
         self.reply_to_message = Message(value)
 
-    def __handle_via_bot(self, value):
+    def _handle_via_bot(self, value):
         self.via_bot = User(value)
 
-    def __handle_entities(self, value):
+    def _handle_entities(self, value):
         self.entities = [MessageEntity(e) for e in value]
 
-    def __handle_animation(self, value):
+    def _handle_animation(self, value):
         self.animation = Animation(value)
 
-    def __handle_audio(self, value):
+    def _handle_audio(self, value):
         self.audio = Audio(value)
 
-    def __handle_document(self, value):
+    def _handle_document(self, value):
         self.document = Document(value)
 
-    def __handle_photo(self, value):
+    def _handle_photo(self, value):
         self.photo = [PhotoSize(p) for p in value]
 
-    def __handle_sticker(self, value):
+    def _handle_sticker(self, value):
         self.sticker = Sticker(value)
 
-    def __handle_video(self, value):
+    def _handle_video(self, value):
         self.video = Video(value)
 
-    def __handle_video_note(self, value):
+    def _handle_video_note(self, value):
         self.video_note = VideoNote(value)
 
-    def __handle_voice(self, value):
+    def _handle_voice(self, value):
         self.voice = Voice(value)
 
-    def __handle_caption_entities(self, value):
+    def _handle_caption_entities(self, value):
         self.caption_entities = [MessageEntity(e) for e in value]
 
-    def __handle_contact(self, value):
+    def _handle_contact(self, value):
         self.contact = Contact(value)
 
-    def __handle_dice(self, value):
+    def _handle_dice(self, value):
         self.dice = Dice(value)
 
-    def __handle_game(self, value):
+    def _handle_game(self, value):
         self.game = Game(value)
 
-    def __handle_poll(self, value):
+    def _handle_poll(self, value):
         self.poll = Poll(value)
 
-    def __handle_venue(self, value):
+    def _handle_venue(self, value):
         self.venue = Venue(value)
 
-    def __handle_location(self, value):
+    def _handle_location(self, value):
         self.location = Location(value)
 
-    def __handle_new_chat_members(self, value):
+    def _handle_new_chat_members(self, value):
         self.new_chat_members = [User(u) for u in value]
 
-    def __handle_left_chat_member(self, value):
+    def _handle_left_chat_member(self, value):
         self.left_chat_member = User(value)
 
-    def __handle_new_chat_photo(self, value):
+    def _handle_new_chat_photo(self, value):
         self.new_chat_photo = [PhotoSize(p) for p in value]
 
-    def __handle_message_auto_delete_timer_changed(self, value):
+    def _handle_message_auto_delete_timer_changed(self, value):
         self.message_auto_delete_timer_changed = MessageAutoDeleteTimerChanged(value)
 
-    def __handle_pinned_message(self, value):
+    def _handle_pinned_message(self, value):
         self.pinned_message = Message(value)

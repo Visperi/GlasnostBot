@@ -80,9 +80,9 @@ class Poll:
     )
 
     def __init__(self, payload: PollPayload):
-        self.__update(payload)
+        self._update(payload)
 
-    def __update(self, payload: PollPayload):
+    def _update(self, payload: PollPayload):
         self.id = payload["id"]
         self.question = payload["question"]
         self.options = [PollOption(o) for o in payload["options"]]

@@ -43,9 +43,9 @@ class User:
     )
 
     def __init__(self, payload: UserPayload) -> None:
-        self.__update(payload)
+        self._update(payload)
 
-    def __update(self, payload: UserPayload) -> None:
+    def _update(self, payload: UserPayload) -> None:
         self.id = payload["id"]
         self.is_bot = payload["is_bot"]
         self.first_name = payload["first_name"]

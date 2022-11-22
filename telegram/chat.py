@@ -120,9 +120,9 @@ class Chat:
     )
 
     def __init__(self, payload: ChatPayload) -> None:
-        self.__update(payload)
+        self._update(payload)
 
-    def __update(self, payload: ChatPayload) -> None:
+    def _update(self, payload: ChatPayload) -> None:
         self.id = payload["id"]
         self.type = payload["type"]
         self.title = payload.get("title")
@@ -155,16 +155,16 @@ class Chat:
             else:
                 func(self, value)
 
-    def __handle_photo(self, value):
+    def _handle_photo(self, value):
         self.photo = ChatPhoto(value)
 
-    def __handle_pinned_message(self, value):
+    def _handle_pinned_message(self, value):
         self.pinned_message = Message(value)
 
-    def __handle_permissions(self, value):
+    def _handle_permissions(self, value):
         self.permissions = ChatPermissions(value)
 
-    def __handle_location(self, value):
+    def _handle_location(self, value):
         self.location = ChatLocation(value)
 
 

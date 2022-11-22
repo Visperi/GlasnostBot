@@ -43,22 +43,22 @@ class Client:
     API_BASE_URL = "https://api.telegram.org/"
 
     def __init__(self, secret: str, client_session: aiohttp.ClientSession = None) -> None:
-        self.__secret: str = secret
-        self.__client_session: aiohttp.ClientSession = client_session
+        self._secret: str = secret
+        self._client_session: aiohttp.ClientSession = client_session
         self.loop = asyncio.new_event_loop()
         self.updates_offset = -1
         asyncio.set_event_loop(self.loop)
 
-        if not self.__client_session:
-            self.loop.run_until_complete(self.__init_session())
+        if not self._client_session:
+            self.loop.run_until_complete(self._init_session())
 
-    async def __init_session(self) -> None:
-        self.__client_session = aiohttp.ClientSession()
+    async def _init_session(self) -> None:
+        self._client_session = aiohttp.ClientSession()
 
     def __build_url(self, method_path: str) -> str:
-        return self.API_BASE_URL + f"bot{self.__secret}" + method_path
+        return self.API_BASE_URL + f"bot{self._secret}" + method_path
 
-    async def __request(
+    async def _request(
             self,
             http_method: str,
             method_path: str,
@@ -66,8 +66,8 @@ class Client:
             params: dict = None,
             headers: dict = None
     ) -> dict:
-        url = self.API_BASE_URL + f"bot{self.__secret}" + method_path
-        async with self.__client_session.request(
+        url = self.API_BASE_URL + f"bot{self._secret}" + method_path
+        async with self._client_session.request(
                 http_method,
                 url,
                 timeout=request_timeout,
@@ -87,30 +87,30 @@ class Client:
             else:
                 return content
 
-    async def __get(
+    async def _get(
             self,
             method_path: str,
             request_timeout: int = 10,
             params: dict = None,
             headers: dict = None
     ) -> dict:
-        return await self.__request("GET", method_path, request_timeout, params, headers)
+        return await self._request("GET", method_path, request_timeout, params, headers)
 
-    async def __post(
+    async def _post(
             self,
             method_path: str,
             request_timeout: int = 10,
             params: dict = None,
             headers: dict = None
     ) -> dict:
-        return await self.__request("POST", method_path, request_timeout, params, headers)
+        return await self._request("POST", method_path, request_timeout, params, headers)
 
-    async def __get_updates_loop(self) -> None:
+    async def _get_updates_loop(self) -> None:
         _logger.info("Now long polling messages")
 
         while True:
             params = {"timeout": 200, "offset": self.updates_offset}
-            resp = await self.__get(TgMethod.getUpdates, request_timeout=200, params=params)
+            resp = await self._get(TgMethod.getUpdates, request_timeout=200, params=params)
             # TODO: Try-catch here in case of not-OK status
             results = replace_builtin_keywords(resp["result"])
 
@@ -121,11 +121,11 @@ class Client:
             await asyncio.sleep(1)
 
     def start(self) -> None:
-        if not self.__secret:
+        if not self._secret:
             raise ValueError("Secret is needed to connect to Telegram API.")
 
         try:
-            self.loop.create_task(self.__get_updates_loop())
+            self.loop.create_task(self._get_updates_loop())
             self.loop.run_forever()
         except KeyboardInterrupt:
             pass

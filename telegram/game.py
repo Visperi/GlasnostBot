@@ -47,9 +47,9 @@ class Game:
     )
 
     def __init__(self, payload: GamePayload):
-        self.__update(payload)
+        self._update(payload)
 
-    def __update(self, payload: GamePayload):
+    def _update(self, payload: GamePayload):
         self.title = payload["title"]
         self.description = payload["title"]
         self.photo = [PhotoSize(p) for p in payload["photo"]]
@@ -70,8 +70,8 @@ class Dice:
     )
 
     def __init__(self, payload: DicePayload):
-        self.__update(payload)
+        self._update(payload)
 
-    def __update(self, payload: DicePayload):
+    def _update(self, payload: DicePayload):
         self.emoji = payload["emoji"]
         self.value = payload["value"]

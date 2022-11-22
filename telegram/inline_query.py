@@ -60,9 +60,9 @@ class InlineQuery(InlineQueryBase):
 
     def __init__(self, payload: InlineQueryPayload):
         super().__init__(payload)
-        self.__update(payload)
+        self._update(payload)
 
-    def __update(self, payload: InlineQueryPayload):
+    def _update(self, payload: InlineQueryPayload):
         self.query = payload["query"]
         self.offset = payload["offset"]
         self.chat_type = payload.get("chat_type")
@@ -85,9 +85,9 @@ class CallbackQuery(InlineQueryBase):
 
     def __init__(self, payload: CallbackQueryPayload):
         super().__init__(payload)
-        self.__update(payload)
+        self._update(payload)
 
-    def __update(self, payload: CallbackQueryPayload):
+    def _update(self, payload: CallbackQueryPayload):
         self.inline_message_id = payload.get("inline_message_id")
         self.chat_instance = payload["chat_instance"]
         self.data = payload.get("data")
@@ -108,9 +108,9 @@ class ShippingQuery(InlineQueryBase):
 
     def __init__(self, payload: ShippingQueryPayload):
         super().__init__(payload)
-        self.__update(payload)
+        self._update(payload)
 
-    def __update(self, payload: ShippingQueryPayload):
+    def _update(self, payload: ShippingQueryPayload):
         self.invoice_payload = payload["invoice_payload"]
         self.shipping_address = payload["shipping_address"]
 
@@ -127,9 +127,9 @@ class PreCheckoutQuery(InlineQueryBase):
 
     def __init__(self, payload: PreCheckoutQueryPayload):
         super().__init__(payload)
-        self.__update(payload)
+        self._update(payload)
 
-    def __update(self, payload: PreCheckoutQueryPayload):
+    def _update(self, payload: PreCheckoutQueryPayload):
         self.currency = payload["currency"]
         self.total_amount = payload["total_amount"]
         self.invoice_payload = payload["invoice_payload"]
@@ -152,9 +152,9 @@ class ChosenInlineResult:
     )
 
     def __init__(self, payload: ChosenInlineResultPayload):
-        self.__update(payload)
+        self._update(payload)
 
-    def __update(self, payload: ChosenInlineResultPayload):
+    def _update(self, payload: ChosenInlineResultPayload):
         self.result_id = payload["result_id"]
         self.from_ = payload["from_"]
         self.inline_message_id = payload.get("inline_message_id")
