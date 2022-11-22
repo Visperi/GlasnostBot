@@ -26,8 +26,7 @@ SOFTWARE.
 import aiohttp
 import asyncio
 import logging
-from .update import Update
-from .utils import replace_builtin_keywords
+from .api_response import ApiResponse
 
 _logger = logging.getLogger(__name__)
 
@@ -65,7 +64,7 @@ class Client:
             request_timeout: float = 10,
             params: dict = None,
             headers: dict = None
-    ) -> dict:
+    ) -> ApiResponse:
         url = self.API_BASE_URL + f"bot{self._secret}" + method_path
         async with self._client_session.request(
                 http_method,
@@ -84,8 +83,7 @@ class Client:
                 description = content["description"]
                 _logger.exception(f"Error {error_code}: {description}")
 
-            else:
-                return content
+            return ApiResponse(content)
 
     async def _get(
             self,
@@ -93,7 +91,7 @@ class Client:
             request_timeout: int = 10,
             params: dict = None,
             headers: dict = None
-    ) -> dict:
+    ) -> ApiResponse:
         return await self._request("GET", method_path, request_timeout, params, headers)
 
     async def _post(
@@ -102,7 +100,7 @@ class Client:
             request_timeout: int = 10,
             params: dict = None,
             headers: dict = None
-    ) -> dict:
+    ) -> ApiResponse:
         return await self._request("POST", method_path, request_timeout, params, headers)
 
     async def _get_updates_loop(self) -> None:
@@ -111,12 +109,11 @@ class Client:
         while True:
             params = {"timeout": 200, "offset": self.updates_offset}
             resp = await self._get(TgMethod.getUpdates, request_timeout=200, params=params)
-            # TODO: Try-catch here in case of not-OK status
-            results = replace_builtin_keywords(resp["result"])
+            # TODO: Do something here with non-OK response?
 
-            updates = [Update(u) for u in results]
-            if updates:
-                self.updates_offset = updates[-1].update_id + 1
+            if resp.result:
+                # Trigger all received messages read
+                self.updates_offset = resp.result[-1].update_id + 1
 
             await asyncio.sleep(1)
 
