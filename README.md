@@ -30,7 +30,30 @@ client.start()
 
 Multiple listeners are supported for each event, although currently limited by the listener names since they must be 
 exact matches with the actual event. Listening events is also supported by subclassing `telegram.Client` and then 
-overriding the event methods.
+overriding the event methods:
+
+```python
+import telegram
+
+
+class TgBot(telegram.Client):
+
+    def __init__(self, secret: str):
+        super().__init__(secret)
+
+    async def on_update(self, update: telegram.Update) -> None:
+        print("Update received in TgBot overridden event")
+
+
+bot = TgBot("YOUR SECRET HERE")
+
+
+@bot.event
+async def on_update(update: telegram.Update) -> None:
+    print("Update received in event listener method")
+
+bot.start()
+```
 
 ## Licence
 
