@@ -16,8 +16,7 @@ Basic usage:
 ```python
 import telegram
 
-secret = "YOUR SECRET HERE"
-client = telegram.Client(secret)
+client = telegram.Client()
 
 
 @client.event
@@ -25,7 +24,7 @@ async def on_update(update: telegram.Update) -> None:
     print("Update received in main.py")
 
 # Call this blocking call last!
-client.start()
+client.start("YOUR SECRET HERE")
 ```
 
 Multiple listeners are supported for each event, although currently limited by the listener names since they must be 
@@ -38,21 +37,21 @@ import telegram
 
 class TgBot(telegram.Client):
 
-    def __init__(self, secret: str):
-        super().__init__(secret)
+    def __init__(self):
+        super().__init__()
 
     async def on_update(self, update: telegram.Update) -> None:
         print("Update received in TgBot overridden event")
 
 
-bot = TgBot("YOUR SECRET HERE")
+bot = TgBot()
 
 
 @bot.event
 async def on_update(update: telegram.Update) -> None:
     print("Update received in event listener method")
 
-bot.start()
+bot.start("YOUR_TOKEN_HERE")
 ```
 
 ## Licence
