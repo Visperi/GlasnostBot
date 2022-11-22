@@ -43,22 +43,29 @@ class Client:
 
     API_BASE_URL = "https://api.telegram.org/"
 
-    def __init__(self, secret: str, client_session: aiohttp.ClientSession = None) -> None:
-        self._secret: str = secret
+    def __init__(
+            self,
+            client_session: aiohttp.ClientSession = None,
+            loop: asyncio.AbstractEventLoop = None
+    ) -> None:
+        self._secret: str = ""
         self._client_session: aiohttp.ClientSession = client_session
-        self.loop = asyncio.new_event_loop()
+        self.loop = loop
         self.updates_offset = -1
         self.listeners = {}
-        asyncio.set_event_loop(self.loop)
 
-        if not self._client_session:
-            self.loop.run_until_complete(self._init_session())
+        self._existing_loop = self.loop is not None
+        if loop is None:
+            _logger.debug("Creating new event loop")
+            self.loop = asyncio.new_event_loop()
+            asyncio.set_event_loop(self.loop)
 
-    async def _init_session(self) -> None:
+        if client_session is None:
+            _logger.debug("Initializing new aiohttp.ClientSession")
+            self.loop.run_until_complete(self._init_http_session())
+
+    async def _init_http_session(self) -> None:
         self._client_session = aiohttp.ClientSession()
-
-    def __build_url(self, method_path: str) -> str:
-        return self.API_BASE_URL + f"bot{self._secret}" + method_path
 
     async def _request(
             self,
@@ -120,34 +127,45 @@ class Client:
                 self.updates_offset = latest.update_id + 1
 
                 for listener in self.listeners.get("on_update", []):
-                    await listener(latest)
+                    try:
+                        await listener(latest)
+                    except Exception as e:
+                        _logger.error("Ignoring unexpected exception: ", exc_info=e)
 
                 await self.on_update(latest)
 
             await asyncio.sleep(1)
 
-    def event(self, coroutine: Coroutine) -> Coroutine:
+    def add_listener(self, coroutine: Coroutine, name: str = None) -> Coroutine:
         if not asyncio.iscoroutinefunction(coroutine):
             raise ValueError("Event listener must be a coroutine function.")
+        if not name:
+            name = coroutine.__name__
 
         try:
-            self.listeners[coroutine.__name__].append(coroutine)
+            self.listeners[name].append(coroutine)
         except KeyError:
-            self.listeners[coroutine.__name__] = []
-            self.listeners[coroutine.__name__].append(coroutine)
+            self.listeners[name] = []
+            self.listeners[name].append(coroutine)
 
-        _logger.debug(f"Registered listener for event '{coroutine.__name__}'")
+        _logger.debug(f"Registered listener for event '{name}'")
         return coroutine
+
+    def event(self, coroutine: Coroutine) -> Coroutine:
+        return self.add_listener(coroutine)
 
     async def on_update(self, update: Update) -> None:
         pass
 
-    def start(self) -> None:
-        if not self._secret:
+    def start(self, secret: str) -> None:
+        if not secret:
             raise ValueError("Secret is needed to connect to Telegram API.")
+        self._secret = secret
 
         try:
             self.loop.create_task(self._get_updates_loop())
-            self.loop.run_forever()
+            if not self._existing_loop:
+                _logger.debug("Running the event listeners indefinitely.")
+                self.loop.run_forever()
         except KeyboardInterrupt:
             pass
