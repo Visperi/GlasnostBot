@@ -28,7 +28,7 @@ import asyncio
 import logging
 from .api_response import ApiResponse
 from .update import Update
-from typing import Coroutine
+from typing import Coroutine, Any, Callable
 
 _logger = logging.getLogger(__name__)
 
@@ -136,7 +136,11 @@ class Client:
 
             await asyncio.sleep(1)
 
-    def add_listener(self, coroutine: Coroutine, name: str = None) -> Coroutine:
+    def add_listener(
+            self,
+            coroutine: Callable[..., Coroutine[Any, Any, Any]],
+            name: str = None
+    ) -> Callable[..., Coroutine[Any, Any, Any]]:
         if not asyncio.iscoroutinefunction(coroutine):
             raise ValueError("Event listener must be a coroutine function.")
         if not name:
@@ -151,7 +155,10 @@ class Client:
         _logger.debug(f"Registered listener for event '{name}'")
         return coroutine
 
-    def event(self, coroutine: Coroutine) -> Coroutine:
+    def event(
+            self,
+            coroutine: Callable[..., Coroutine[Any, Any, Any]]
+    ) -> Callable[..., Coroutine[Any, Any, Any]]:
         return self.add_listener(coroutine)
 
     async def on_update(self, update: Update) -> None:
