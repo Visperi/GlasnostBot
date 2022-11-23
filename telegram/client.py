@@ -54,6 +54,7 @@ class Client:
 
     API_BASE_URL = "https://api.telegram.org/"
 
+    # noinspection PyTypeChecker
     def __init__(
             self,
             client_session: aiohttp.ClientSession = None,
@@ -67,11 +68,12 @@ class Client:
         :param client_session: An existing client session. If omitted, new one is automatically initialized.
         :param loop: An existing event loop where to attach to. If omitted, new one is automatically initialized.
         """
-        self._secret: str = ""
+        self._secret: str = None
         self._client_session: aiohttp.ClientSession = client_session
         self.loop: asyncio.AbstractEventLoop = loop
         self.updates_offset: int = -1
         self.listeners: Dict[str, List[Coro]] = {}
+        self.polling_task: asyncio.Task = None
 
         self._existing_loop = self.loop is not None
         if loop is None:
@@ -245,12 +247,21 @@ class Client:
         """
         if not secret:
             raise ValueError("Secret is needed to connect to Telegram API.")
+        if self.polling_task is not None:
+            raise ValueError("Already connected to Telegram API.")
         self._secret = secret
 
         try:
-            self.loop.create_task(self._get_updates_loop())
+            self.polling_task = self.loop.create_task(self._get_updates_loop())
             if not self._existing_loop:
                 _logger.debug("Running the event listeners indefinitely.")
                 self.loop.run_forever()
         except KeyboardInterrupt:
             pass
+
+    def stop(self):
+        if self.polling_task is None:
+            raise ValueError("There is no connection to Telegram api.")
+
+        self.polling_task.cancel()
+        self.polling_task = None
