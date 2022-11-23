@@ -180,22 +180,30 @@ class Client:
         while True:
             params = {"timeout": 200, "offset": self.updates_offset}
             resp = await self._get(_TgMethod.getUpdates, request_timeout=200, params=params)
-            # TODO: Do something here with non-OK response?
+            updates = resp.result
 
-            if resp.result:
-                latest = resp.result[-1]
+            if updates:
+                await self.invoke_update_listeners(updates)
+                latest = updates[-1]
                 # Trigger all received messages read next time updates are received
                 self.updates_offset = latest.update_id + 1
 
-                for listener in self.listeners.get("on_update", []):
-                    try:
-                        await listener(latest)
-                    except Exception as e:
-                        _logger.error("Ignoring unexpected exception: ", exc_info=e)
-
-                await self.on_update(latest)
-
             await asyncio.sleep(1)
+
+    async def invoke_update_listeners(self, updates: List[Update]) -> None:
+        """
+        Send updates to all registered event listeners.
+        """
+        listeners = self.listeners.get("on_update", [])
+        for update in updates:
+            await self.on_update(update)
+
+            for listener in listeners:
+                try:
+                    await listener(update)
+                except Exception as e:
+                    _logger.error("Ignoring unexpected exception: ", exc_info=e)
+                    break
 
     def add_listener(self, coroutine: Coro, name: str = None) -> Coro:
         """
