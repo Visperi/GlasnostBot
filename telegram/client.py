@@ -28,9 +28,17 @@ import asyncio
 import logging
 from .api_response import ApiResponse
 from .update import Update
-from typing import Coroutine, Any, Callable
+from typing import (
+    Coroutine,
+    Any,
+    Callable,
+    Dict,
+    List,
+    TypeVar
+)
 
 _logger = logging.getLogger(__name__)
+Coro = TypeVar("Coro", bound=Callable[..., Coroutine[Any, Any, Any]])
 
 
 class _TgMethod:
@@ -40,6 +48,9 @@ class _TgMethod:
 
 
 class Client:
+    """
+    A class responsible for handling asynchronous connection to Telegram API.
+    """
 
     API_BASE_URL = "https://api.telegram.org/"
 
@@ -48,11 +59,19 @@ class Client:
             client_session: aiohttp.ClientSession = None,
             loop: asyncio.AbstractEventLoop = None
     ) -> None:
+        """
+        Initialize a new client for connection to the Telegram API. This client is then responsible for polling updates
+        and invoking events based on the received data. Can either be attached to an existing client session and/or
+        event loop, or initialized as is with new connections.
+
+        :param client_session: An existing client session. If omitted, new one is automatically initialized.
+        :param loop: An existing event loop where to attach to. If omitted, new one is automatically initialized.
+        """
         self._secret: str = ""
         self._client_session: aiohttp.ClientSession = client_session
-        self.loop = loop
-        self.updates_offset = -1
-        self.listeners = {}
+        self.loop: asyncio.AbstractEventLoop = loop
+        self.updates_offset: int = -1
+        self.listeners: Dict[str, List[Coro]] = {}
 
         self._existing_loop = self.loop is not None
         if loop is None:
@@ -65,6 +84,10 @@ class Client:
             self.loop.run_until_complete(self._init_http_session())
 
     async def _init_http_session(self) -> None:
+        """
+        Initialize a new aiohttp.ClientSession used in connection for the API for the client.
+        Automatically called if no session is given to the initializer.
+        """
         self._client_session = aiohttp.ClientSession()
 
     async def _request(
@@ -75,6 +98,20 @@ class Client:
             params: dict = None,
             headers: dict = None
     ) -> ApiResponse:
+        """
+        Make an HTTP request to the Telegram API.
+
+        :param http_method: HTTP method to send to the API.
+        :param method_path: Path of the method in Telegram API.
+        :param request_timeout: Timeout in seconds for the request itself.
+        :param params: Params for the request.
+        :param headers: Headers for the request.
+        :return: The response object containing OK status and possible results, error codes etc.
+        :exception ValueError: The HTTP method is not GET or POST and thus not supported by Telegram API.
+        """
+        if http_method != "GET" and http_method != "POST":
+            raise ValueError("The Telegram API supports only GET and POST methods for HTTP requests.")
+
         url = self.API_BASE_URL + f"bot{self._secret}" + method_path
         async with self._client_session.request(
                 http_method,
@@ -98,22 +135,44 @@ class Client:
     async def _get(
             self,
             method_path: str,
-            request_timeout: int = 10,
+            request_timeout: float = 10,
             params: dict = None,
             headers: dict = None
     ) -> ApiResponse:
+        """
+        Shorthand method to make a GET request on Telegram API.
+
+        :param method_path: Path of the API method.
+        :param request_timeout: Timeout in seconds for the request itself.
+        :param params: Params for the GET request.
+        :param headers: Headers for the GET request.
+        :return: The response object containing OK status and possible results, error codes etc.
+        """
         return await self._request("GET", method_path, request_timeout, params, headers)
 
     async def _post(
             self,
             method_path: str,
-            request_timeout: int = 10,
+            request_timeout: float = 10,
             params: dict = None,
             headers: dict = None
     ) -> ApiResponse:
+        """
+        Shorthand method to make a POST request on Telegram API.
+
+        :param method_path: Path of the API method.
+        :param request_timeout: Timeout in seconds for the request itself.
+        :param params: Params for the POST request.
+        :param headers: Headers for the POST request.
+        :return: The response object containing OK status and possible results, error codes etc.
+        """
         return await self._request("POST", method_path, request_timeout, params, headers)
 
     async def _get_updates_loop(self) -> None:
+        """
+        An indefinitely running loop, using long polling to receive updates from the Telegram API. Handling the received
+        data is then passed to on_update method.
+        """
         _logger.info("Now long polling messages")
 
         while True:
@@ -136,11 +195,15 @@ class Client:
 
             await asyncio.sleep(1)
 
-    def add_listener(
-            self,
-            coroutine: Callable[..., Coroutine[Any, Any, Any]],
-            name: str = None
-    ) -> Callable[..., Coroutine[Any, Any, Any]]:
+    def add_listener(self, coroutine: Coro, name: str = None) -> Coro:
+        """
+        Add a listener to an event method. The amount of listeners per event is unlimited.
+
+        :param coroutine: Coroutine function to call when the event occurs.
+        :param name: Name of the event to listen. If omitted, the coroutine name is used and must match an event name.
+        :return: The decorated function.
+        :exception ValueError: The coroutine is not actually a coroutine function.
+        """
         if not asyncio.iscoroutinefunction(coroutine):
             raise ValueError("Event listener must be a coroutine function.")
         if not name:
@@ -155,16 +218,31 @@ class Client:
         _logger.debug(f"Registered listener for event '{name}'")
         return coroutine
 
-    def event(
-            self,
-            coroutine: Callable[..., Coroutine[Any, Any, Any]]
-    ) -> Callable[..., Coroutine[Any, Any, Any]]:
+    def event(self, coroutine: Coro) -> Coro:
+        """
+        Shorthand, decorator method for adding a listener to event listener.
+
+        :param coroutine: Coroutine to add the listener for
+        :return:
+        """
         return self.add_listener(coroutine)
 
     async def on_update(self, update: Update) -> None:
+        """
+        Method called when an Update is received from Telegram API. When overridden, nothing is done to this data
+        before or after this method is called.
+
+        :param update: Update object received from the Telegram API
+        """
+        # TODO: Handle commands, messages, more granular objects etc. here by default
         pass
 
     def start(self, secret: str) -> None:
+        """
+        Connect to the Telegram API and start polling Telegram Updates and invoking events indefinitely.
+
+        :param secret: Secret to the Telegram API.
+        """
         if not secret:
             raise ValueError("Secret is needed to connect to Telegram API.")
         self._secret = secret
