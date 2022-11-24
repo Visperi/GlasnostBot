@@ -1,58 +1,28 @@
-## telegram.py
+## GlasnostBot
 
-An asynchronous python library for telegram API.
+A bot made for forwarding Oulun Tietoteekkarit ry Telegram announcements from OTiT Glasnost to their Discord server.
 
-This is a very young and Work In Progress project. Even the name is subject to change. 
-Lots of functionality is still missing, and documentation is nonexistent, 
-although the structure and classes are solely based on the official API documentation.
-Just converted to use pythonic coding style.
+All shorter than 2000 character messages, including forwards, are supported and copied from Telegram to Discord. 
+Forwarded messages include name of the original message sender:
 
-**Python 3.8 or higher is required**
+Forward from individual user. `prefer_username` option exists for users that have one 
 
-## Usage
+![Forward from user](images/forward_example.PNG)
 
-Basic usage:
+Forward from a channel. Channel title is used by default.
 
-```python
-import telegram
+![Forward from channel](images/forward_example2.PNG)
 
-client = telegram.Client()
+The telegram library used in this bot is also made by me and has its own repository 
+[telegram.py](https://github.com/Visperi/telegram.py).
 
+## TODO
+Non-exhaustive list of features still needed for stable support:
 
-@client.event
-async def on_update(update: telegram.Update) -> None:
-    print("Update received in main.py")
-
-# Call this blocking call last!
-client.start("YOUR SECRET HERE")
-```
-
-Multiple listeners are supported for each event, although currently limited by the listener names since they must be 
-exact matches with the actual event. Listening events is also supported by subclassing `telegram.Client` and then 
-overriding the event methods:
-
-```python
-import telegram
-
-
-class TgBot(telegram.Client):
-
-    def __init__(self):
-        super().__init__()
-
-    async def on_update(self, update: telegram.Update) -> None:
-        print("Update received in TgBot overridden event")
-
-
-bot = TgBot()
-
-
-@bot.event
-async def on_update(update: telegram.Update) -> None:
-    print("Update received in event listener method")
-
-bot.start("YOUR_TOKEN_HERE")
-```
+- Support messages over length of 2000 characters
+- Support replies to old forwarded messages by replying them directly
+- Support attachments in messages
+    - In edited messages support attachment deletion
 
 ## Licence
 
