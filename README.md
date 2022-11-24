@@ -1,6 +1,6 @@
 ## GlasnostBot
 
-A bot made for forwarding Oulun Tietoteekkarit ry Telegram announcements from OTiT Glasnost to their Discord server.
+A bot made for forwarding Oulun Tietoteekkarit ry Telegram announcements from OTiT glasnost to their Discord server.
 
 All shorter than 2000 character messages, including forwards, are supported and copied from Telegram to Discord. 
 Forwarded messages include name of the original message sender:
