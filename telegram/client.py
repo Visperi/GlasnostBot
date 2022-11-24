@@ -195,6 +195,7 @@ class Client:
         Send updates to all registered event listeners.
         """
         listeners = self.listeners.get("on_update", [])
+        _logger.debug(f"Invoking all {len(listeners)}+1 listeners for {len(updates)} updates.")
         for update in updates:
             await self.on_update(update)
 
