@@ -2,8 +2,8 @@
 
 A bot made for forwarding Oulun Tietoteekkarit ry Telegram announcements from OTiT glasnost to their Discord server.
 
-All shorter than 2000 character messages, including forwards, are supported and copied from Telegram to Discord. 
-Forwarded messages include name of the original message sender:
+All text from shorter than 2000 character messages, including forwards, is supported and copied from Telegram to 
+Discord. Forwarded messages include name of the original message sender:
 
 Forward from individual user. `prefer_username` option exists for users that have one 
 
@@ -23,6 +23,7 @@ Non-exhaustive list of features still needed for stable support:
 - Support replies to old forwarded messages by replying them directly
 - Support attachments in messages
     - In edited messages support attachment deletion
+- Detect and keep possible stylised text if possible
 
 ## Licence
 
