@@ -34,7 +34,6 @@ if __name__ == "__main__":
     with open("credentials.json", "r") as credentials_file:
         credentials = json.load(credentials_file)
 
-    tg_secret = credentials["tokens"]["telegram"]
     discord_secret = credentials["tokens"]["discord"]
 
     discord_bot = DiscordBot()
