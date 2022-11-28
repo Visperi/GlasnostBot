@@ -31,7 +31,7 @@ import logging
 from typing import Tuple, List, Optional
 from discord.ext import commands
 from discord_bot import DiscordBot
-from message_cache import MessageCache
+from database_handler import DatabaseHandler
 
 
 _logger = logging.getLogger(__name__)
@@ -51,7 +51,7 @@ class TelegramCog(commands.Cog):
         self.discord_channel_ids = ids[1]
         self.tg_bot = telegram.Client(aiohttp.ClientSession(), loop=bot.loop)
         self.bot = bot
-        self.message_cache = MessageCache(self.database_name)
+        self.message_cache = DatabaseHandler(self.database_name)
 
     async def cog_load(self) -> None:
         _logger.debug(f"Starting Telegram polling before loading {__name__}")

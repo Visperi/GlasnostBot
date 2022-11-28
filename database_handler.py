@@ -32,7 +32,7 @@ from typing import List
 _logger = logging.getLogger(__name__)
 
 
-class MessageCache:
+class DatabaseHandler:
 
     def __init__(self, database: str, pragma_foreign_keys: bool = False) -> None:
         self.connection = self.connect(database, pragma_foreign_keys)
