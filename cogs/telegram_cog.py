@@ -163,6 +163,13 @@ class TelegramCog(commands.Cog):
             await self.forward_channel_post(channel_post, channel_post.message_id, is_edit, forwarded_from)
 
     def format_channel_post(self, message: telegram.Message) -> str:
+        """
+        Format a channel post so that stylised text stays as is when sent to discord. Add forwarded messages original
+        author name if it is forwarded message.
+
+        :param message: Channel post to format.
+        :return: Channel post text changed to Discord compatible format.
+        """
         forwarded_from = None
         if message.forward_from or message.forward_from_chat:
             forwarded_from = self.fetch_forwarded_from(message, prefer_username=True)
