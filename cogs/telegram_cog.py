@@ -21,15 +21,14 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 """
-
-
 import json
 import aiohttp
 import discord
 import telegram
+import datetime
 import logging
 from typing import Tuple, List, Optional
-from discord.ext import commands
+from discord.ext import commands, tasks
 from discord_bot import DiscordBot
 from database_handler import DatabaseHandler
 
@@ -51,7 +50,7 @@ class TelegramCog(commands.Cog):
         self.discord_channel_ids = ids[1]
         self.tg_bot = telegram.Client(aiohttp.ClientSession(), loop=bot.loop)
         self.bot = bot
-        self.message_cache = DatabaseHandler(self.database_name)
+        self.database_handler = DatabaseHandler(self.database_name)
 
     async def cog_load(self) -> None:
         _logger.debug(f"Starting Telegram polling before loading {__name__}")
@@ -67,14 +66,17 @@ class TelegramCog(commands.Cog):
             _logger.error("Cannot start Telegram polling. Already polling.")
 
         self.tg_bot.add_listener(self.on_update)
-        if not self.message_cache.connection:
+        if not self.database_handler.connection:
             _logger.debug(f"Connecting to dabatase '{self.database_name}'")
-            self.message_cache.connect(self.database_name)
+            self.database_handler.connect(self.database_name)
+
+        self.database_cleanup_loop.start()
 
     async def cog_unload(self) -> None:
         _logger.debug(f"Stopping Telegram polling before unloading {__name__}.")
         self.tg_bot.stop()
-        self.message_cache.close()
+        self.database_cleanup_loop.cancel()
+        self.database_handler.close()
 
     @staticmethod
     def _read_channel_ids(filepath: str) -> Tuple[int, List[int]]:
@@ -114,6 +116,13 @@ class TelegramCog(commands.Cog):
                 return title
             else:
                 return username
+
+    @tasks.loop(hours=6)
+    async def database_cleanup_loop(self):
+        print("yeet")
+        youngest_to_delete = datetime.datetime.utcnow() - datetime.timedelta(days=30)
+        _logger.debug(f"Deleting message references younger than {youngest_to_delete}.")
+        self.database_handler.delete_by_age(youngest_to_delete)
 
     async def on_update(self, update: telegram.Update) -> None:
         # TODO: Simplify when the library is updated
@@ -162,7 +171,9 @@ class TelegramCog(commands.Cog):
 
                 discord_message = await channel.send(text)
                 if not forwarder_from:
-                    self.message_cache.add(tg_message_id, discord_message)
+                    ts = int(datetime.datetime.utcnow().timestamp())
+                    # Add the bots Discord message to cache for possibility of edits
+                    self.database_handler.add(tg_message_id, discord_message, ts)
 
     async def edit_discord_message(self, new_text: str, tg_message_id: int):
         discord_messages = await self.get_discord_messages(tg_message_id)
@@ -176,7 +187,7 @@ class TelegramCog(commands.Cog):
 
     async def get_discord_messages(self, tg_message_id: int) -> List[discord.Message]:
         messages = []
-        message_ids = self.message_cache.get(tg_message_id)
+        message_ids = self.database_handler.get(tg_message_id)
 
         for message_id, channel_id in message_ids:
             channel = self.bot.get_channel(channel_id)
