@@ -26,7 +26,8 @@ SOFTWARE.
 import logging
 import sqlite3
 import discord
-from typing import List
+import datetime
+from typing import List, Union
 
 
 _logger = logging.getLogger(__name__)
@@ -46,7 +47,8 @@ class DatabaseHandler:
                 message_id INTEGER PRIMARY KEY,
                 channel_id INTEGER NOT NULL,
                 guild_id NOT NULL,
-                tg_message_id INTEGER NOT NULL
+                tg_message_id INTEGER NOT NULL,
+                ts INTEGER NOT NULL
             );
             """
         )
@@ -68,23 +70,48 @@ class DatabaseHandler:
         self.connection = None
         self.cursor = None
 
-    def add(self, tg_message_id: int, discord_message: discord.Message) -> None:
+    def add(self, tg_message_id: int, discord_message: discord.Message, ts: Union[int, datetime.datetime]) -> None:
+        if isinstance(ts, datetime.datetime):
+            ts = int(ts.timestamp())
+
         with self.connection:
             self.cursor.execute(
                 """
-                INSERT INTO discord_messages (message_id, channel_id, guild_id, tg_message_id) 
+                INSERT INTO discord_messages (message_id, channel_id, guild_id, tg_message_id, ts) 
                 VALUES
-                    (?, ?, ?, ?) 
-                """, (discord_message.id, discord_message.channel.id, discord_message.guild.id, tg_message_id)
+                    (?, ?, ?, ?, ?) 
+                """, (discord_message.id, discord_message.channel.id, discord_message.guild.id, tg_message_id, ts)
             )
 
-    def delete(self, tg_message_id: int) -> None:
+        _logger.debug(f"Added message reference to database with values {tg_message_id}, "
+                      f"{discord_message.to_message_reference_dict()}, {ts}")
+
+    def delete_by_id(self, tg_message_id: int) -> int:
         with self.connection:
             self.cursor.execute(
                 """
                 DELETE FROM discord_messages WHERE tg_message_id = ?
                 """, (tg_message_id, )
             )
+
+        deleted = self.cursor.rowcount
+        _logger.debug(f"Deleted {deleted} rows by Telegram timestamp from the database.")
+        return deleted
+
+    def delete_by_age(self, youngest_to_delete: Union[int, datetime.datetime]) -> int:
+        if isinstance(youngest_to_delete, datetime.datetime):
+            youngest_to_delete = int(youngest_to_delete.timestamp())
+
+        with self.connection:
+            self.cursor.execute(
+                """
+                DELETE FROM discord_messages WHERE ts <= ?
+                """, (youngest_to_delete, )
+            )
+
+        deleted = self.cursor.rowcount
+        _logger.debug(f"Deleted {deleted} rows by age from the database.")
+        return deleted
 
     def get(self, tg_message_id: int) -> List[int]:
         with self.connection:
