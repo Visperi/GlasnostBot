@@ -108,8 +108,6 @@ class MessageEntity:
         self.custom_emoji_id = payload.get("custom_emoji_id")
 
     def markdown(self, text: str) -> Optional[str]:
-        if not EntityType.supports_markdown(self.type):
-            raise ValueError(f"Entity of type {self.type} does not support markdown.")
 
         if self.type == EntityType.Bold:
             return f"**{text}**"
