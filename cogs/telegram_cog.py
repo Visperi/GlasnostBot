@@ -175,6 +175,8 @@ class TelegramCog(commands.Cog):
 
         :param text: Text content of the message sent to Discord.
         :param tg_message_id: The Telegram message ID, which is used to save the Discord message to database.
+        :param is_edit: Tells if the Telegram message was edited. If True, a Discord message reference is searched
+        from the database and then edited with the new text.
         :param forwarder_from: If the Telegram message was forwarded, the original message authors (user)name. None if
         the message is not forwarded. Forwarded Telegram messages cannot be edited and thus are not saved to
         the database either. Forwarded messages are also added info about from whom the message was forwarded.
