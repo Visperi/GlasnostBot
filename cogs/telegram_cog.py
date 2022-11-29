@@ -158,14 +158,35 @@ class TelegramCog(commands.Cog):
         else:
             return
 
-        text = channel_post.text
         tg_channel_id = channel_post.sender_chat.id
         if tg_channel_id == self.tg_channel_id:
-            await self.forward_channel_post(text, channel_post.message_id, is_edit, forwarded_from)
+            await self.forward_channel_post(channel_post, channel_post.message_id, is_edit, forwarded_from)
+
+    def format_channel_post(self, message: telegram.Message) -> str:
+        forwarded_from = None
+        if message.forward_from or message.forward_from_chat:
+            forwarded_from = self.fetch_forwarded_from(message, prefer_username=True)
+
+        formatted_message = message.text
+        if message.entities:
+            characters_added = 0
+            for entity in message.entities:
+                offset = entity.offset + characters_added
+                length = entity.length
+                text_seq = formatted_message[offset:offset+length]
+
+                markdowned = entity.markdown(text_seq)
+                formatted_message = formatted_message[:offset] + markdowned + formatted_message[offset+length:]
+                characters_added += len(markdowned) - len(text_seq)
+
+        if forwarded_from is not None:
+            formatted_message = f"**Forwarded from {forwarded_from}**\n\n{formatted_message}"
+
+        return formatted_message
 
     async def forward_channel_post(
             self,
-            text: str,
+            channel_post: telegram.Message,
             tg_message_id: int,
             is_edit: bool,
             forwarder_from: str = None
@@ -173,7 +194,7 @@ class TelegramCog(commands.Cog):
         """
         Send a channel post to all listening Discord channels specified in credentials.json.
 
-        :param text: Text content of the message sent to Discord.
+        :param channel_post: Telegram channel post to forward to Discord.
         :param tg_message_id: The Telegram message ID, which is used to save the Discord message to database.
         :param is_edit: Tells if the Telegram message was edited. If True, a Discord message reference is searched
         from the database and then edited with the new text.
@@ -182,8 +203,7 @@ class TelegramCog(commands.Cog):
         the database either. Forwarded messages are also added info about from whom the message was forwarded.
         """
         # TODO: Do something for longer than 2000 char messages
-        if forwarder_from is not None:
-            text = f"**Forwarded from {forwarder_from}**\n\n{text}"
+        text = self.format_channel_post(channel_post)
         if len(text) > 2000:
             _logger.warning(f"Got message of length {len(text)} characters. Skipping.")
             return
