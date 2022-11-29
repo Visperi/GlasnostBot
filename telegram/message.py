@@ -23,6 +23,7 @@ SOFTWARE.
 """
 
 
+from __future__ import annotations
 from .chat import Chat
 from .user import User
 from .contact import Contact
@@ -45,6 +46,41 @@ from .types.message import (
     MessageAutoDeleteTimerChanged as MessageAutoDeleteTimerChangedPayload
 )
 from .utils import flatten_handlers
+from typing import Optional
+
+
+class EntityType:
+
+    Bold = "bold"
+    Italic = "italic"
+    Underline = "underline"
+    Strikethrough = "strikethrough"
+    Spoiler = "spoiler"
+    Code = "code"
+    Codeblock = "pre"
+    Mention = "mention"
+    Hashtag = "hashtag"
+    Cashtag = "cashtag"
+    BotCommand = "bot_command"
+    Url = "url"
+    Email = "email"
+    PhoneNumber = "phone_number"
+    TextLink = "text_link"
+    TextMention = "text_mention"
+    CustomEmoji = "custom_emoji"
+
+    @classmethod
+    def supports_markdown(cls, entity_type: str) -> bool:
+        return entity_type not in [
+            cls.Mention,
+            cls.Hashtag,
+            cls.Cashtag,
+            cls.BotCommand,
+            cls.Email,
+            cls.PhoneNumber,
+            cls.TextMention,
+            cls.CustomEmoji
+        ]
 
 
 class MessageEntity:
@@ -70,6 +106,27 @@ class MessageEntity:
         self.user = payload.get("user")
         self.language = payload.get("language")
         self.custom_emoji_id = payload.get("custom_emoji_id")
+
+    def markdown(self, text: str) -> Optional[str]:
+        if not EntityType.supports_markdown(self.type):
+            raise ValueError(f"Entity of type {self.type} does not support markdown.")
+
+        if self.type == EntityType.Bold:
+            return f"**{text}**"
+        elif self.type == EntityType.Italic:
+            return f"_{text}_"
+        elif self.type == EntityType.Underline:
+            return f"__{text}__"
+        elif self.type == EntityType.Strikethrough:
+            return f"~~{text}~~"
+        elif self.type == EntityType.Spoiler:
+            return f"||{text}||"
+        elif self.type == EntityType.Code:
+            return f"`{text}`"
+        elif self.type == EntityType.Codeblock:
+            return f"```\n{text}\n```"
+        else:
+            return text
 
 
 class MessageAutoDeleteTimerChanged:
