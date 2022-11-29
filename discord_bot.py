@@ -37,7 +37,8 @@ class DiscordBot(commands.Bot):
     def __init__(self):
         _intents = discord.Intents.default()
         _intents.message_content = True
-        super().__init__(command_prefix="!", intents=_intents)
+        super().__init__(command_prefix="!", intents=_intents,
+                         activity=discord.Game("Missä mennään ja minne"))
 
     @staticmethod
     async def is_dm(ctx: commands.Context) -> bool:
