@@ -44,7 +44,7 @@ class TelegramCog(commands.Cog):
     def __init__(self, bot: DiscordBot):
         self.credentials_path = "credentials.json"
         self.database_name = "glasnost.db"
-        ids = self._read_channel_ids(self.credentials_path)
+        ids = self.fetch_channel_ids(self.credentials_path)
 
         self.tg_channel_id: int = ids[0]
         self.discord_channel_ids = ids[1]
@@ -79,7 +79,13 @@ class TelegramCog(commands.Cog):
         self.database_handler.close()
 
     @staticmethod
-    def _read_channel_ids(filepath: str) -> Tuple[int, List[int]]:
+    def fetch_channel_ids(filepath: str) -> Tuple[int, List[int]]:
+        """
+        Fetch the Telegram channels to listen and Discord channels to forward to from credentials.json.
+
+        :param filepath: Path to the credentials file.
+        :return: Tuple containing the Telegram channel and list of Discord channels.
+        """
         with open(filepath, "r") as credentials_file:
             credentials = json.load(credentials_file)
 
@@ -90,6 +96,13 @@ class TelegramCog(commands.Cog):
 
     @staticmethod
     def fetch_forwarded_from(channel_post: telegram.Message, prefer_username: bool = False) -> Optional[str]:
+        """
+        Fetch the original Telegram messages author name or username.
+
+        :param channel_post: Message forwarded to the channel as a channel post.
+        :param prefer_username: Prefer Telegram username over first name and last name for persons.
+        :return: The Telegram name, or None if not valid user.
+        """
         if not channel_post.forward_from and not channel_post.forward_from_chat:
             return None
 
@@ -118,13 +131,21 @@ class TelegramCog(commands.Cog):
                 return username
 
     @tasks.loop(hours=6)
-    async def database_cleanup_loop(self):
-        print("yeet")
+    async def database_cleanup_loop(self) -> None:
+        """
+        A background task to delete at least 30 days old Discord message references from the database.
+        """
         youngest_to_delete = datetime.datetime.utcnow() - datetime.timedelta(days=30)
         _logger.debug(f"Deleting message references younger than {youngest_to_delete}.")
         self.database_handler.delete_by_age(youngest_to_delete)
 
     async def on_update(self, update: telegram.Update) -> None:
+        """
+        Listener coroutine for the new Telegram Update objects received. Sends channel posts from determined Telegram
+        channels to listening Discord channels.
+
+        :param update: An update object from Telegram API.
+        """
         # TODO: Simplify when the library is updated
         if update.channel_post:
             channel_post = update.channel_post
@@ -150,7 +171,13 @@ class TelegramCog(commands.Cog):
             forwarder_from: str = None
     ) -> None:
         """
-        Send a channel post to all listening Discord channels.
+        Send a channel post to all listening Discord channels specified in credentials.json.
+
+        :param text: Text content of the message sent to Discord.
+        :param tg_message_id: The Telegram message ID, which is used to save the Discord message to database.
+        :param forwarder_from: If the Telegram message was forwarded, the original message authors (user)name. None if
+        the message is not forwarded. Forwarded Telegram messages cannot be edited and thus are not saved to
+        the database either. Forwarded messages are also added info about from whom the message was forwarded.
         """
         # TODO: Do something for longer than 2000 char messages
         if forwarder_from is not None:
@@ -175,7 +202,13 @@ class TelegramCog(commands.Cog):
                     # Add the bots Discord message to cache for possibility of edits
                     self.database_handler.add(tg_message_id, discord_message, ts)
 
-    async def edit_discord_message(self, new_text: str, tg_message_id: int):
+    async def edit_discord_message(self, new_text: str, tg_message_id: int) -> None:
+        """
+        Edit a Discord message based on a Telegram ID to match the content.
+
+        :param new_text: New text from the Telegram for the Discord message.
+        :param tg_message_id: The Telegram message ID, which is used for finding the Discord message reference.
+        """
         discord_messages = await self.get_discord_messages(tg_message_id)
         if not discord_messages:
             _logger.warning(f"Cannot edit Discord message with Telegram message ID {tg_message_id}. "
@@ -186,6 +219,12 @@ class TelegramCog(commands.Cog):
             await discord_message.edit(content=new_text, attachments=discord_message.attachments)
 
     async def get_discord_messages(self, tg_message_id: int) -> List[discord.Message]:
+        """
+        Get all Discord message references from database based on Telegram message ID.
+
+        :param tg_message_id: Telegram message ID to use to search for Discord messages.
+        :return: List of Message objects, or an empty list of none found from database.
+        """
         messages = []
         message_ids = self.database_handler.get(tg_message_id)
 
@@ -203,7 +242,7 @@ class TelegramCog(commands.Cog):
         Reload Telegram channel IDs to read and Discord channel IDs to post messages to.
         """
 
-        credentials = self._read_channel_ids(self.credentials_path)
+        credentials = self.fetch_channel_ids(self.credentials_path)
         self.tg_channel_id = credentials[0]
         self.discord_channel_ids = credentials[1]
 
