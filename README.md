@@ -24,6 +24,28 @@ Non-exhaustive list of features still needed for stable support:
 - Support attachments in messages
     - In edited messages support attachment deletion
 
+## Running the bot
+
+If you want to run this bot by yourself to whatever channels, you need `credentials.json` file in following format to 
+the root of this repository:
+
+```json
+{
+    "tokens": {
+        "telegram": "TOKEN",
+        "discord": "TOKEN"
+    },
+    "ids": {
+        "telegram": CHANNEL_ID,
+        "discord": [1, 2, ...]
+    }
+}
+```
+
+So before running bot an application in both Telegram API and Discord API are needed. There can currently be only one 
+Telegram channel to listen and an arbitrary amount of listening Discord channels. All IDs must be integers, and for 
+Telegram they are always negative.
+
 ## Licence
 
 MIT Licence
