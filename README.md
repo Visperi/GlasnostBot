@@ -36,15 +36,15 @@ the root of this repository:
         "discord": "TOKEN"
     },
     "ids": {
-        "telegram": CHANNEL_ID,
-        "discord": [1, 2, ...]
+        "telegram": -12345,
+        "discord": [1, 2, 3]
     }
 }
 ```
 
-So before running bot an application in both Telegram API and Discord API are needed. There can currently be only one 
-Telegram channel to listen and an arbitrary amount of listening Discord channels. All IDs must be integers, and for 
-Telegram they are always negative.
+So before running the bot an application and token for both Telegram API and Discord API is needed.
+There can currently be only one Telegram channel to listen and an arbitrary amount of listening Discord channels.
+All IDs must be integers, and for Telegram they are always negative.
 
 ## Licence
 
