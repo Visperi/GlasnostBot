@@ -259,7 +259,17 @@ class TelegramCog(commands.Cog):
 
         for message_id, channel_id in message_ids:
             channel = self.bot.get_channel(channel_id)
-            messages.append(await channel.fetch_message(message_id))
+            if not channel:
+                _logger.error(f"Discord channel with ID {channel_id} not found. Cannot fetch message reference. "
+                              f"Skipping.")
+                continue
+
+            try:
+                messages.append(await channel.fetch_message(message_id))
+            except discord.NotFound:
+                _logger.error(f"Discord message with ID {message_id} not found. Cannot fetch message reference. "
+                              f"Skipping.")
+                continue
 
         return messages
 
