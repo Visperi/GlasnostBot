@@ -27,8 +27,8 @@ from discord.ext import commands
 from discord_bot import DiscordBot
 
 
-class ManagementCog(commands.Cog, name="Management",
-                    description="Various bot owner only commands for managing the bot through Discord chat."):
+class OwnerCog(commands.Cog, name="OwnerOnly",
+               description="Various bot owner only commands for managing the bot through Discord chat."):
 
     def __init__(self, bot: DiscordBot):
         self.bot = bot
@@ -78,7 +78,7 @@ class ManagementCog(commands.Cog, name="Management",
     @commands.command(name="sync")
     async def sync_commands(self, ctx: commands.Context, guild_id: int = None) -> None:
         """
-        Synchronize slash commands to Discord API for the bot. Bot owner command.
+        Synchronize slash commands to Discord API for the bot.
         :param ctx:
         :param guild_id: Guild ID to sync the commands for. If not provided, sync for all guilds.
         """
@@ -87,4 +87,4 @@ class ManagementCog(commands.Cog, name="Management",
 
 
 async def setup(bot: DiscordBot):
-    await bot.add_cog(ManagementCog(bot))
+    await bot.add_cog(OwnerCog(bot))
