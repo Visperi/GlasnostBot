@@ -5,8 +5,9 @@ A bot made for forwarding Oulun Tietoteekkarit ry Telegram announcements from OT
 All text from shorter than 2000 character messages, including forwards, edits and replies, are supported and forwarded 
 from Telegram channel/group/chat to an arbitrary amount of Discord channels.
 
-The capability of editing and replying to old Discord messages depends solely on if they are found in the sqlite3 this 
-bot uses. database. A cleanup loop is automatically run every 6 hours and removes over 30 days old references.  
+The capability of editing and replying to old Discord messages depends solely on if they are found in the sqlite3 
+database this bot uses. A cleanup background loop is automatically run every 6 hours and removes over 30 days old 
+references.
 
 The telegram library used in this bot is also made by me and has its own repository 
 [telegram.py](https://github.com/Visperi/telegram.py).
