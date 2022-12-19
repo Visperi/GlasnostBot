@@ -252,7 +252,7 @@ class TelegramCog(commands.Cog):
             return
 
         for discord_message in discord_messages:
-            discord_message = await discord_message.reply(reply_text)
+            discord_message = await discord_message.reply(reply_text, mention_author=False)
             self.serialize_discord_message(tg_message_id, discord_message)
 
     async def edit_discord_messages(self, new_text: str, tg_message_id: int) -> None:
