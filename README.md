@@ -20,9 +20,8 @@ The telegram library used in this bot is also made by me and has its own reposit
 Non-exhaustive list of features still needed for stable support:
 
 - Support messages over length of 2000 characters
-- Support replies to old messages by replying them directly
 - Support attachments in messages
-    - In edited messages support attachment deletion
+    - In edited messages support attachment deletion(?)
 
 ## Running the bot
 
