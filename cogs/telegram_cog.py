@@ -150,17 +150,15 @@ class TelegramCog(commands.Cog):
         if update.channel_post:
             channel_post = update.channel_post
             is_edit = False
-            forwarded_from = self.fetch_forwarded_from(channel_post)
         elif update.edited_channel_post:
             channel_post = update.edited_channel_post
             is_edit = True
-            forwarded_from = None  # Forwarded Telegram messages cannot be edited
         else:
             return
 
         tg_channel_id = channel_post.sender_chat.id
         if tg_channel_id == self.tg_channel_id:
-            await self.forward_channel_post(channel_post, channel_post.message_id, is_edit, forwarded_from)
+            await self.forward_channel_post(channel_post, is_edit)
 
     def format_channel_post(self, message: telegram.Message) -> str:
         """
@@ -194,20 +192,14 @@ class TelegramCog(commands.Cog):
     async def forward_channel_post(
             self,
             channel_post: telegram.Message,
-            tg_message_id: int,
-            is_edit: bool,
-            forwarder_from: str = None
+            is_edit: bool
     ) -> None:
         """
         Send a channel post to all listening Discord channels specified in credentials.json.
 
         :param channel_post: Telegram channel post to forward to Discord.
-        :param tg_message_id: The Telegram message ID, which is used to save the Discord message to database.
         :param is_edit: Tells if the Telegram message was edited. If True, a Discord message reference is searched
         from the database and then edited with the new text.
-        :param forwarder_from: If the Telegram message was forwarded, the original message authors (user)name. None if
-        the message is not forwarded. Forwarded Telegram messages cannot be edited and thus are not saved to
-        the database either. Forwarded messages are also added info about from whom the message was forwarded.
         """
         # TODO: Do something for longer than 2000 char messages
         text = self.format_channel_post(channel_post)
@@ -217,23 +209,55 @@ class TelegramCog(commands.Cog):
 
         # TODO: Simplify when library is updated
         if is_edit:
-            await self.edit_discord_message(text, tg_message_id)
+            await self.edit_discord_messages(text, channel_post.message_id)
+        elif channel_post.reply_to_message:
+            await self.reply_discord_messages(text, channel_post.message_id, channel_post.reply_to_message.message_id)
         else:
-            for channel_id in self.discord_channel_ids:
-                channel = self.bot.get_channel(channel_id)
-                if not channel:
-                    _logger.error(f"Attempted to forward Telegram message to unknown channel with ID {channel_id}.")
-                    continue
+            await self.send_discord_messages(text, channel_post.message_id)
 
-                discord_message = await channel.send(text)
-                if not forwarder_from:
-                    ts = int(datetime.datetime.utcnow().timestamp())
-                    # Add the bots Discord message to cache for possibility of edits
-                    self.database_handler.add(tg_message_id, discord_message, ts)
-
-    async def edit_discord_message(self, new_text: str, tg_message_id: int) -> None:
+    def serialize_discord_message(self, tg_message_id: int, discord_message: discord.Message) -> None:
         """
-        Edit a Discord message based on a Telegram ID to match the content.
+        Serialize a Discord message to database so that it can be later retrieved and deserialized based on Telegram
+        message ID.
+
+        :param tg_message_id: The Telegram message ID.
+        :param discord_message: A Discord message corresponding the Telegram message.
+        """
+        ts = int(datetime.datetime.utcnow().timestamp())
+        self.database_handler.add(tg_message_id, discord_message, ts)
+
+    async def send_discord_messages(self, text: str, tg_message_id: int) -> None:
+        """
+        Send Discord message to all channels defined in the configuration file.
+
+        :param text: The text to send to Discord.
+        :param tg_message_id: Telegram message ID from which the content is retrieved from. Needed for database
+        serialization.
+        """
+        for channel_id in self.discord_channel_ids:
+            channel = self.bot.get_channel(channel_id)
+            if not channel:
+                _logger.error(f"Attempted to forward Telegram message to unknown channel with ID {channel_id}.")
+                continue
+
+            discord_message = await channel.send(text)
+            self.serialize_discord_message(tg_message_id, discord_message)
+
+    async def reply_discord_messages(self, reply_text: str, tg_message_id: int, replied_tg_message_id: int) -> None:
+        discord_messages = await self.get_discord_messages(replied_tg_message_id)
+        if not discord_messages:
+            _logger.warning(f"Cannot reply to Discord message with Telegram message ID {replied_tg_message_id}. "
+                            f"No messages exist in cache with such ID. Sending new messages instead.")
+            await self.send_discord_messages(reply_text, tg_message_id)
+            return
+
+        for discord_message in discord_messages:
+            discord_message = await discord_message.reply(reply_text)
+            self.serialize_discord_message(tg_message_id, discord_message)
+
+    async def edit_discord_messages(self, new_text: str, tg_message_id: int) -> None:
+        """
+        Edit a Discord messages based on a Telegram ID to match the content.
 
         :param new_text: New text from the Telegram for the Discord message.
         :param tg_message_id: The Telegram message ID, which is used for finding the Discord message reference.
