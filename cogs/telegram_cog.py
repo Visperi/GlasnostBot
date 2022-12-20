@@ -49,6 +49,7 @@ class TelegramCog(commands.Cog):
         self.tg_channel_id: int = Missing
         self.discord_channel_ids: List[int] = Missing
         self.prefer_telegram_usernames: bool = Missing
+        self.send_orphans_as_new_message: bool = Missing
         self.update_age_threshold: int = Missing
         self.message_cleanup_threshold: int = Missing
         self.read_configuration()
@@ -57,14 +58,20 @@ class TelegramCog(commands.Cog):
         self.bot = bot
         self.database_handler = DatabaseHandler(self.database_name)
 
-    def read_configuration(self) -> None:
+    def read_configuration(self) -> dict:
         config = toml.load("config.toml")
         self.tg_channel_id = config["credentials"]["channel_ids"]["telegram"]
         self.discord_channel_ids = config["credentials"]["channel_ids"]["discord"]
         self.prefer_telegram_usernames = config["preferences"]["prefer_telegram_usernames"]
+        self.send_orphans_as_new_message = config["preferences"]["send_orphans_as_new_message"]
         self.update_age_threshold = config["preferences"]["update_age_threshold"]
         self.message_cleanup_threshold = config["preferences"]["message_cleanup_threshold"]
         self.database_name = config["preferences"]["database_path"]
+
+        return dict(
+            channel_ids=config["credentials"]["channel_ids"],
+            preferences=config["preferences"]
+        )
 
     async def cog_load(self) -> None:
         _logger.debug(f"Starting Telegram polling before loading {__name__}")
@@ -245,12 +252,33 @@ class TelegramCog(commands.Cog):
             discord_message = await channel.send(text)
             self.serialize_discord_message(tg_message_id, discord_message)
 
+    async def _handle_orphan_messages(self, text: str, tg_message_id: int) -> None:
+        """
+        Handle orphan messages not having matching references in the database.
+        Does nothing if send_orphans_as_new_message is set to False, otherwise sends new messages.
+
+        :param text: Content of the orphan message.
+        :param tg_message_id: Telegram ID of the orphan message. Needed for adding a new reference to the database.
+        """
+        if self.send_orphans_as_new_message:
+            await self.send_discord_messages(text, tg_message_id)
+
     async def reply_discord_messages(self, reply_text: str, tg_message_id: int, replied_tg_message_id: int) -> None:
+        """
+        Fetch old Discord message references from the database and reply to them with given text.
+        If no messages are found in database, send new messages or do nothing based on the configuration.
+
+        :param reply_text: Content in the new Telegram reply message.
+        :param tg_message_id: The new Telegram message ID. Needed for adding a new Discord message reference to
+        the database.
+        :param replied_tg_message_id: ID of the replied Telegram message. Needed for finding message reference from the
+        database.
+        """
         discord_messages = await self.get_discord_messages(replied_tg_message_id)
         if not discord_messages:
             _logger.warning(f"Cannot reply to Discord message with Telegram message ID {replied_tg_message_id}. "
                             f"No messages exist in cache with such ID. Sending new messages instead.")
-            await self.send_discord_messages(reply_text, tg_message_id)
+            await self._handle_orphan_messages(reply_text, tg_message_id)
             return
 
         for discord_message in discord_messages:
@@ -260,6 +288,7 @@ class TelegramCog(commands.Cog):
     async def edit_discord_messages(self, new_text: str, tg_message_id: int) -> None:
         """
         Edit a Discord messages based on a Telegram ID to match the content.
+        If no messages are found in database, send new messages or do nothing based on the configuration.
 
         :param new_text: New text from the Telegram for the Discord message.
         :param tg_message_id: The Telegram message ID, which is used for finding the Discord message reference.
@@ -268,6 +297,7 @@ class TelegramCog(commands.Cog):
         if not discord_messages:
             _logger.warning(f"Cannot edit Discord message with Telegram message ID {tg_message_id}. "
                             f"No messages exist in cache with such ID.")
+            await self._handle_orphan_messages(new_text, tg_message_id)
             return
 
         for discord_message in discord_messages:
@@ -306,10 +336,10 @@ class TelegramCog(commands.Cog):
         """
         Reload Telegram channel IDs to read and Discord channel IDs to post messages to.
         """
-        self.read_configuration()
+        configuration = self.read_configuration()
 
-        await ctx.send(f"Configuration reloaded! There are now \n{len(self.discord_channel_ids)} Discord channel "
-                       f"listeners for Telegram channel {self.tg_channel_id}.")
+        await ctx.send(f"Configuration reloaded! IDs and preferences are now as follows:\n "
+                       f"```toml\n{toml.dumps(configuration)}```")
 
 
 async def setup(bot: DiscordBot):
