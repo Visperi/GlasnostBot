@@ -16,25 +16,20 @@ For showcase images of the bot in action see section [Images](#Images).
 
 ## Running the bot
 
-If you want to run this bot by yourself to whatever channels, you need `credentials.json` file in following format to 
-the root of this repository:
+Before running the bot an application and tokens for both Telegram API and Discord API are needed.
 
-```json
-{
-    "tokens": {
-        "telegram": "TOKEN",
-        "discord": "TOKEN"
-    },
-    "ids": {
-        "telegram": -12345,
-        "discord": [1, 2, 3]
-    }
-}
-```
+To run an instance of this bot by yourself, all that is required is to configure the `config.toml` file. 
+A prefilled template can be found from `config_example.toml`. There can currently be only one Telegram channel to listen and an arbitrary amount of Discord channels where the 
+messages are forwarded. All IDs must be integers, and for Telegram they are always negative starting with `-100`.
 
-So before running the bot an application and token for both Telegram API and Discord API is needed.
-There can currently be only one Telegram channel to listen and an arbitrary amount of listening Discord channels.
-All IDs must be integers, and for Telegram they are always negative.
+Preferences have the following settings:
+
+1. `prefer_telegram_usernames`: Boolean value. In forwarded user messages prefer their username over their real name(s)
+if possible. Has no effect for forwarded channel posts.
+2. `message_cleanup_threshold`: Integer value. Inclusive age in days for Discord message references to be deleted from 
+database on automatic cleanup loop. References at least this old will be deleted, and cannot be replied or edited in 
+Discord anymore.
+3. `database_path`: String value. Path to the sqlite3 database file used for storing message references.
 
 ## TODO
 Non-exhaustive list of features still needed for stable support:
