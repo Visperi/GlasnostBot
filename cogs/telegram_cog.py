@@ -27,13 +27,14 @@ import discord
 import telegram
 import datetime
 import logging
-from typing import Tuple, List, Optional
+from typing import List, Optional, TypeVar, Any
 from discord.ext import commands, tasks
 from discord_bot import DiscordBot
 from database_handler import DatabaseHandler
 
 
 _logger = logging.getLogger(__name__)
+Missing = TypeVar("Missing", Any, None)
 
 
 class TelegramCog(commands.Cog):
@@ -42,15 +43,26 @@ class TelegramCog(commands.Cog):
     """
 
     def __init__(self, bot: DiscordBot):
-        self.config_path = "config.toml"
-        self.database_name = "glasnost.db"
-        ids = self.fetch_channel_ids(self.config_path)
+        self.config_path: str = "config.toml"
 
-        self.tg_channel_id: int = ids[0]
-        self.discord_channel_ids = ids[1]
+        self.database_name: str = Missing
+        self.tg_channel_id: int = Missing
+        self.discord_channel_ids: List[int] = Missing
+        self.prefer_telegram_usernames: bool = Missing
+        self.message_cleanup_threshold: int = Missing
+        self.read_configuration()
+
         self.tg_bot = telegram.Client(aiohttp.ClientSession(), loop=bot.loop)
         self.bot = bot
         self.database_handler = DatabaseHandler(self.database_name)
+
+    def read_configuration(self) -> None:
+        config = toml.load("config.toml")
+        self.tg_channel_id = config["credentials"]["channel_ids"]["telegram"]
+        self.discord_channel_ids = config["credentials"]["channel_ids"]["discord"]
+        self.prefer_telegram_usernames = config["preferences"]["prefer_telegram_usernames"]
+        self.message_cleanup_threshold = config["preferences"]["message_cleanup_threshold"]
+        self.database_name = config["preferences"]["database_path"]
 
     async def cog_load(self) -> None:
         _logger.debug(f"Starting Telegram polling before loading {__name__}")
@@ -74,20 +86,6 @@ class TelegramCog(commands.Cog):
         self.tg_bot.stop()
         self.database_cleanup_loop.cancel()
         self.database_handler.close()
-
-    @staticmethod
-    def fetch_channel_ids(filepath: str) -> Tuple[int, List[int]]:
-        """
-        Fetch the configuration file for Telegram channels to listen and Discord channels to forward to.
-
-        :param filepath: Path to the configuration file.
-        :return: Tuple containing the Telegram channel and list of Discord channels.
-        """
-        config = toml.load(filepath)
-        tg_channel_id = config["credentials"]["channel_ids"]["telegram"]
-        discord_channel_ids = config["credentials"]["channel_ids"]["discord"]
-
-        return tg_channel_id, discord_channel_ids
 
     @staticmethod
     def fetch_forwarded_from(channel_post: telegram.Message, prefer_username: bool = False) -> Optional[str]:
@@ -128,9 +126,10 @@ class TelegramCog(commands.Cog):
     @tasks.loop(hours=6)
     async def database_cleanup_loop(self) -> None:
         """
-        A background task to delete at least 30 days old Discord message references from the database.
+        A background task deleting Discord message references from the database at least X days old defined in the
+        configuration file.
         """
-        youngest_to_delete = datetime.datetime.utcnow() - datetime.timedelta(days=30)
+        youngest_to_delete = datetime.datetime.utcnow() - datetime.timedelta(days=self.message_cleanup_threshold)
         _logger.debug(f"Deleting message references younger than {youngest_to_delete}.")
         self.database_handler.delete_by_age(youngest_to_delete)
 
@@ -165,7 +164,7 @@ class TelegramCog(commands.Cog):
         """
         forwarded_from = None
         if message.forward_from or message.forward_from_chat:
-            forwarded_from = self.fetch_forwarded_from(message, prefer_username=True)
+            forwarded_from = self.fetch_forwarded_from(message, prefer_username=self.prefer_telegram_usernames)
 
         formatted_message = message.text
         if message.entities:
@@ -295,17 +294,14 @@ class TelegramCog(commands.Cog):
     @commands.is_owner()
     @commands.dm_only()
     @commands.command("reload", description="Reload Telegram and Discord IDs from credentials file.")
-    async def reload_ids(self, ctx: commands.Context):
+    async def reload_configuration(self, ctx: commands.Context):
         """
         Reload Telegram channel IDs to read and Discord channel IDs to post messages to.
         """
+        self.read_configuration()
 
-        credentials = self.fetch_channel_ids(self.config_path)
-        self.tg_channel_id = credentials[0]
-        self.discord_channel_ids = credentials[1]
-
-        await ctx.send(f"IDs reloaded! There are now \n{len(self.discord_channel_ids)} Discord channel listeners for "
-                       f"Telegram channel {self.tg_channel_id}.")
+        await ctx.send(f"Configuration reloaded! There are now \n{len(self.discord_channel_ids)} Discord channel "
+                       f"listeners for Telegram channel {self.tg_channel_id}.")
 
 
 async def setup(bot: DiscordBot):
