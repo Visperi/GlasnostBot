@@ -282,8 +282,9 @@ class TelegramCog(commands.Cog):
             return
 
         for discord_message in discord_messages:
-            discord_message = await discord_message.reply(reply_text, mention_author=False)
-            self.serialize_discord_message(tg_message_id, discord_message)
+            new_discord_message = await discord_message.reply(reply_text, mention_author=False)
+            self.serialize_discord_message(tg_message_id, new_discord_message)
+            self.database_handler.update_ts(replied_tg_message_id, int(datetime.datetime.utcnow().timestamp()))
 
     async def edit_discord_messages(self, new_text: str, tg_message_id: int) -> None:
         """
@@ -302,6 +303,7 @@ class TelegramCog(commands.Cog):
 
         for discord_message in discord_messages:
             await discord_message.edit(content=new_text, attachments=discord_message.attachments)
+            self.database_handler.update_ts(tg_message_id, int(datetime.datetime.utcnow().timestamp()))
 
     async def get_discord_messages(self, tg_message_id: int) -> List[discord.Message]:
         """
