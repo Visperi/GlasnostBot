@@ -32,8 +32,8 @@ perhaps be given.
 3. `message_cleanup_threshold`: Integer value. Inclusive age in days for Discord message references to be deleted from 
 database on automatic cleanup loop. References at least this old will be deleted, and cannot be replied or edited in 
 Discord anymore.
-4. `update_age_threshold`: Integer value. Inclusive maximum age for hanging Telegram messages to forward to Discord,
-due to e.g. lag spikes or bot downtimes.
+4. `update_age_threshold`: Integer value. Inclusive maximum age in seconds for hanging Telegram messages to forward to 
+Discord, due to e.g. lag spikes or bot downtimes.
 5. `database_path`: String value. Path to the sqlite3 database file used for storing message references.
 
 ## TODO
@@ -42,7 +42,8 @@ Non-exhaustive list of features still needed for stable support:
 - Support messages over length of 2000 characters
 - Support attachments in messages
     - In edited messages support attachment deletion(?)
-- Update referenced message timestamps in database for LRU-like behavior on not-referenced messages
+- A tool to merge old `config.toml` with updated one, leaving modified fields untouched
+	- Possibly a custom config handler class for also better OOP config handling?
 
 ## Images
 
