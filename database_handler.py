@@ -27,7 +27,7 @@ import logging
 import sqlite3
 import discord
 import datetime
-from typing import List, Union
+from typing import List, Union, Tuple
 
 
 _logger = logging.getLogger(__name__)
@@ -86,6 +86,20 @@ class DatabaseHandler:
         _logger.debug(f"Added message reference to database with values {tg_message_id}, "
                       f"{discord_message.to_message_reference_dict()}, {ts}")
 
+    def update_ts(self, tg_message_id: int, new_ts: int) -> int:
+        with self.connection:
+            self.cursor.execute(
+                """
+                UPDATE discord_messages 
+                SET ts = ?
+                WHERE tg_message_id = ?
+                """, (new_ts, tg_message_id)
+            )
+
+        modified = self.cursor.rowcount
+        _logger.debug(f"Updated timestamp to {new_ts} for total of {modified} message references")
+        return modified
+
     def delete_by_id(self, tg_message_id: int) -> int:
         with self.connection:
             self.cursor.execute(
@@ -113,7 +127,7 @@ class DatabaseHandler:
         _logger.debug(f"Deleted {deleted} rows by age from the database.")
         return deleted
 
-    def get(self, tg_message_id: int) -> List[int]:
+    def get(self, tg_message_id: int) -> List[Tuple[int, int]]:
         with self.connection:
             ids = self.cursor.execute(
                 """
