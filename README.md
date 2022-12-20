@@ -37,7 +37,6 @@ Non-exhaustive list of features still needed for stable support:
 - Support messages over length of 2000 characters
 - Support attachments in messages
     - In edited messages support attachment deletion(?)
-- Better bot configuration files
 
 ## Images
 
