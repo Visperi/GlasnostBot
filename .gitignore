@@ -1,4 +1,4 @@
 .idea/
 __pycache__/
 *.db
-credentials.json
+config.toml

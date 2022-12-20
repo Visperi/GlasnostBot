@@ -1,0 +1,17 @@
+[credentials]
+
+[credentials.tokens]
+telegram = "TOKEN"
+discord = "TOKEN"
+
+[credentials.channel_ids]
+telegram = -100123456
+discord = [
+    1234,
+    5678,
+    9012
+]
+
+[preferences]
+prefer_telegram_usernames = true
+message_cleanup_threshold = 30
