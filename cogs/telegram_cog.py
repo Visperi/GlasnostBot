@@ -21,7 +21,7 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 """
-import json
+import toml
 import aiohttp
 import discord
 import telegram
@@ -42,9 +42,9 @@ class TelegramCog(commands.Cog):
     """
 
     def __init__(self, bot: DiscordBot):
-        self.credentials_path = "credentials.json"
+        self.config_path = "config.toml"
         self.database_name = "glasnost.db"
-        ids = self.fetch_channel_ids(self.credentials_path)
+        ids = self.fetch_channel_ids(self.config_path)
 
         self.tg_channel_id: int = ids[0]
         self.discord_channel_ids = ids[1]
@@ -55,13 +55,10 @@ class TelegramCog(commands.Cog):
     async def cog_load(self) -> None:
         _logger.debug(f"Starting Telegram polling before loading {__name__}")
 
-        with open(self.credentials_path, "r") as credentials_file:
-            credentials = json.load(credentials_file)
-
-        tg_token = credentials["tokens"]["telegram"]
-
+        config = toml.load("config.toml")
+        telegram_token = config["credentials"]["tokens"]["telegram"]
         try:
-            self.tg_bot.start(tg_token)
+            self.tg_bot.start(telegram_token)
         except ValueError:
             _logger.error("Cannot start Telegram polling. Already polling.")
 
@@ -81,18 +78,16 @@ class TelegramCog(commands.Cog):
     @staticmethod
     def fetch_channel_ids(filepath: str) -> Tuple[int, List[int]]:
         """
-        Fetch the Telegram channels to listen and Discord channels to forward to from credentials.json.
+        Fetch the configuration file for Telegram channels to listen and Discord channels to forward to.
 
-        :param filepath: Path to the credentials file.
+        :param filepath: Path to the configuration file.
         :return: Tuple containing the Telegram channel and list of Discord channels.
         """
-        with open(filepath, "r") as credentials_file:
-            credentials = json.load(credentials_file)
+        config = toml.load(filepath)
+        tg_channel_id = config["credentials"]["channel_ids"]["telegram"]
+        discord_channel_ids = config["credentials"]["channel_ids"]["discord"]
 
-        tg_channel_ids = credentials["ids"]["telegram"]
-        discord_channel_ids = [id_ for id_ in credentials["ids"]["discord"]]
-
-        return tg_channel_ids, discord_channel_ids
+        return tg_channel_id, discord_channel_ids
 
     @staticmethod
     def fetch_forwarded_from(channel_post: telegram.Message, prefer_username: bool = False) -> Optional[str]:
@@ -195,7 +190,7 @@ class TelegramCog(commands.Cog):
             is_edit: bool
     ) -> None:
         """
-        Send a channel post to all listening Discord channels specified in credentials.json.
+        Send a channel post content to all listening Discord channels specified in the configuration file.
 
         :param channel_post: Telegram channel post to forward to Discord.
         :param is_edit: Tells if the Telegram message was edited. If True, a Discord message reference is searched
@@ -305,7 +300,7 @@ class TelegramCog(commands.Cog):
         Reload Telegram channel IDs to read and Discord channel IDs to post messages to.
         """
 
-        credentials = self.fetch_channel_ids(self.credentials_path)
+        credentials = self.fetch_channel_ids(self.config_path)
         self.tg_channel_id = credentials[0]
         self.discord_channel_ids = credentials[1]
 

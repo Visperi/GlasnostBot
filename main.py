@@ -25,16 +25,13 @@ SOFTWARE.
 
 from discord_bot import DiscordBot
 import telegram
-import json
+import toml
 
 
 if __name__ == "__main__":
     telegram.utils.configure_logging()
-
-    with open("credentials.json", "r") as credentials_file:
-        credentials = json.load(credentials_file)
-
-    discord_secret = credentials["tokens"]["discord"]
+    config = toml.load("config.toml")
+    discord_token = config["credentials"]["tokens"]["discord"]
 
     discord_bot = DiscordBot()
-    discord_bot.run(discord_secret, log_handler=None)
+    discord_bot.run(discord_token, log_handler=None)
