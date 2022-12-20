@@ -333,10 +333,10 @@ class TelegramCog(commands.Cog):
 
     @commands.is_owner()
     @commands.dm_only()
-    @commands.command("reload", description="Reload Telegram and Discord IDs from credentials file.")
+    @commands.command("reload", description="Reload channel IDs and preferences in runtime.")
     async def reload_configuration(self, ctx: commands.Context):
         """
-        Reload Telegram channel IDs to read and Discord channel IDs to post messages to.
+        Reload Telegram and Discord channel IDs and preferences from the configuration files.
         """
         configuration = self.read_configuration()
 
