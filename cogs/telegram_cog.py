@@ -94,7 +94,7 @@ class TelegramCog(commands.Cog):
         _logger.debug(f"Stopping Telegram polling before unloading {__name__}.")
         self.tg_bot.stop()
         self.database_cleanup_loop.cancel()
-        self.database_handler.close()
+        self.database_handler.disconnect()
 
     @staticmethod
     def fetch_forwarded_from(channel_post: telegram.Message, prefer_username: bool = False) -> Optional[str]:
