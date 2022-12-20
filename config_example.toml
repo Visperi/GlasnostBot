@@ -14,6 +14,7 @@ discord = [
 
 [preferences]
 prefer_telegram_usernames = true
+send_orphans_as_new_message = true
 message_cleanup_threshold = 30
-update_age_threshold = 3600
+update_age_threshold = 600
 database_path = "glasnost.db"
