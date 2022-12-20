@@ -1,49 +1,53 @@
 ## GlasnostBot
 
-A bot made for forwarding Oulun Tietoteekkarit ry Telegram announcements from OTiT glasnost to their Discord server.
+A bot forwarding broadcast Telegram channel posts to Discord channels. The main purpose of this bot is to provide a
+one-way connection from Telegram announcements to Discord announcements for Oulun Tietoteekkarit ry 
+(University of Oulu CSE student guild).
 
-All text from shorter than 2000 character messages, including forwards, edits and replies, are supported and forwarded 
-from Telegram channel/group/chat to an arbitrary amount of Discord channels.
-
-The capability of editing and replying to old Discord messages depends solely on if they are found in the sqlite3 
-database this bot uses. A cleanup background loop is automatically run every 6 hours and removes over 30 days old 
-references.
+New messages, edits, replies and forwards are all supported from one Telegram channel/group/chat to an arbitrary amount 
+of Discord channels. Only restriction is that they currently must be less than 2000 characters long for Discord.
 
 The telegram library used in this bot is also made by me and has its own repository 
 [telegram.py](https://github.com/Visperi/telegram.py).
 
-For showcase images of the bot in action see section [Images](#Images).
+For images of the bot in action see section [Images](#Images).
 
 ## Running the bot
 
-Before running the bot an application and tokens for both Telegram API and Discord API are needed.
+Before running the bot an application and API tokens for both Telegram API and Discord API are needed.
 
 To run an instance of this bot by yourself, all that is required is to configure the `config.toml` file. 
-A prefilled template can be found from `config_example.toml`. There can currently be only one Telegram channel to listen and an arbitrary amount of Discord channels where the 
-messages are forwarded. All IDs must be integers, and for Telegram they are always negative starting with `-100`.
+A prefilled template can be found from `config_example.toml`. There can currently be only one Telegram channel to listen
+and an arbitrary amount of Discord channels where the 
+messages are forwarded.
 
-Preferences have the following settings:
+The capability of editing and replying to old Discord messages depends solely on if they are found in the bots' 
+database. This can be adjusted with variable `message_cleanup_threshold` in preferences.
+
+IDs for both Discord and Telegram are always integers, and for Telegram they start with `-100`. 
+IDs can be edited in the configuration file and then reloaded in runtime by using command `reload` through Discord.
+
+### Preferences
+
+Preferences can be used to control the bot behaviour in more readable way and in runtime without restarting the whole 
+bot. All that is needed to adjust the configuration values and then use command `reload` through Discord. 
+Following preferences are currently available:
 
 1. `prefer_telegram_usernames`: Boolean value. In forwarded user messages prefer their username over their real name(s)
 if possible. Has no effect for forwarded channel posts.
+
 2. `send_orphans_as_new_message`: Boolean value. Send edits and replies not found from the database as completely new 
 messages. Do note that e.g. short replies to old messages can look out of place this way, and some context should 
 perhaps be given.
+
 3. `message_cleanup_threshold`: Integer value. Inclusive age in days for Discord message references to be deleted from 
-database on automatic cleanup loop. References at least this old will be deleted, and cannot be replied or edited in 
+the database in 6 hour intervals. References at least this old will be deleted, and cannot be replied or edited in 
 Discord anymore.
+
 4. `update_age_threshold`: Integer value. Inclusive maximum age in seconds for hanging Telegram messages to forward to 
 Discord, due to e.g. lag spikes or bot downtimes.
+
 5. `database_path`: String value. Path to the sqlite3 database file used for storing message references.
-
-## TODO
-Non-exhaustive list of features still needed for stable support:
-
-- Support messages over length of 2000 characters
-- Support attachments in messages
-    - In edited messages support attachment deletion(?)
-- A tool to merge old `config.toml` with updated one, leaving modified fields untouched
-	- Possibly a custom config handler class for also better OOP config handling?
 
 ## Images
 
