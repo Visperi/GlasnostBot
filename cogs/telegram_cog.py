@@ -49,6 +49,7 @@ class TelegramCog(commands.Cog):
         self.tg_channel_id: int = Missing
         self.discord_channel_ids: List[int] = Missing
         self.prefer_telegram_usernames: bool = Missing
+        self.update_age_threshold: int = Missing
         self.message_cleanup_threshold: int = Missing
         self.read_configuration()
 
@@ -61,6 +62,7 @@ class TelegramCog(commands.Cog):
         self.tg_channel_id = config["credentials"]["channel_ids"]["telegram"]
         self.discord_channel_ids = config["credentials"]["channel_ids"]["discord"]
         self.prefer_telegram_usernames = config["preferences"]["prefer_telegram_usernames"]
+        self.update_age_threshold = config["preferences"]["update_age_threshold"]
         self.message_cleanup_threshold = config["preferences"]["message_cleanup_threshold"]
         self.database_name = config["preferences"]["database_path"]
 
@@ -140,6 +142,7 @@ class TelegramCog(commands.Cog):
 
         :param update: An update object from Telegram API.
         """
+        await self.bot.wait_until_ready()
         # TODO: Simplify when the library is updated
         if update.channel_post:
             channel_post = update.channel_post
@@ -148,6 +151,11 @@ class TelegramCog(commands.Cog):
             channel_post = update.edited_channel_post
             is_edit = True
         else:
+            return
+
+        update_age = int(datetime.datetime.now().timestamp()) - channel_post.date
+        if update_age > self.update_age_threshold:
+            _logger.warning(f"Got update older than configured threshold age of {self.update_age_threshold} seconds.")
             return
 
         tg_channel_id = channel_post.sender_chat.id

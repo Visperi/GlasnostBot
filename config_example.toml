@@ -15,4 +15,5 @@ discord = [
 [preferences]
 prefer_telegram_usernames = true
 message_cleanup_threshold = 30
+update_age_threshold = 3600
 database_path = "glasnost.db"

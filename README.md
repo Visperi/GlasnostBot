@@ -29,7 +29,9 @@ if possible. Has no effect for forwarded channel posts.
 2. `message_cleanup_threshold`: Integer value. Inclusive age in days for Discord message references to be deleted from 
 database on automatic cleanup loop. References at least this old will be deleted, and cannot be replied or edited in 
 Discord anymore.
-3. `database_path`: String value. Path to the sqlite3 database file used for storing message references.
+3. `update_age_threshold`: Integer value. Maximum age for hanging Telegram messages to forward to Discord, '
+due to e.g. lag spikes or bot downtimes.
+4. `database_path`: String value. Path to the sqlite3 database file used for storing message references.
 
 ## TODO
 Non-exhaustive list of features still needed for stable support:
