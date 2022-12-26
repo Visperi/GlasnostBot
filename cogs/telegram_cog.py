@@ -161,7 +161,7 @@ class TelegramCog(commands.Cog):
             return
 
         update_age = int(datetime.datetime.now().timestamp()) - channel_post.date
-        if update_age > self.update_age_threshold:
+        if is_edit is False and update_age > self.update_age_threshold:
             _logger.warning(f"Got update older than configured threshold age of {self.update_age_threshold} seconds.")
             return
 
