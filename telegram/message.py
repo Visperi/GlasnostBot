@@ -109,6 +109,12 @@ class MessageEntity:
         self.custom_emoji_id = payload.get("custom_emoji_id")
 
     def markdown(self, text: str) -> Optional[str]:
+        """
+        Convert entity to Markdown syntax with given text.
+
+        :param text: Content for the Markdown conversion.
+        :return: Given text converted to Entity Markdown syntax
+        """
 
         if self.type == EntityType.Bold:
             return f"**{text}**"
@@ -130,23 +136,23 @@ class MessageEntity:
             return text
 
     @property
-    def one_way_offset(self):
+    def one_way_markdown_offset(self):
         """
-        One-way Markdown offset of the entity, i.e. how many characters are added both sides of given text.
+        One-way Markdown offset of the entity, i.e. how many characters are added to the left side of given text on
+        Markdown conversion. Apart from TextLinks this is same as total added characters divided by two.
+        Internally used for converting entities to actual Markdown text.
 
         :return: Amount of characters added to both sides of string in Markdown for this entity.
         """
         if self.type == EntityType.TextLink:
-            raise ValueError("Hyperlinks don't have one-way offsets")
-
-        if self.type == EntityType.Url:
-            return 0
-        elif self.type == EntityType.Italic or self.type == EntityType.Code:
+            # TextLink is a special case and has characters also in the middle
+            # Luckily only the section in square brackets needs the Markdown
             return 1
-        elif self.type == EntityType.Codeblock:
-            return 3
         else:
-            return 2
+            # For generic cases use simple calculation instead of hard coding
+            tmp = "dummy"
+            md = self.markdown(tmp)
+            return (len(md) - len(tmp)) // 2
 
 
 class MessageAutoDeleteTimerChanged:
@@ -381,7 +387,7 @@ class Message:
         grouped_entities = self._group_entities()
         total_offset = 0
 
-        for offset, offset_entities in grouped_entities.items():
+        for offset_entities in grouped_entities.values():
             one_way_offset = total_offset
             for entity in offset_entities:
                 offset = entity.offset + one_way_offset
@@ -389,7 +395,11 @@ class Message:
                 entity_markdown = entity.markdown(text_seq)
                 markdownified = markdownified[:offset] + entity_markdown + markdownified[offset+entity.length:]
 
-                one_way_offset += entity.one_way_offset
-                total_offset += entity.one_way_offset * 2
+                one_way_offset += entity.one_way_markdown_offset
+                if entity.type == EntityType.TextLink:
+                    # TextLink has extra brackets, need to calculate the difference
+                    total_offset += len(entity_markdown) - len(text_seq)
+                else:
+                    total_offset += entity.one_way_markdown_offset * 2
 
         return markdownified
