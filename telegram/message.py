@@ -360,6 +360,9 @@ class Message:
 
     @property
     def text_formatted(self) -> str:
+        """
+        Telegram message content and entities combined into Markdown syntax
+        """
         return self.markdownify()
 
     def _group_entities(self) -> Dict[int, List[MessageEntity]]:
