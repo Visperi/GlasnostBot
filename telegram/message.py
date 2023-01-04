@@ -24,6 +24,7 @@ SOFTWARE.
 
 
 from __future__ import annotations
+
 from .chat import Chat
 from .user import User
 from .contact import Contact
@@ -46,7 +47,7 @@ from .types.message import (
     MessageAutoDeleteTimerChanged as MessageAutoDeleteTimerChangedPayload
 )
 from .utils import flatten_handlers
-from typing import Optional, List
+from typing import Optional, List, Dict
 
 
 class EntityType:
@@ -108,6 +109,12 @@ class MessageEntity:
         self.custom_emoji_id = payload.get("custom_emoji_id")
 
     def markdown(self, text: str) -> Optional[str]:
+        """
+        Convert entity to Markdown syntax with given text.
+
+        :param text: Content for the Markdown conversion.
+        :return: Given text converted to Entity Markdown syntax
+        """
 
         if self.type == EntityType.Bold:
             return f"**{text}**"
@@ -127,6 +134,25 @@ class MessageEntity:
             return f"[{text}]({self.url})"
         else:
             return text
+
+    @property
+    def one_way_markdown_offset(self):
+        """
+        One-way Markdown offset of the entity, i.e. how many characters are added to the left side of given text on
+        Markdown conversion. Apart from TextLinks this is same as total added characters divided by two.
+        Internally used for converting entities to actual Markdown text.
+
+        :return: Amount of characters added to both sides of string in Markdown for this entity.
+        """
+        if self.type == EntityType.TextLink:
+            # TextLink is a special case and has characters also in the middle
+            # Luckily only the section in square brackets needs the Markdown
+            return 1
+        else:
+            # For generic cases use simple calculation instead of hard coding
+            tmp = "dummy"
+            md = self.markdown(tmp)
+            return (len(md) - len(tmp)) // 2
 
 
 class MessageAutoDeleteTimerChanged:
@@ -336,19 +362,44 @@ class Message:
     def text_formatted(self) -> str:
         return self.markdownify()
 
-    def markdownify(self) -> str:
-        markdownified = self.text
-        offsets = []
-        characters_added = 0
-        for entity in self.entities:
-            offset = entity.offset + characters_added
-            if entity.offset in offsets:
-                offset -= 2
-            text_seq = markdownified[offset:offset+entity.length]
-            offsets.append(entity.offset)
+    def _group_entities(self) -> Dict[int, List[MessageEntity]]:
+        """
+        Group message entities with same offsets together.
 
-            entity_markdown = entity.markdown(text_seq)
-            markdownified = markdownified[:offset] + entity_markdown + markdownified[offset+entity.length:]
-            characters_added += len(entity_markdown) - len(text_seq)
+        :return: Dictionary containing offsets as keys and list of entities with the offset.
+        """
+        grouped_entities = {}
+        for entity in self.entities:
+            try:
+                grouped_entities[entity.offset].append(entity)
+            except KeyError:
+                grouped_entities[entity.offset] = [entity]
+
+        return grouped_entities
+
+    def markdownify(self) -> str:
+        """
+        Apply message entities in Markdown syntax to the message content.
+
+        :return: Message content with entities added in Markdown syntax.
+        """
+        markdownified = self.text
+        grouped_entities = self._group_entities()
+        total_offset = 0
+
+        for offset_entities in grouped_entities.values():
+            one_way_offset = total_offset
+            for entity in offset_entities:
+                offset = entity.offset + one_way_offset
+                text_seq = markdownified[offset:offset+entity.length]
+                entity_markdown = entity.markdown(text_seq)
+                markdownified = markdownified[:offset] + entity_markdown + markdownified[offset+entity.length:]
+
+                one_way_offset += entity.one_way_markdown_offset
+                if entity.type == EntityType.TextLink:
+                    # TextLink has extra brackets, need to calculate the difference
+                    total_offset += len(entity_markdown) - len(text_seq)
+                else:
+                    total_offset += entity.one_way_markdown_offset * 2
 
         return markdownified
