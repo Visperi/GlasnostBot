@@ -5,12 +5,12 @@ one-way connection from Telegram announcements to Discord announcements for Oulu
 (University of Oulu CSE student guild).
 
 New messages, edits, replies and forwards are all supported from one Telegram channel/group/chat to an arbitrary amount 
-of Discord channels. Only restriction is that they currently must be less than 2000 characters long for Discord.
+of Discord channels. Only attachments are yet to be supported.
 
 The telegram library used in this bot is also made by me and has its own repository 
 [telegram.py](https://github.com/Visperi/telegram.py).
 
-For images of the bot in action see section [Images](#Images).
+For images of the features see section [Images](#Images).
 
 ## Running the bot
 
@@ -54,20 +54,21 @@ Discord, due to e.g. lag spikes or bot downtimes.
 Once the bot is listening to a Telegram channel and has some Discord channels defined, it forwards all messages to 
 Discord and serializes them into a sqlite3 database for possible edits and replies.
 
-![Plain new message](img/plain_new.png)
+Example of message with different kind of markdown texts:
 
-Replied messages are also replied in Discord if message references are fround from the database.
+![Basic markdown example](img/basic_example.png)
 
-![Reply message](img/reply.png)
+Messages can of course also be edited:
 
-Same goes for edited Telegram messages. Do note that edits into forwarded Telegram messages do not show in Telegram.
+![Edit example](img/edit_example.png)
 
-![Edited message](img/edit.png)
+...And replied to:
 
-Forwarded messages include the name of the original message sender. For channels this means the channel title. 
-For users this means their real name or username, depending on if `prefer_username` option is used.
+![Reply example](img/reply_example.png)
 
-![Forwarded message](img/forward.png)
+The maximum length for messages is 4096 characters like in free Telegram version:
+
+![Lorem ipsum](img/lorem_ipsum.PNG)
 
 ## Licence
 
