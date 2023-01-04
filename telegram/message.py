@@ -131,7 +131,9 @@ class MessageEntity:
 
     @property
     def markdown_offset(self):
-        if self.type == EntityType.Italic or self.type == EntityType.Code:
+        if self.type == EntityType.Url:
+            return 0
+        elif self.type == EntityType.Italic or self.type == EntityType.Code:
             return 1
         elif self.type == EntityType.Codeblock:
             return 3
@@ -377,4 +379,5 @@ class Message:
                 group_offset += entity.markdown_offset
                 total_offset += entity.markdown_offset * 2
 
+        print(markdownified)
         return markdownified
