@@ -123,6 +123,8 @@ class MessageEntity:
             return f"`{text}`"
         elif self.type == EntityType.Codeblock:
             return f"```\n{text}\n```"
+        elif self.type == EntityType.TextLink:
+            return f"[{text}]({self.url})"
         else:
             return text
 
