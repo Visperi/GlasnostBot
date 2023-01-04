@@ -382,15 +382,14 @@ class Message:
         total_offset = 0
 
         for offset, offset_entities in grouped_entities.items():
-            group_offset = total_offset
+            one_way_offset = total_offset
             for entity in offset_entities:
-                offset = entity.offset + group_offset
+                offset = entity.offset + one_way_offset
                 text_seq = markdownified[offset:offset+entity.length]
                 entity_markdown = entity.markdown(text_seq)
                 markdownified = markdownified[:offset] + entity_markdown + markdownified[offset+entity.length:]
 
-                group_offset += entity.one_way_offset
+                one_way_offset += entity.one_way_offset
                 total_offset += entity.one_way_offset * 2
 
-        print(markdownified)
         return markdownified
