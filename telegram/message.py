@@ -24,6 +24,7 @@ SOFTWARE.
 
 
 from __future__ import annotations
+
 from .chat import Chat
 from .user import User
 from .contact import Contact
@@ -46,7 +47,7 @@ from .types.message import (
     MessageAutoDeleteTimerChanged as MessageAutoDeleteTimerChangedPayload
 )
 from .utils import flatten_handlers
-from typing import Optional, List
+from typing import Optional, List, Dict
 
 
 class EntityType:
@@ -127,6 +128,15 @@ class MessageEntity:
             return f"[{text}]({self.url})"
         else:
             return text
+
+    @property
+    def markdown_offset(self):
+        if self.type == EntityType.Italic or self.type == EntityType.Code:
+            return 1
+        elif self.type == EntityType.Codeblock:
+            return 3
+        else:
+            return 2
 
 
 class MessageAutoDeleteTimerChanged:
@@ -336,19 +346,35 @@ class Message:
     def text_formatted(self) -> str:
         return self.markdownify()
 
-    def markdownify(self) -> str:
-        markdownified = self.text
-        offsets = []
-        characters_added = 0
-        for entity in self.entities:
-            offset = entity.offset + characters_added
-            if entity.offset in offsets:
-                offset -= 2
-            text_seq = markdownified[offset:offset+entity.length]
-            offsets.append(entity.offset)
+    def _group_entities(self) -> Dict[int, List[MessageEntity]]:
+        """
+        Group message entities with same offsets together.
 
-            entity_markdown = entity.markdown(text_seq)
-            markdownified = markdownified[:offset] + entity_markdown + markdownified[offset+entity.length:]
-            characters_added += len(entity_markdown) - len(text_seq)
+        :return: Dictionary containing offsets as keys and list of entities with the offset.
+        """
+        grouped_entities = {}
+        for entity in self.entities:
+            try:
+                grouped_entities[entity.offset].append(entity)
+            except KeyError:
+                grouped_entities[entity.offset] = [entity]
+
+        return grouped_entities
+
+    def markdownify(self):
+        markdownified = self.text
+        grouped_entities = self._group_entities()
+        total_offset = 0
+
+        for offset, offset_entities in grouped_entities.items():
+            group_offset = total_offset
+            for entity in offset_entities:
+                offset = entity.offset + group_offset
+                text_seq = markdownified[offset:offset+entity.length]
+                entity_markdown = entity.markdown(text_seq)
+                markdownified = markdownified[:offset] + entity_markdown + markdownified[offset+entity.length:]
+
+                group_offset += entity.markdown_offset
+                total_offset += entity.markdown_offset * 2
 
         return markdownified
