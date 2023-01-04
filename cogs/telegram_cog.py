@@ -169,7 +169,7 @@ class TelegramCog(commands.Cog):
         if tg_channel_id == self.tg_channel_id:
             await self.forward_channel_post(channel_post, is_edit)
 
-    def format_channel_post(self, message: telegram.Message) -> str:
+    def format_channel_post(self, message: telegram.Message) -> discord.Embed:
         """
         Format a channel post so that stylised text stays as is when sent to discord. Add forwarded messages original
         author name if it is forwarded message.
@@ -179,10 +179,20 @@ class TelegramCog(commands.Cog):
         """
         forwarded_from = self.fetch_forwarded_from(message, prefer_username=self.prefer_telegram_usernames)
         formatted_message = message.text_formatted
-        if forwarded_from is not None:
-            formatted_message = f"**Forwarded from {forwarded_from}**\n\n{formatted_message}"
+        embed = discord.Embed(description=formatted_message)
 
-        return formatted_message
+        if forwarded_from is not None:
+            forward_notification = f"Forwarded from {forwarded_from}"
+            if len(forward_notification) < 256:
+                embed.title = f"Forwarded from {forwarded_from}"
+            else:
+                embed.description = f"**{forward_notification}\n\n{embed.description}**"
+
+        if len(embed.description) > 4096:
+            raise ValueError(f"Too long message for Discord embed. "
+                             f"Got message of length {len(embed.description)} characters.")
+
+        return embed
 
     async def forward_channel_post(
             self,
@@ -194,21 +204,18 @@ class TelegramCog(commands.Cog):
 
         :param channel_post: Telegram channel post to forward to Discord.
         :param is_edit: Tells if the Telegram message was edited. If True, a Discord message reference is searched
-        from the database and then edited with the new text.
+        from the database and then edited with the new embed.
         """
         # TODO: Do something for longer than 2000 char messages
-        text = self.format_channel_post(channel_post)
-        if len(text) > 2000:
-            _logger.warning(f"Got message of length {len(text)} characters. Skipping.")
-            return
+        embed = self.format_channel_post(channel_post)
 
         # TODO: Simplify when library is updated
         if is_edit:
-            await self.edit_discord_messages(text, channel_post.message_id)
+            await self.edit_discord_messages(embed, channel_post.message_id)
         elif channel_post.reply_to_message:
-            await self.reply_discord_messages(text, channel_post.message_id, channel_post.reply_to_message.message_id)
+            await self.reply_discord_messages(embed, channel_post.message_id, channel_post.reply_to_message.message_id)
         else:
-            await self.send_discord_messages(text, channel_post.message_id)
+            await self.send_discord_messages(embed, channel_post.message_id)
 
     def serialize_discord_message(self, tg_message_id: int, discord_message: discord.Message) -> None:
         """
@@ -221,11 +228,11 @@ class TelegramCog(commands.Cog):
         ts = int(datetime.datetime.utcnow().timestamp())
         self.database_handler.add(tg_message_id, discord_message, ts)
 
-    async def send_discord_messages(self, text: str, tg_message_id: int) -> None:
+    async def send_discord_messages(self, embed: discord.Embed, tg_message_id: int) -> None:
         """
         Send Discord message to all channels defined in the configuration file.
 
-        :param text: The text to send to Discord.
+        :param embed: A discord.Embed object to send to the Discord channels.
         :param tg_message_id: Telegram message ID from which the content is retrieved from. Needed for database
         serialization.
         """
@@ -235,26 +242,31 @@ class TelegramCog(commands.Cog):
                 _logger.error(f"Attempted to forward Telegram message to unknown channel with ID {channel_id}.")
                 continue
 
-            discord_message = await channel.send(text)
+            discord_message = await channel.send(embed=embed)
             self.serialize_discord_message(tg_message_id, discord_message)
 
-    async def _handle_orphan_messages(self, text: str, tg_message_id: int) -> None:
+    async def _handle_orphan_messages(self, embed: discord.Embed, tg_message_id: int) -> None:
         """
         Handle orphan messages not having matching references in the database.
         Does nothing if send_orphans_as_new_message is set to False, otherwise sends new messages.
 
-        :param text: Content of the orphan message.
+        :param embed: Content of the orphan message.
         :param tg_message_id: Telegram ID of the orphan message. Needed for adding a new reference to the database.
         """
         if self.send_orphans_as_new_message:
-            await self.send_discord_messages(text, tg_message_id)
+            await self.send_discord_messages(embed, tg_message_id)
 
-    async def reply_discord_messages(self, reply_text: str, tg_message_id: int, replied_tg_message_id: int) -> None:
+    async def reply_discord_messages(
+            self,
+            reply_embed: discord.Embed,
+            tg_message_id: int,
+            replied_tg_message_id: int
+    ) -> None:
         """
         Fetch old Discord message references from the database and reply to them with given text.
         If no messages are found in database, send new messages or do nothing based on the configuration.
 
-        :param reply_text: Content in the new Telegram reply message.
+        :param reply_embed: Embed to reply with to the old Discord message.
         :param tg_message_id: The new Telegram message ID. Needed for adding a new Discord message reference to
         the database.
         :param replied_tg_message_id: ID of the replied Telegram message. Needed for finding message reference from the
@@ -264,31 +276,31 @@ class TelegramCog(commands.Cog):
         if not discord_messages:
             _logger.warning(f"Cannot reply to Discord message with Telegram message ID {replied_tg_message_id}. "
                             f"No messages exist in cache with such ID. Sending new messages instead.")
-            await self._handle_orphan_messages(reply_text, tg_message_id)
+            await self._handle_orphan_messages(reply_embed, tg_message_id)
             return
 
         for discord_message in discord_messages:
-            new_discord_message = await discord_message.reply(reply_text, mention_author=False)
+            new_discord_message = await discord_message.reply(embed=reply_embed, mention_author=False)
             self.serialize_discord_message(tg_message_id, new_discord_message)
             self.database_handler.update_ts(replied_tg_message_id, int(datetime.datetime.utcnow().timestamp()))
 
-    async def edit_discord_messages(self, new_text: str, tg_message_id: int) -> None:
+    async def edit_discord_messages(self, new_embed: discord.Embed, tg_message_id: int) -> None:
         """
         Edit a Discord messages based on a Telegram ID to match the content.
         If no messages are found in database, send new messages or do nothing based on the configuration.
 
-        :param new_text: New text from the Telegram for the Discord message.
+        :param new_embed: New embed for the edited Discord message.
         :param tg_message_id: The Telegram message ID, which is used for finding the Discord message reference.
         """
         discord_messages = await self.get_discord_messages(tg_message_id)
         if not discord_messages:
             _logger.warning(f"Cannot edit Discord message with Telegram message ID {tg_message_id}. "
                             f"No messages exist in cache with such ID.")
-            await self._handle_orphan_messages(new_text, tg_message_id)
+            await self._handle_orphan_messages(new_embed, tg_message_id)
             return
 
         for discord_message in discord_messages:
-            await discord_message.edit(content=new_text, attachments=discord_message.attachments)
+            await discord_message.edit(embed=new_embed, attachments=discord_message.attachments)
             self.database_handler.update_ts(tg_message_id, int(datetime.datetime.utcnow().timestamp()))
 
     async def get_discord_messages(self, tg_message_id: int) -> List[discord.Message]:
