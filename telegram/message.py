@@ -46,7 +46,7 @@ from .types.message import (
     MessageAutoDeleteTimerChanged as MessageAutoDeleteTimerChangedPayload
 )
 from .utils import flatten_handlers
-from typing import Optional
+from typing import Optional, List
 
 
 class EntityType:
@@ -212,7 +212,7 @@ class Message:
         self.media_group_id = payload.get("media_group_id")
         self.author_signature = payload.get("author_signature")
         self.text = payload.get("text")
-        self.entities = payload.get("entities", [])
+        self.entities: List[MessageEntity] = payload.get("entities", [])
         self.animation = payload.get("animation")
         self.audio = payload.get("audio")
         self.document = payload.get("document")
@@ -329,3 +329,24 @@ class Message:
 
     def _handle_pinned_message(self, value):
         self.pinned_message = Message(value)
+
+    @property
+    def text_formatted(self) -> str:
+        return self.markdownify()
+
+    def markdownify(self) -> str:
+        markdownified = self.text
+        offsets = []
+        characters_added = 0
+        for entity in self.entities:
+            offset = entity.offset + characters_added
+            if entity.offset in offsets:
+                offset -= 2
+            text_seq = markdownified[offset:offset+entity.length]
+            offsets.append(entity.offset)
+
+            entity_markdown = entity.markdown(text_seq)
+            markdownified = markdownified[:offset] + entity_markdown + markdownified[offset+entity.length:]
+            characters_added += len(entity_markdown) - len(text_seq)
+
+        return markdownified
