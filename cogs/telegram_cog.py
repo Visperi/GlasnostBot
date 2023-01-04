@@ -181,23 +181,7 @@ class TelegramCog(commands.Cog):
         if message.forward_from or message.forward_from_chat:
             forwarded_from = self.fetch_forwarded_from(message, prefer_username=self.prefer_telegram_usernames)
 
-        # TODO: Move the markdownifying to Message properties/methods
-        formatted_message = message.text
-        if message.entities:
-            offsets = []
-            characters_added = 0
-            for entity in message.entities:
-                offset = entity.offset + characters_added
-                if entity.offset in offsets:
-                    offset -= 2
-                length = entity.length
-                text_seq = formatted_message[offset:offset+length]
-                offsets.append(entity.offset)
-
-                markdowned = entity.markdown(text_seq)
-                formatted_message = formatted_message[:offset] + markdowned + formatted_message[offset+length:]
-                characters_added += len(markdowned) - len(text_seq)
-
+        formatted_message = message.text_formatted
         if forwarded_from is not None:
             formatted_message = f"**Forwarded from {forwarded_from}**\n\n{formatted_message}"
 
