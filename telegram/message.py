@@ -130,7 +130,15 @@ class MessageEntity:
             return text
 
     @property
-    def markdown_offset(self):
+    def one_way_offset(self):
+        """
+        One-way Markdown offset of the entity, i.e. how many characters are added both sides of given text.
+
+        :return: Amount of characters added to both sides of string in Markdown for this entity.
+        """
+        if self.type == EntityType.TextLink:
+            raise ValueError("Hyperlinks don't have one-way offsets")
+
         if self.type == EntityType.Url:
             return 0
         elif self.type == EntityType.Italic or self.type == EntityType.Code:
@@ -363,7 +371,12 @@ class Message:
 
         return grouped_entities
 
-    def markdownify(self):
+    def markdownify(self) -> str:
+        """
+        Apply message entities in Markdown syntax to the message content.
+
+        :return: Message content with entities added in Markdown syntax.
+        """
         markdownified = self.text
         grouped_entities = self._group_entities()
         total_offset = 0
@@ -376,8 +389,8 @@ class Message:
                 entity_markdown = entity.markdown(text_seq)
                 markdownified = markdownified[:offset] + entity_markdown + markdownified[offset+entity.length:]
 
-                group_offset += entity.markdown_offset
-                total_offset += entity.markdown_offset * 2
+                group_offset += entity.one_way_offset
+                total_offset += entity.one_way_offset * 2
 
         print(markdownified)
         return markdownified
