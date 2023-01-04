@@ -177,10 +177,7 @@ class TelegramCog(commands.Cog):
         :param message: Channel post to format.
         :return: Channel post text changed to Discord compatible format.
         """
-        forwarded_from = None
-        if message.forward_from or message.forward_from_chat:
-            forwarded_from = self.fetch_forwarded_from(message, prefer_username=self.prefer_telegram_usernames)
-
+        forwarded_from = self.fetch_forwarded_from(message, prefer_username=self.prefer_telegram_usernames)
         formatted_message = message.text_formatted
         if forwarded_from is not None:
             formatted_message = f"**Forwarded from {forwarded_from}**\n\n{formatted_message}"
