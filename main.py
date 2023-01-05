@@ -32,6 +32,9 @@ if __name__ == "__main__":
     telegram.utils.configure_logging()
     config = toml.load("config.toml")
     discord_token = config["credentials"]["tokens"]["discord"]
+    command_prefix = config["bot_settings"]["command_prefix"]
+    activity_status = config["bot_settings"]["activity_status"]
+    dm_only_commands = config["bot_settings"]["dm_only_commands"]
 
-    discord_bot = DiscordBot()
+    discord_bot = DiscordBot(command_prefix, activity_status, dm_only_commands)
     discord_bot.run(discord_token, log_handler=None)
