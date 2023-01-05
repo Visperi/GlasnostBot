@@ -27,10 +27,27 @@ database. This can be adjusted with variable `message_cleanup_threshold` in pref
 IDs for both Discord and Telegram are always integers, and for Telegram they start with `-100`. 
 IDs can be edited in the configuration file and then reloaded in runtime by using command `reload` through Discord.
 
+## Configuration
+
+### Bot settings
+
+Bot settings are a way to configure Discord bot settings for each run. This means that modifying bot settings requires 
+a restart for the whole bot for them to make effect. Following bot settings are currently available:
+
+1. `command_prefix`: String or iterable of strings. This determines accepted command prefix(es) for the Discord bot. 
+For further information and notes about iterable prefixes, see the discord.py command prefix
+[documentation](https://discordpy.readthedocs.io/en/stable/ext/commands/api.html?highlight=prefix#discord.ext.commands.Bot.command_prefix).
+
+2. `activity_status`: String value. This value can be used to set the bot status in Discord. Empty string can be used 
+to have no status at all.
+
+3. `dm_only_commands`: Boolean value. Determine if bot commands should be accepted only through Discord direct messages.
+Setting this value to false allows bot commands to be executed in any Discord channel it can read.
+
 ### Preferences
 
-Preferences can be used to control the bot behaviour in more readable way and in runtime without restarting the whole 
-bot. All that is needed to adjust the configuration values and then use command `reload` through Discord. 
+Preferences can be used to control the bots message forwarding behaviour in more readable way. Preferences can be 
+modified and then reloaded in runtime by using Discord bot command `reload`. 
 Following preferences are currently available:
 
 1. `prefer_telegram_usernames`: Boolean value. In forwarded user messages prefer their username over their real name(s)
