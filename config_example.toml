@@ -1,3 +1,5 @@
+# Modifying anything except preferences needs a restart for the bot
+
 [credentials]
 
 [credentials.tokens]
@@ -12,6 +14,15 @@ discord = [
     9012
 ]
 
+[bot_settings]
+# The command prefix accepts both strings and iterable of strings
+# See discord.py documentation about command prefix for further details
+command_prefix = "!"
+# Empty string can be given here for no activity status
+activity_status = "Missä mennään ja minne"
+dm_only_commands = true
+
+# Preferences can be reloaded at runtime via command `reload`
 [preferences]
 prefer_telegram_usernames = true
 send_orphans_as_new_message = true
