@@ -27,6 +27,7 @@ import discord
 import logging
 import os
 from discord.ext import commands
+from typing import Iterable, Union, Optional
 
 
 _logger = logging.getLogger(__name__)
@@ -34,11 +35,30 @@ _logger = logging.getLogger(__name__)
 
 class DiscordBot(commands.Bot):
 
-    def __init__(self):
+    def __init__(
+            self,
+            command_prefix: Union[str, Iterable[str]],
+            activity_status: Optional[str],
+            dm_only_commands: bool = True
+    ):
+        """
+        Initialize new Telegram listener Discord bot instance.
+
+        :param command_prefix: Command prefix for the bot. Both strings and iterable of strings are valid.
+        :param activity_status: Activity status for the bot to show in Discord. If None, no status is shown.
+        :param dm_only_commands: Allow commands only through DMs to the bot.
+        """
+        self.dm_only_commands = dm_only_commands
+
         _intents = discord.Intents.default()
         _intents.message_content = True
-        super().__init__(command_prefix="!", intents=_intents,
-                         activity=discord.Game("Missä mennään ja minne"))
+        activity = None
+
+        if activity_status:
+            activity = discord.Game(activity_status)
+
+        super().__init__(command_prefix=command_prefix, intents=_intents,
+                         activity=activity)
 
     @staticmethod
     async def is_dm(ctx: commands.Context) -> bool:
@@ -54,4 +74,5 @@ class DiscordBot(commands.Bot):
             except Exception as e:
                 _logger.error(f"Failed to load extension {cog}: ", exc_info=e)
 
-        self.add_check(self.is_dm)
+        if self.dm_only_commands:
+            self.add_check(self.is_dm)
