@@ -4,8 +4,9 @@ A bot forwarding broadcast Telegram channel posts to Discord channels. The main 
 one-way connection from Telegram announcements to Discord announcements for Oulun Tietoteekkarit ry 
 (University of Oulu CSE student guild).
 
-New messages, edits, replies and forwards are all supported from one Telegram channel/group/chat to an arbitrary amount 
-of Discord channels. Only attachments are yet to be supported.
+Simply put the bot listens to a Telegram channel, and after a new message sends it to all configured Discord channels in 
+a Discord compatible format. In addition to new messages, edits, replies and forwards are fully supported. 
+Only attachments and other non-text media are yet to be supported.
 
 The telegram library used in this bot is also made by me and has its own repository 
 [telegram.py](https://github.com/Visperi/telegram.py).
@@ -69,9 +70,10 @@ Discord, due to e.g. lag spikes or bot downtimes.
 ## Images
 
 Once the bot is listening to a Telegram channel and has some Discord channels defined, it forwards all messages to 
-Discord and serializes them into a sqlite3 database for possible edits and replies.
+Discord and serializes them into an internal database for possible edits and replies. The messages are sent to Discord 
+as soon as they are received, but discord.py internal ratelimiting may affect the speed if messages are sent rapidly.
 
-Example of message with different kind of markdown texts:
+Example of the fully supported nested text formatting:
 
 ![Basic markdown example](img/basic_example.png)
 
