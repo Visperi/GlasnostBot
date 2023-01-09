@@ -1,4 +1,4 @@
-## GlasnostBot
+# GlasnostBot
 
 A bot forwarding broadcast Telegram channel posts to Discord channels. The main purpose of this bot is to provide a
 one-way connection from Telegram announcements to Discord announcements for Oulun Tietoteekkarit ry 
@@ -31,6 +31,8 @@ IDs can be edited in the configuration file and then reloaded in runtime by usin
 ## Configuration
 
 ### Bot settings
+
+**This bot supports Python 3.8 or higher versions**
 
 Bot settings are a way to configure Discord bot settings for each run. This means that modifying bot settings requires 
 a restart for the whole bot for them to make effect. Following bot settings are currently available:
