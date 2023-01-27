@@ -48,6 +48,7 @@ from .types.message import (
 )
 from .utils import flatten_handlers
 from typing import Optional, List, Dict
+from urllib.parse import urlparse, urlunparse
 
 
 class EntityType:
@@ -108,6 +109,34 @@ class MessageEntity:
         self.language = payload.get("language")
         self.custom_emoji_id = payload.get("custom_emoji_id")
 
+    @staticmethod
+    def _complete_url(url: str) -> str:
+        """
+        Complete partial url so that it has scheme and starts with www. Does nothing for already complete urls.
+
+        :param url: Url to be completed
+        :return: Completed url including scheme and starting with www.
+        """
+        tmp = urlparse(url, "http")
+        netloc = tmp.netloc or tmp.path
+        path = tmp.path if tmp.netloc else ""
+        if not netloc.startswith("www."):
+            netloc = f"www.{netloc}"
+
+        filled = tmp._replace(netloc=netloc, path=path)
+        return urlunparse(filled)
+
+    @staticmethod
+    def _make_hyperlink(text: str, url: str) -> str:
+        """
+        Convert bare text to a hyperlink.
+
+        :param text: Hyperlink text
+        :param url: Hyperlink url
+        :return: Hyperlink with given text and url
+        """
+        return f"[{text}]({url})"
+
     def markdown(self, text: str) -> Optional[str]:
         """
         Convert entity to Markdown syntax with given text.
@@ -131,7 +160,10 @@ class MessageEntity:
         elif self.type == EntityType.Codeblock:
             return f"```\n{text}\n```"
         elif self.type == EntityType.TextLink:
-            return f"[{text}]({self.url})"
+            return self._make_hyperlink(text, self.url)
+        elif self.type == EntityType.Url:
+            complete_url = self._complete_url(text)
+            return self._make_hyperlink(text, complete_url)
         else:
             return text
 
@@ -140,13 +172,13 @@ class MessageEntity:
         """
         One-way Markdown offset of the entity, i.e. how many characters are added to the left side of given text on
         Markdown conversion. Apart from TextLinks this is same as total added characters divided by two.
-        Internally used for converting entities to actual Markdown text.
+        Internally used especially in converting nested markdown in text.
 
         :return: Amount of characters added to both sides of string in Markdown for this entity.
         """
         if self.type == EntityType.TextLink:
-            # TextLink is a special case and has characters also in the middle
-            # Luckily only the section in square brackets needs the Markdown
+            # TextLink has extra characters also in the middle, but only one character is added left side
+            # e.g. www.example.com -> [www.example.com](www.example.com)
             return 1
         else:
             # For generic cases use simple calculation instead of hard coding
@@ -391,7 +423,7 @@ class Message:
         total_offset = 0
 
         for offset_entities in grouped_entities.values():
-            one_way_offset = total_offset
+            one_way_offset = total_offset  # Offset needed in nested entities
             for entity in offset_entities:
                 offset = entity.offset + one_way_offset
                 text_seq = markdownified[offset:offset+entity.length]
@@ -399,7 +431,7 @@ class Message:
                 markdownified = markdownified[:offset] + entity_markdown + markdownified[offset+entity.length:]
 
                 one_way_offset += entity.one_way_markdown_offset
-                if entity.type == EntityType.TextLink:
+                if entity.type == EntityType.TextLink or entity.type == EntityType.Url:
                     # TextLink has extra brackets, need to calculate the difference
                     total_offset += len(entity_markdown) - len(text_seq)
                 else:
