@@ -138,9 +138,10 @@ class TelegramCog(commands.Cog):
         A background task deleting Discord message references from the database at least X days old defined in the
         configuration file.
         """
-        youngest_to_delete = datetime.datetime.utcnow() - datetime.timedelta(days=self.message_cleanup_threshold)
-        _logger.debug(f"Deleting message references younger than {youngest_to_delete}.")
-        self.database_handler.delete_by_age(youngest_to_delete)
+        threshold = self.message_cleanup_threshold
+        _logger.debug(f"Running database auto cleanup task with timestamp threshold of {threshold} days.")
+        upper_threshold_limit = datetime.datetime.utcnow() - datetime.timedelta(days=threshold)
+        self.database_handler.delete_by_age(upper_threshold_limit)
 
     async def on_update(self, update: telegram.Update) -> None:
         """
