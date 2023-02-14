@@ -60,19 +60,21 @@ class DatabaseHandler:
 
         self.connection = connection
         self.cursor = connection.cursor()
-        _logger.info(f"Connected to database '{database}'")
+        on_off = "ON" if pragma_foreign_keys else "OFF"
+        _logger.info(f"Connected to database '{database}' with PRAGMA foreign_keys {on_off}")
 
         return connection
 
     def disconnect(self) -> None:
-        _logger.debug("Closing database connection")
+        _logger.info("Closing database connection")
         self.connection.close()
         self.connection = None
         self.cursor = None
+        _logger.debug("Connection closed")
 
     def add(self, tg_message_id: int, discord_message: discord.Message, ts: Union[int, datetime.datetime]) -> None:
         """
-        Add a new Discord reference to the database for possible later references.
+        Add a new Discord message reference to the database for possible later references.
 
         :param tg_message_id: Telegram message ID. Needed for finding all Discord messages based on the original message
         :param discord_message: The Discord message sent to Discord. Data needed for deserialization is saved to
@@ -91,7 +93,7 @@ class DatabaseHandler:
                 """, (discord_message.id, discord_message.channel.id, discord_message.guild.id, tg_message_id, ts)
             )
 
-        _logger.debug(f"Added message reference to database with values {tg_message_id}, "
+        _logger.debug(f"Successfully added reference to database with values {tg_message_id}, "
                       f"{discord_message.to_message_reference_dict()}, {ts}")
 
     def update_ts(self, tg_message_id: int, new_ts: int) -> int:
@@ -102,6 +104,8 @@ class DatabaseHandler:
         :param new_ts: Leap second aware UTC Timestamp of the last reference time
         :return: Amount of modified rows
         """
+        _logger.debug(
+            f"Updating timestamp to {new_ts} for Discord message references with Telegram message ID {tg_message_id}.")
 
         with self.connection:
             self.cursor.execute(
@@ -113,10 +117,13 @@ class DatabaseHandler:
             )
 
         modified = self.cursor.rowcount
-        _logger.debug(f"Updated timestamp to {new_ts} for total of {modified} message references")
+        _logger.debug(f"Successfully updated timestamp for total of {modified} references.")
         return modified
 
     def delete_by_id(self, tg_message_id: int) -> int:
+        _logger.debug(
+            f"Deleting Discord message references with Telegram message ID {tg_message_id} from the database.")
+
         with self.connection:
             self.cursor.execute(
                 """
@@ -125,30 +132,32 @@ class DatabaseHandler:
             )
 
         deleted = self.cursor.rowcount
-        _logger.debug(f"Deleted {deleted} rows by Telegram timestamp from the database.")
+        _logger.debug(f"Successfully deleted {deleted} references.")
         return deleted
 
-    def delete_by_age(self, youngest_to_delete: Union[int, datetime.datetime]) -> int:
+    def delete_by_age(self, upper_age_limit: Union[int, datetime.datetime]) -> int:
         """
         Delete message references from the database based on their timestamps. All messages failing to be inside given
         time restrictions are deleted.
 
-        :param youngest_to_delete: Inclusive leap second aware UTC timestamp or datetime object determining
+        :param upper_age_limit: Inclusive leap second aware UTC timestamp or datetime object determining
         the most recent reference to delete. Messages with this or smaller timestamps will be deleted!
         :return: Amount of deleted messages
         """
-        if isinstance(youngest_to_delete, datetime.datetime):
-            youngest_to_delete = int(youngest_to_delete.timestamp())
+        if isinstance(upper_age_limit, datetime.datetime):
+            upper_age_limit = int(upper_age_limit.timestamp())
+
+        _logger.debug(f"Deleting Discord message references with upper limit of {upper_age_limit} from the database.")
 
         with self.connection:
             self.cursor.execute(
                 """
                 DELETE FROM discord_messages WHERE ts <= ?
-                """, (youngest_to_delete, )
+                """, (upper_age_limit,)
             )
 
         deleted = self.cursor.rowcount
-        _logger.debug(f"Deleted {deleted} rows by age from the database.")
+        _logger.debug(f"Successfully deleted {deleted} references.")
         return deleted
 
     def get(self, tg_message_id: int) -> List[Tuple[int, int]]:
@@ -159,6 +168,8 @@ class DatabaseHandler:
         :return: List containing tuples of Discord message IDs and Discord channel IDs, which can be used to find
         references to actual Discord message objects.
         """
+        _logger.debug(f"Fetching all Discord message references with Telegram message ID {tg_message_id}")
+
         with self.connection:
             ids = self.cursor.execute(
                 """
