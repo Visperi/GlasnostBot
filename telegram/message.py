@@ -180,7 +180,7 @@ class MessageEntity:
             return 1
         else:
             # For generic cases use simple calculation instead of hard coding
-            tmp = "dummy"
+            tmp = "__dummy__"
             md = self.markdown(tmp)
             return (len(md) - len(tmp)) // 2
 
@@ -429,10 +429,6 @@ class Message:
                 markdownified = markdownified[:offset] + entity_markdown + markdownified[offset+entity.length:]
 
                 one_way_offset += entity.one_way_markdown_offset
-                if entity.type == EntityType.TextLink or entity.type == EntityType.Url:
-                    # TextLink has extra brackets, need to calculate the difference
-                    total_offset += len(entity_markdown) - len(text_seq)
-                else:
-                    total_offset += entity.one_way_markdown_offset * 2
+                total_offset += len(entity_markdown) - len(text_seq)
 
         return markdownified
