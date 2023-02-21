@@ -120,8 +120,6 @@ class MessageEntity:
         tmp = urlparse(url, "http")
         netloc = tmp.netloc or tmp.path
         path = tmp.path if tmp.netloc else ""
-        if not netloc.startswith("www."):
-            netloc = f"www.{netloc}"
 
         filled = tmp._replace(netloc=netloc, path=path)
         return urlunparse(filled)
