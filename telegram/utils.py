@@ -24,7 +24,15 @@ SOFTWARE.
 
 
 import logging
-from typing import Union, List
+from typing import (
+    Union,
+    List,
+    Type,
+    TypeVar
+)
+
+
+T = TypeVar("T")
 
 
 class _CustomFormatter(logging.Formatter):
@@ -93,8 +101,14 @@ def configure_logging(
     logger.addHandler(handler)
 
 
-def flatten_handlers(cls):
-    prefix = f"_handle_"
+def flatten_handlers(cls: Type[T]) -> Type[T]:
+    """
+    Decorator method for flattening class attribute handler methods to list of tuples (attr_name, handler_func).
+
+    :param cls: The class instance
+    :return: The class instance with flattened handlers.
+    """
+    prefix = "_handle_"
     handlers = [(key[len(prefix):], value) for key, value in cls.__dict__.items() if key.startswith(prefix)]
 
     cls._HANDLERS = handlers
