@@ -179,7 +179,7 @@ class TelegramCog(commands.Cog):
         :return: Channel post text changed to Discord compatible format.
         """
         forwarded_from = self.fetch_forwarded_from(message, prefer_username=self.prefer_telegram_usernames)
-        formatted_message = message.text_formatted
+        formatted_message = message.markdownify(make_urls_to_hyperlink=False)  # Discord embeds do not support hyperlinks
         embed = discord.Embed(description=formatted_message)
 
         if forwarded_from is not None:

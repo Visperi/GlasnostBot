@@ -114,7 +114,7 @@ class MessageEntity:
         """
         Complete partial url so that it has scheme and starts with www. Does nothing for already complete urls.
 
-        :param url: Url to be completed
+        :param url: Url to be completed.
         :return: Completed url including scheme and starting with www.
         """
         tmp = urlparse(url, "http")
@@ -122,7 +122,7 @@ class MessageEntity:
         path = tmp.path if tmp.netloc else ""
 
         filled = tmp._replace(netloc=netloc, path=path)
-        return urlunparse(filled)
+        return str(urlunparse(filled))
 
     @staticmethod
     def _make_hyperlink(text: str, url: str) -> str:
@@ -135,11 +135,12 @@ class MessageEntity:
         """
         return f"[{text}]({url})"
 
-    def markdown(self, text: str) -> Optional[str]:
+    def markdown(self, text: str, make_url_to_hyperlink: bool) -> Optional[str]:
         """
         Convert entity to Markdown syntax with given text.
 
         :param text: Content for the Markdown conversion.
+        :param make_url_to_hyperlink: Make bare text urls to hyperlinks.
         :return: Given text converted to Entity Markdown syntax
         """
 
@@ -161,7 +162,10 @@ class MessageEntity:
             return self._make_hyperlink(text, self.url)
         elif self.type == EntityType.Url:
             complete_url = self._complete_url(text)
-            return self._make_hyperlink(text, complete_url)
+            if make_url_to_hyperlink:
+                return self._make_hyperlink(text, complete_url)
+            else:
+                return complete_url
         else:
             return text
 
@@ -181,7 +185,7 @@ class MessageEntity:
         else:
             # For generic cases use simple calculation instead of hard coding
             tmp = "__dummy__"
-            md = self.markdown(tmp)
+            md = self.markdown(tmp, False)
             return (len(md) - len(tmp)) // 2
 
 
@@ -391,7 +395,8 @@ class Message:
     @property
     def text_formatted(self) -> str:
         """
-        Telegram message content and entities combined into Markdown syntax
+        Telegram message content and entities combined into Markdown syntax. Uses markdownify method with default
+        settings, so use that method instead if more control is needed.
         """
         return self.markdownify()
 
@@ -410,7 +415,7 @@ class Message:
 
         return grouped_entities
 
-    def markdownify(self) -> str:
+    def markdownify(self, make_urls_to_hyperlink: bool = True) -> str:
         """
         Apply message entities in Markdown syntax to the message content.
 
@@ -420,12 +425,17 @@ class Message:
         grouped_entities = self._group_entities()
         total_offset = 0
 
+        # TODO: Use this to fix the codepoint issues
+        # https://stackoverflow.com/questions/39280183/utf-16-codepoint-counting-in-python
+        text_utf16 = self.text.encode("utf-16-le")
+
         for offset_entities in grouped_entities.values():
             one_way_offset = total_offset  # Offset needed in nested entities
             for entity in offset_entities:
                 offset = entity.offset + one_way_offset
-                text_seq = markdownified[offset:offset+entity.length]
-                entity_markdown = entity.markdown(text_seq)
+                entity_end = offset + entity.length
+                text_seq = markdownified[offset:entity_end]
+                entity_markdown = entity.markdown(text_seq, make_urls_to_hyperlink)
                 markdownified = markdownified[:offset] + entity_markdown + markdownified[offset+entity.length:]
 
                 one_way_offset += entity.one_way_markdown_offset
