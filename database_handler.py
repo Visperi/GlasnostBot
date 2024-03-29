@@ -35,8 +35,9 @@ _logger = logging.getLogger(__name__)
 
 class DatabaseHandler:
 
-    def __init__(self, database: str, pragma_foreign_keys: bool = False) -> None:
-        self.connection = self.connect(database, pragma_foreign_keys)
+    def __init__(self, database_path: str, pragma_foreign_keys: bool = False) -> None:
+        self.database_path = None
+        self.connection = self.connect(database_path, pragma_foreign_keys)
         self.cursor = self.connection.cursor()
         self._ensure_table_exists()
 
@@ -53,15 +54,16 @@ class DatabaseHandler:
             """
         )
 
-    def connect(self, database: str, pragma_foreign_keys: bool = False) -> sqlite3.Connection:
-        connection = sqlite3.connect(database)
+    def connect(self, database_path: str, pragma_foreign_keys: bool = False) -> sqlite3.Connection:
+        connection = sqlite3.connect(database_path)
         if pragma_foreign_keys:
             connection.execute("PRAGMA foreign_keys = ON")
 
         self.connection = connection
         self.cursor = connection.cursor()
+        self.database_path = database_path
         on_off = "ON" if pragma_foreign_keys else "OFF"
-        _logger.info(f"Connected to database '{database}' with PRAGMA foreign_keys {on_off}")
+        _logger.info(f"Connected to database '{database_path}' with PRAGMA foreign_keys {on_off}")
 
         return connection
 
