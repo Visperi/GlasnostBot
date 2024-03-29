@@ -23,18 +23,18 @@ SOFTWARE.
 """
 
 
-from discord_bot import DiscordBot
 import telegram
-import toml
+from config import Config
+from discord_bot import DiscordBot
 
 
 if __name__ == "__main__":
     telegram.utils.configure_logging()
-    config = toml.load("config.toml")
-    discord_token = config["credentials"]["tokens"]["discord"]
-    command_prefix = config["bot_settings"]["command_prefix"]
-    activity_status = config["bot_settings"]["activity_status"]
-    dm_only_commands = config["bot_settings"]["dm_only_commands"]
+    config = Config("config.toml")
+    discord_token = config.credentials.discord
+    command_prefix = config.bot_settings.command_prefix
+    activity_status = config.bot_settings.activity_status
+    dm_only_commands = config.bot_settings.dm_only_commands
 
     discord_bot = DiscordBot(command_prefix, activity_status, dm_only_commands)
     discord_bot.run(discord_token, log_handler=None)

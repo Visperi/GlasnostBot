@@ -21,15 +21,18 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 """
-import toml
+
 import aiohttp
-import discord
-import telegram
 import datetime
 import logging
 from typing import List, Optional, TypeVar, Any
+
+import discord
 from discord.ext import commands, tasks
 from discord_bot import DiscordBot
+
+import telegram
+from config import Config
 from database_handler import DatabaseHandler
 
 
@@ -44,6 +47,7 @@ class TelegramCog(commands.Cog):
 
     def __init__(self, bot: DiscordBot):
         self.config_path: str = "config.toml"
+        self.load_configuration()
 
         self.database_name: str = Missing
         self.tg_channel_id: int = Missing
@@ -52,32 +56,30 @@ class TelegramCog(commands.Cog):
         self.send_orphans_as_new_message: bool = Missing
         self.update_age_threshold: int = Missing
         self.message_cleanup_threshold: int = Missing
-        self.read_configuration()
+        self.load_configuration()
 
         self.tg_bot = telegram.Client(aiohttp.ClientSession(), loop=bot.loop)
         self.bot = bot
         self.database_handler = DatabaseHandler(self.database_name)
 
-    def read_configuration(self) -> dict:
-        config = toml.load("config.toml")
-        self.tg_channel_id = config["credentials"]["channel_ids"]["telegram"]
-        self.discord_channel_ids = config["credentials"]["channel_ids"]["discord"]
-        self.prefer_telegram_usernames = config["preferences"]["prefer_telegram_usernames"]
-        self.send_orphans_as_new_message = config["preferences"]["send_orphans_as_new_message"]
-        self.update_age_threshold = config["preferences"]["update_age_threshold"]
-        self.message_cleanup_threshold = config["preferences"]["message_cleanup_threshold"]
-        self.database_name = config["preferences"]["database_path"]
+    def load_configuration(self) -> Config:
+        config = Config(self.config_path)
 
-        return dict(
-            channel_ids=config["credentials"]["channel_ids"],
-            preferences=config["preferences"]
-        )
+        self.tg_channel_id = config.channel_ids.telegram
+        self.discord_channel_ids = config.channel_ids.discord
+        self.prefer_telegram_usernames = config.preferences.prefer_telegram_usernames
+        self.send_orphans_as_new_message = config.preferences.send_orphans_as_new_message
+        self.update_age_threshold = config.preferences.update_age_threshold
+        self.message_cleanup_threshold = config.preferences.message_cleanup_threshold
+        self.database_name = config.preferences.database_path
+
+        return config
 
     async def cog_load(self) -> None:
         _logger.debug(f"Starting Telegram polling before loading {__name__}")
 
-        config = toml.load("config.toml")
-        telegram_token = config["credentials"]["tokens"]["telegram"]
+        config = Config("config.toml")
+        telegram_token = config.credentials.telegram
         try:
             self.tg_bot.start(telegram_token)
         except ValueError:
@@ -356,10 +358,10 @@ class TelegramCog(commands.Cog):
         """
         Reload Telegram and Discord channel IDs and preferences from the configuration files.
         """
-        configuration = self.read_configuration()
+        configuration = self.load_configuration()
 
         await ctx.send(f"Configuration reloaded! IDs and preferences are now as follows:\n "
-                       f"```toml\n{toml.dumps(configuration)}```")
+                       f"```toml\n{configuration}```")
 
 
 async def setup(bot: DiscordBot):

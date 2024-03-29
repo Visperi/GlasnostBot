@@ -1,13 +1,11 @@
-# Modifying bot tokens or bot settings needs a bot restart to take effect!
+# Modifying bot credentials or bot settings needs a bot restart to take effect!
 # Channel IDs and Preferences can be reloaded in runtime by the bot owner with reload command
 
 [credentials]
-
-[credentials.tokens]
 telegram = "TOKEN"
 discord = "TOKEN"
 
-[credentials.channel_ids]
+[channel_ids]
 telegram = -100123456
 discord = [
     1234,
