@@ -129,6 +129,7 @@ class PreCheckoutQuery(InlineQueryBase):
         super().__init__(payload)
         self._update(payload)
 
+    # noinspection Duplicates
     def _update(self, payload: PreCheckoutQueryPayload):
         self.currency = payload["currency"]
         self.total_amount = payload["total_amount"]

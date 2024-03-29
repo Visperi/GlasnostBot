@@ -93,6 +93,7 @@ class PreCheckoutQuery:
         self._update(payload)
 
     # TODO: Figure out how to read variable 'from' to 'from_' from payload!
+    # noinspection Duplicates
     def _update(self, payload: PreCheckoutQueryPayload):
         self.id = payload["id"]
         self.from_ = User(payload["from_"])
