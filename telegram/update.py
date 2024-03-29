@@ -39,6 +39,7 @@ from .utils import flatten_handlers
 
 @flatten_handlers
 class Update:
+    _HANDLERS = []
 
     __slots__ = (
         "update_id",

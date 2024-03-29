@@ -92,6 +92,7 @@ class ChatPermissions:
 
 @flatten_handlers
 class Chat:
+    _HANDLERS = []
 
     __slots__ = (
         "id",

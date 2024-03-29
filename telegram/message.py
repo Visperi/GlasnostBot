@@ -199,6 +199,7 @@ class MessageAutoDeleteTimerChanged:
 
 @flatten_handlers
 class Message:
+    _HANDLERS = []
 
     __slots__ = (
         "message_id",
