@@ -47,6 +47,10 @@ class __ConfigSection:
     def __str__(self):
         return str(self.as_dict())
 
+    @classmethod
+    def generate_default(cls):
+        raise NotImplemented(f"generate_default method not implemented in {cls.__name__}")
+
 class _Preferences(__ConfigSection):
 
     __slots__ = (
@@ -60,6 +64,14 @@ class _Preferences(__ConfigSection):
     def __init__(self, preferences_dict: dict):
         super().__init__(preferences_dict)
 
+    @classmethod
+    def generate_default(cls):
+        return cls(dict(prefer_telegram_usernames=True,
+                        send_orphans_as_new_message=True,
+                        message_cleanup_threshold=30,
+                        update_age_threshold=600,
+                        database_path="glasnost.db"))
+
 
 class _BotSettings(__ConfigSection):
 
@@ -72,16 +84,11 @@ class _BotSettings(__ConfigSection):
     def __init__(self, settings_dict: dict):
         super().__init__(settings_dict)
 
-
-class _Tokens(__ConfigSection):
-
-    __slots__ = (
-        "discord",
-        "telegram"
-    )
-
-    def __init__(self, tokens_dict: dict):
-        super().__init__(tokens_dict)
+    @classmethod
+    def generate_default(cls):
+        return cls(dict(command_prefix="!",
+                        activity_status="Missä mennään ja minne",
+                        dm_only_commands=True))
 
 
 class _ChannelIds(__ConfigSection):
@@ -94,6 +101,11 @@ class _ChannelIds(__ConfigSection):
     def __init__(self, channel_ids_dict: dict):
         super().__init__(channel_ids_dict)
 
+    @classmethod
+    def generate_default(cls):
+        return cls(dict(telegram=-10012345,
+                        discord=[1234, 5678, 9012]))
+
 
 class _Credentials(__ConfigSection):
 
@@ -104,6 +116,11 @@ class _Credentials(__ConfigSection):
 
     def __init__(self, credentials_dict: dict):
         super().__init__(credentials_dict)
+
+    @classmethod
+    def generate_default(cls):
+        return cls(dict(telegram="TOKEN",
+                        discord="TOKEN"))
 
 
 class Config:
@@ -135,26 +152,12 @@ class Config:
         return toml.dumps(self.as_dict())
 
     @staticmethod
-    def generate_new(output_file: str) -> dict:
+    def generate_default(output_file: str):
 
-        config = {
-            "credentials": {
-                "tokens": {
-                    "telegram": "TOKEN",
-                    "discord": "TOKEN"
-                },
-                "channel_ids": {
-                    "telegram": -10012345,
-                    "discord": [1234, 5678, 9012]
-                }
-            },
-            "preferences": {
-                "prefer_telegram_usernames": True,
-                "message_cleanup_threshold": 30
-            }
-        }
+        config = dict(credentials=_Credentials.generate_default().as_dict(),
+                      channel_ids=_ChannelIds.generate_default().as_dict(),
+                      bot_settings=_BotSettings.generate_default().as_dict(),
+                      preferences=_Preferences.generate_default().as_dict())
 
-        with open(output_file, "w") as output_file:
+        with open(output_file, "w", encoding="utf-8") as output_file:
             toml.dump(config, output_file)
-
-        return config
