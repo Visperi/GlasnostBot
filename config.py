@@ -24,10 +24,8 @@ SOFTWARE.
 
 
 import toml
-from typing import TypeVar, Any
 
-
-Missing = TypeVar("Missing", Any, None)
+from utils import Missing
 
 
 class __ConfigSection:

@@ -25,7 +25,7 @@ SOFTWARE.
 import aiohttp
 import datetime
 import logging
-from typing import List, Optional, TypeVar, Any
+from typing import List, Optional
 
 import discord
 from discord.ext import commands, tasks
@@ -33,11 +33,11 @@ from discord_bot import DiscordBot
 
 import telegram
 from config import Config
+from utils import Missing
 from database_handler import DatabaseHandler
 
 
 _logger = logging.getLogger(__name__)
-Missing = TypeVar("Missing", Any, None)
 
 
 class TelegramCog(commands.Cog):
