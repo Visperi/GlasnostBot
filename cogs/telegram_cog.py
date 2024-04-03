@@ -171,8 +171,6 @@ class TelegramCog(commands.Cog):
             _logger.warning(f"Got update older than configured threshold age of {self.update_age_threshold} seconds.")
             return
 
-        if channel_post.has_video:
-            print("leet")
         # TODO: Support multiple media at once
         tg_channel_id = channel_post.sender_chat.id
         if tg_channel_id == self.tg_channel_id:
@@ -224,8 +222,6 @@ class TelegramCog(commands.Cog):
         from the database and then edited with the new embed.
         """
         embed = await self.format_embed(channel_post)
-        if not embed:
-            _logger.info("hgfdgefastre")
         content = None
         file = None
         if channel_post.has_image:
@@ -241,7 +237,7 @@ class TelegramCog(commands.Cog):
                                               channel_post.reply_to_message.message_id,
                                               content=content)
         else:
-            await self.send_discord_messages(embed, channel_post.message_id, content=content, file=file)
+            await self.send_discord_messages(embed, channel_post.message_id, content=content, files=file)
 
     def serialize_discord_message(self, tg_message_id: int, discord_message: discord.Message) -> None:
         """
@@ -259,7 +255,8 @@ class TelegramCog(commands.Cog):
             embed: discord.Embed,
             tg_message_id: int,
             content: str = None,
-            file: discord.File = None
+            file: discord.File = None,
+            files: List[discord.File] = None
     ) -> None:
         """
         Send Discord message to all channels defined in the configuration file.
@@ -268,6 +265,10 @@ class TelegramCog(commands.Cog):
         :param tg_message_id: Telegram message ID from which the content is retrieved from. Needed for database
         serialization.
         :param content: Text content to send in addition to the Discord embed.
+        :param file: A discord.File object to send with the message. Using this parameter with parameter files leads
+        to an exception.
+        :param files: List of discord.File objects to send with the message. Maximum amount of files is 10. Using this
+        parameter with parameter file leads to an exception.
         """
         for channel_id in self.discord_channel_ids:
             channel = self.bot.get_channel(channel_id)
@@ -275,7 +276,7 @@ class TelegramCog(commands.Cog):
                 _logger.error(f"Attempted to forward Telegram message to unknown channel with ID {channel_id}.")
                 continue
 
-            discord_message = await channel.send(content=content, embed=embed, file=file)
+            discord_message = await channel.send(content=content, embed=embed, file=file, files=files)  # noqa
             self.serialize_discord_message(tg_message_id, discord_message)
 
     async def _handle_orphan_messages(self, embed: discord.Embed, tg_message_id: int, content: str = None) -> None:
