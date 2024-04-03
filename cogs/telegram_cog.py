@@ -39,6 +39,9 @@ from database_handler import DatabaseHandler
 
 _logger = logging.getLogger(__name__)
 
+MAX_EMBED_DESCRIPTION_LENGTH = 4096
+MAX_EMBED_TITLE_LENGTH = 256
+
 
 class TelegramCog(commands.Cog):
     """
@@ -58,7 +61,7 @@ class TelegramCog(commands.Cog):
         self.message_cleanup_threshold: int = Missing
         self.load_configuration()
 
-        self.tg_bot = telegram.Client(aiohttp.ClientSession(), loop=bot.loop)
+        self.telegram_client = telegram.Client(aiohttp.ClientSession(), loop=bot.loop)
         self.bot = bot
         self.database_handler = DatabaseHandler(self.database_name)
 
@@ -81,11 +84,11 @@ class TelegramCog(commands.Cog):
         config = Config("config.toml")
         telegram_token = config.credentials.telegram
         try:
-            self.tg_bot.start(telegram_token)
+            self.telegram_client.start(telegram_token)
         except ValueError:
             _logger.error("Cannot start Telegram polling. Already polling.")
 
-        self.tg_bot.add_listener(self.on_update)
+        self.telegram_client.add_listener(self.on_update)
         if not self.database_handler.connection:
             _logger.debug(f"Connecting to dabatase '{self.database_name}'")
             self.database_handler.connect(self.database_name)
@@ -94,7 +97,7 @@ class TelegramCog(commands.Cog):
 
     async def cog_unload(self) -> None:
         _logger.debug(f"Stopping Telegram polling before unloading {__name__}.")
-        self.tg_bot.stop()
+        self.telegram_client.stop()
         self.database_cleanup_loop.cancel()
         self.database_handler.disconnect()
 
@@ -168,11 +171,14 @@ class TelegramCog(commands.Cog):
             _logger.warning(f"Got update older than configured threshold age of {self.update_age_threshold} seconds.")
             return
 
+        if channel_post.has_video:
+            print("leet")
+        # TODO: Support multiple media at once
         tg_channel_id = channel_post.sender_chat.id
         if tg_channel_id == self.tg_channel_id:
             await self.forward_channel_post(channel_post, is_edit)
 
-    def format_channel_post(self, message: telegram.Message) -> discord.Embed:
+    async def format_embed(self, message: telegram.Message) -> Optional[discord.Embed]:
         """
         Format a channel post so that stylised text stays as is when sent to discord. Add forwarded messages original
         author name if it is forwarded message.
@@ -181,21 +187,29 @@ class TelegramCog(commands.Cog):
         :return: Channel post text changed to Discord compatible format.
         """
         forwarded_from = self.fetch_forwarded_from(message, prefer_username=self.prefer_telegram_usernames)
-        formatted_message = message.markdownify(make_urls_to_hyperlink=False)  # Discord embeds do not support hyperlinks
-        embed = discord.Embed(description=formatted_message)
+        try:
+            # Discord embeds do not support hyperlinks
+            formatted_message = message.markdownify(make_urls_to_hyperlink=False)
+        except ValueError:
+            _logger.debug("Skipping formatting message with no text content")
+            formatted_message = ""  # Use empty string instead of None for compatibility with forwarded from data
 
+        embed = discord.Embed(description=formatted_message)
         if forwarded_from is not None:
             forward_notification = f"Forwarded from {forwarded_from}"
-            if len(forward_notification) < 256:
+            if len(forward_notification) < MAX_EMBED_TITLE_LENGTH and formatted_message:
                 embed.title = f"Forwarded from {forwarded_from}"
             else:
-                embed.description = f"**{forward_notification}\n\n{embed.description}**"
+                embed.description = f"**{forward_notification}**\n\n{formatted_message}"
 
-        if len(embed.description) > 4096:
+        if len(embed.description) > MAX_EMBED_DESCRIPTION_LENGTH:
             raise ValueError(f"Too long message for Discord embed. "
                              f"Got message of length {len(embed.description)} characters.")
 
-        return embed
+        if not embed.description:
+            return None
+        else:
+            return embed
 
     async def forward_channel_post(
             self,
@@ -209,8 +223,14 @@ class TelegramCog(commands.Cog):
         :param is_edit: Tells if the Telegram message was edited. If True, a Discord message reference is searched
         from the database and then edited with the new embed.
         """
-        embed = self.format_channel_post(channel_post)
+        embed = await self.format_embed(channel_post)
+        if not embed:
+            _logger.info("hgfdgefastre")
         content = None
+        file = None
+        if channel_post.has_image:
+            file_path = await self.telegram_client.download_image(channel_post.photo[-1].file_id, "test.jpg")
+            file = discord.File(file_path)
 
         # TODO: Simplify when library is updated
         if is_edit:
@@ -221,7 +241,7 @@ class TelegramCog(commands.Cog):
                                               channel_post.reply_to_message.message_id,
                                               content=content)
         else:
-            await self.send_discord_messages(embed, channel_post.message_id, content=content)
+            await self.send_discord_messages(embed, channel_post.message_id, content=content, file=file)
 
     def serialize_discord_message(self, tg_message_id: int, discord_message: discord.Message) -> None:
         """
@@ -238,7 +258,8 @@ class TelegramCog(commands.Cog):
             self,
             embed: discord.Embed,
             tg_message_id: int,
-            content: str = None
+            content: str = None,
+            file: discord.File = None
     ) -> None:
         """
         Send Discord message to all channels defined in the configuration file.
@@ -254,7 +275,7 @@ class TelegramCog(commands.Cog):
                 _logger.error(f"Attempted to forward Telegram message to unknown channel with ID {channel_id}.")
                 continue
 
-            discord_message = await channel.send(content=content, embed=embed)
+            discord_message = await channel.send(content=content, embed=embed, file=file)
             self.serialize_discord_message(tg_message_id, discord_message)
 
     async def _handle_orphan_messages(self, embed: discord.Embed, tg_message_id: int, content: str = None) -> None:
