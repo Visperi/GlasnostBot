@@ -37,7 +37,8 @@ from typing import (
     Callable,
     Dict,
     List,
-    TypeVar
+    TypeVar,
+    Optional
 )
 
 _logger = logging.getLogger(__name__)
@@ -270,12 +271,25 @@ class Client:
         self.polling_task.cancel()
         self.polling_task = None
 
-    async def get_file_url(self, file_id: str) -> str:
+    async def get_file_url(self, file_id: str) -> Optional[str]:
+        """
+        Fetch a file URL from its ID. This URL can then be directly used to download the file.
+
+        :param file_id: The file ID in Telegram API.
+        :return: Url pointing to the file, or None if a request for filed URL is not successful.
+        """
         resp = await self._get(api_helpers.ApiMethod.getFile, params=dict(file_id=file_id))
         if resp.ok:
             return resp.result.build_download_url(self._secret)
 
     async def download_blob(self, file_url: str, output_path: str) -> str:
+        """
+        Download a file from Telegram API by its url.
+
+        :param file_url: Full URL pointing to the file in Telegram API.
+        :param output_path: Output path for the downloaded file.
+        :return: Path to the downloaded file.
+        """
         if not file_url:
             raise ValueError("A proper file url must be given for blob download")
         if not output_path:
@@ -291,11 +305,35 @@ class Client:
         return output_path
 
 
-    async def download_image(self, file_id: str, output_path: str):
+    async def download_image(self, file_id: str, output_path: str) -> str:
+        """
+        Download an image from Telegram API.
+
+        :param file_id: The image ID in Telegram API. This ID is then used to fetch a complete URL to the actual
+                        resource for download.
+        :param output_path: Output path for the downloaded image.
+        :return: Path to the downloaded image.
+        """
         return await self.download_blob(await self.get_file_url(file_id), output_path)
 
-    async def download_video(self, file_id: str, output_path: str):
+    async def download_video(self, file_id: str, output_path: str) -> str:
+        """
+        Download a video from the Telegram API.
+
+        :param file_id: The video ID in Telegram API. This ID is then used to fetch a complete URL for the actual
+                        resource for download.
+        :param output_path: Output path for the downloaded video.
+        :return: Path to the downloaded video.
+        """
         return await self.download_blob(await self.get_file_url(file_id), output_path)
 
-    async def download_file(self, file_id: str, output_path: str):
+    async def download_file(self, file_id: str, output_path: str) -> str:
+        """
+        Download a file from the Telegram API.
+
+        :param file_id: The file ID in Telegram API. This ID is then used to fetch a complete URL for the actual
+                        resource for download.
+        :param output_path: Output path for the downloaded file.
+        :return: Path to the downloaded file.
+        """
         return await self.download_blob(await self.get_file_url(file_id), output_path)
