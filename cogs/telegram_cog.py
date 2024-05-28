@@ -237,7 +237,7 @@ class TelegramCog(commands.Cog):
                                               channel_post.reply_to_message.message_id,
                                               content=content)
         else:
-            await self.send_discord_messages(embed, channel_post.message_id, content=content, files=file)
+            await self.send_discord_messages(embed, channel_post.message_id, content=content, file=file)
 
     def serialize_discord_message(self, tg_message_id: int, discord_message: discord.Message) -> None:
         """
@@ -270,6 +270,10 @@ class TelegramCog(commands.Cog):
         :param files: List of discord.File objects to send with the message. Maximum amount of files is 10. Using this
         parameter with parameter file leads to an exception.
         """
+        if file and files:
+            raise ValueError("Using both parameters file and files is not possible. Use file for single file and files "
+                             "for multiple files instead.")
+
         for channel_id in self.discord_channel_ids:
             channel = self.bot.get_channel(channel_id)
             if not channel:
