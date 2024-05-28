@@ -22,7 +22,6 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 """
 
-
 from __future__ import annotations
 
 from .chat import Chat
@@ -401,6 +400,47 @@ class Message:
         """
         return self.markdownify()
 
+    @property
+    def has_image(self) -> bool:
+        """
+        True if the message contains image(s)
+        """
+        return len(self.photo) > 0
+
+    @property
+    def has_video(self) -> bool:
+        """
+        True if the message contains video(s)
+        """
+        return self.video is not None
+
+    @property
+    def has_media(self) -> bool:
+        """
+        True if the message contains image(s) or video(s)
+        """
+        return self.has_image or self.has_video
+
+    @property
+    def message_content(self) -> Optional[str]:
+        """
+        The message textual content.
+
+        When a message contains media, the message text is changed to message caption instead by the API, and this
+        property is a convenient way to get whichever is in effect.
+        """
+        return self.text or self.caption  # Text and caption cannot co-exist
+
+    @property
+    def message_entities(self) -> Optional[List[MessageEntity]]:
+        """
+        The message textual content entities.
+
+        When a message contains media, the message text is changed to message caption instead by the API, and this
+        property is a convenient way to get whichever is in effect.
+        """
+        return self.entities or self.caption_entities  # Both entity types cannot co-exist
+
     def _group_entities(self) -> Dict[int, List[MessageEntity]]:
         """
         Group message entities with same offsets together.
@@ -408,7 +448,8 @@ class Message:
         :return: Dictionary containing offsets as keys and list of entities with the offset.
         """
         grouped_entities = {}
-        for entity in self.entities:
+        entities = self.message_entities
+        for entity in entities:
             try:
                 grouped_entities[entity.offset].append(entity)
             except KeyError:
@@ -416,19 +457,23 @@ class Message:
 
         return grouped_entities
 
-    def markdownify(self, make_urls_to_hyperlink: bool = True) -> str:
+    def markdownify(self, make_urls_to_hyperlink: bool = True) -> Optional[str]:
         """
         Apply message entities in Markdown syntax to the message content.
 
         :return: Message content with entities added in Markdown syntax.
+        :raises ValueError: If the message has no either text or caption.
         """
-        markdownified = self.text
+        if not self.message_content:
+            raise ValueError("Cannot markdownify a message with no either text or caption attribute")
+
+        markdownified = self.message_content
         grouped_entities = self._group_entities()
         total_offset = 0
 
         # TODO: Use this to fix the codepoint issues
         # https://stackoverflow.com/questions/39280183/utf-16-codepoint-counting-in-python
-        text_utf16 = self.text.encode("utf-16-le")
+        markdownified_utf16 = markdownified.encode("utf-16-le")
 
         for offset_entities in grouped_entities.values():
             one_way_offset = total_offset  # Offset needed in nested entities
