@@ -49,7 +49,7 @@ class __ConfigSection:
 
     @classmethod
     def generate_default(cls):
-        raise NotImplemented(f"generate_default method not implemented in {cls.__name__}")
+        raise NotImplementedError(f"generate_default method not implemented in {cls.__name__}")
 
 class _Preferences(__ConfigSection):
 
