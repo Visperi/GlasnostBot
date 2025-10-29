@@ -23,22 +23,10 @@ SOFTWARE.
 """
 
 
-from typing_extensions import TypedDict, NotRequired
-from typing import List, Union
-from .update import Update
+API_BASE_URL = "https://api.telegram.org/"
 
+class ApiMethod:
+    """ Methods supported by Telegram API """
 
-class FileQueryResult(TypedDict):
-
-    file_id: str
-    file_unique_id: str
-    file_size: int
-    file_path: str
-
-
-class ApiResponse(TypedDict):
-
-    ok: bool
-    result: NotRequired[Union[List[Update], FileQueryResult]]
-    error_code: NotRequired[int]
-    description: NotRequired[str]
+    getUpdates = "/getUpdates"
+    getFile = "/getFile"

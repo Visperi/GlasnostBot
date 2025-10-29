@@ -23,9 +23,12 @@ SOFTWARE.
 """
 
 
-import aiohttp
 import asyncio
 import logging
+
+import aiohttp
+
+from . import api_helpers
 from .api_response import ApiResponse
 from .update import Update
 from typing import (
@@ -34,25 +37,18 @@ from typing import (
     Callable,
     Dict,
     List,
-    TypeVar
+    TypeVar,
+    Optional
 )
 
 _logger = logging.getLogger(__name__)
 Coro = TypeVar("Coro", bound=Callable[..., Coroutine[Any, Any, Any]])
 
 
-class _TgMethod:
-    """ Methods supported by Telegram API """
-
-    getUpdates = "/getUpdates"
-
-
 class Client:
     """
     A class responsible for handling asynchronous connection to Telegram API.
     """
-
-    API_BASE_URL = "https://api.telegram.org/"
 
     # noinspection PyTypeChecker
     def __init__(
@@ -95,7 +91,7 @@ class Client:
     async def _request(
             self,
             http_method: str,
-            method_path: str,
+            request_path: str,
             request_timeout: float = 10,
             params: dict = None,
             headers: dict = None
@@ -104,9 +100,9 @@ class Client:
         Make an HTTP request to the Telegram API.
 
         :param http_method: HTTP method to send to the API.
-        :param method_path: Path of the method in Telegram API.
+        :param request_path: Path of the requested Telegram API method.
         :param request_timeout: Timeout in seconds for the request itself.
-        :param params: Params for the request.
+        :param params: Query parameters for the request.
         :param headers: Headers for the request.
         :return: The response object containing OK status and possible results, error codes etc.
         :exception ValueError: The HTTP method is not GET or POST and thus not supported by Telegram API.
@@ -114,7 +110,7 @@ class Client:
         if http_method != "GET" and http_method != "POST":
             raise ValueError("The Telegram API supports only GET and POST methods for HTTP requests.")
 
-        url = self.API_BASE_URL + f"bot{self._secret}" + method_path
+        url = api_helpers.API_BASE_URL + f"bot{self._secret}" + request_path
         async with self._client_session.request(
                 http_method,
                 url,
@@ -172,14 +168,14 @@ class Client:
 
     async def _get_updates_loop(self) -> None:
         """
-        An indefinitely running loop, using long polling to receive updates from the Telegram API. Handling the received
+        An infinite loop, using long polling to receive updates from the Telegram API. Handling the received
         data is then passed to on_update method.
         """
         _logger.info("Now long polling messages")
 
         while True:
             params = {"timeout": 200, "offset": self.updates_offset}
-            resp = await self._get(_TgMethod.getUpdates, request_timeout=200, params=params)
+            resp = await self._get(api_helpers.ApiMethod.getUpdates, request_timeout=200, params=params)
             updates = resp.result
 
             if updates:
@@ -274,3 +270,70 @@ class Client:
 
         self.polling_task.cancel()
         self.polling_task = None
+
+    async def get_file_url(self, file_id: str) -> Optional[str]:
+        """
+        Fetch a file URL from its ID. This URL can then be directly used to download the file.
+
+        :param file_id: The file ID in Telegram API.
+        :return: Url pointing to the file, or None if a request for filed URL is not successful.
+        """
+        resp = await self._get(api_helpers.ApiMethod.getFile, params=dict(file_id=file_id))
+        if resp.ok:
+            return resp.result.build_download_url(self._secret)
+
+    async def download_blob(self, file_url: str, output_path: str) -> str:
+        """
+        Download a file from Telegram API by its url.
+
+        :param file_url: Full URL pointing to the file in Telegram API.
+        :param output_path: Output path for the downloaded file.
+        :return: Path to the downloaded file.
+        """
+        if not file_url:
+            raise ValueError("A proper file url must be given for blob download")
+        if not output_path:
+            raise ValueError("Output path must be specified when downloading blob")
+
+        async with self._client_session as session:
+            async with session.get(file_url) as resp:
+                if resp.status == 200:
+                    with open(output_path, "wb") as fd:
+                        async for chunk in resp.content.iter_chunked(10):
+                            fd.write(chunk)
+
+        return output_path
+
+
+    async def download_image(self, file_id: str, output_path: str) -> str:
+        """
+        Download an image from Telegram API.
+
+        :param file_id: The image ID in Telegram API. This ID is then used to fetch a complete URL to the actual
+                        resource for download.
+        :param output_path: Output path for the downloaded image.
+        :return: Path to the downloaded image.
+        """
+        return await self.download_blob(await self.get_file_url(file_id), output_path)
+
+    async def download_video(self, file_id: str, output_path: str) -> str:
+        """
+        Download a video from the Telegram API.
+
+        :param file_id: The video ID in Telegram API. This ID is then used to fetch a complete URL for the actual
+                        resource for download.
+        :param output_path: Output path for the downloaded video.
+        :return: Path to the downloaded video.
+        """
+        return await self.download_blob(await self.get_file_url(file_id), output_path)
+
+    async def download_file(self, file_id: str, output_path: str) -> str:
+        """
+        Download a file from the Telegram API.
+
+        :param file_id: The file ID in Telegram API. This ID is then used to fetch a complete URL for the actual
+                        resource for download.
+        :param output_path: Output path for the downloaded file.
+        :return: Path to the downloaded file.
+        """
+        return await self.download_blob(await self.get_file_url(file_id), output_path)
