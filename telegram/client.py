@@ -172,7 +172,7 @@ class Client:
 
     async def _get_updates_loop(self) -> None:
         """
-        An indefinitely running loop, using long polling to receive updates from the Telegram API. Handling the received
+        An infinite loop, using long polling to receive updates from the Telegram API. Handling the received
         data is then passed to on_update method.
         """
         _logger.info("Now long polling messages")
@@ -250,7 +250,7 @@ class Client:
 
     def start(self, secret: str) -> None:
         """
-        Connect to the Telegram API and start polling Telegram Updates and invoking events indefinitely.
+        Connect to the Telegram API and start polling Telegram Updates and invoking related events.
 
         :param secret: Secret to the Telegram API.
         """
@@ -263,7 +263,7 @@ class Client:
         try:
             self.polling_task = self.loop.create_task(self._get_updates_loop())
             if not self._existing_loop:
-                _logger.debug("Running the event listeners indefinitely.")
+                _logger.debug("Starting the event listeners.")
                 self.loop.run_forever()
         except KeyboardInterrupt:
             pass
