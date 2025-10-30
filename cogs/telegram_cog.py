@@ -23,7 +23,7 @@ SOFTWARE.
 """
 
 from typing import List, Optional
-import datetime
+from datetime import datetime, UTC, timedelta
 import logging
 
 import toml
@@ -39,6 +39,15 @@ from database_handler import DatabaseHandler
 
 
 _logger = logging.getLogger(__name__)
+
+
+def get_current_timestamp() -> int:
+    """
+    Get the current UTC time as POSIX timestamp.
+
+    :return: POSIX timestamp.
+    """
+    return int(datetime.now(UTC).timestamp())
 
 
 class TelegramCog(commands.Cog):
@@ -139,7 +148,7 @@ class TelegramCog(commands.Cog):
         """
         threshold = self.message_cleanup_threshold
         _logger.debug(f"Running database auto cleanup task with timestamp threshold of {threshold} days.")
-        upper_threshold_limit = datetime.datetime.utcnow() - datetime.timedelta(days=threshold)
+        upper_threshold_limit = datetime.now(UTC) - timedelta(days=threshold)
         self.database_handler.delete_by_age(upper_threshold_limit)
 
     async def on_update(self, update: telegram.Update) -> None:
@@ -160,7 +169,7 @@ class TelegramCog(commands.Cog):
         else:
             return
 
-        update_age = int(datetime.datetime.now().timestamp()) - channel_post.date
+        update_age = get_current_timestamp() - channel_post.date
         if is_edit is False and update_age > self.update_age_threshold:
             _logger.warning(f"Got update older than configured threshold age of {self.update_age_threshold} seconds.")
             return
@@ -228,8 +237,7 @@ class TelegramCog(commands.Cog):
         :param tg_message_id: The Telegram message ID.
         :param discord_message: A Discord message corresponding the Telegram message.
         """
-        ts = int(datetime.datetime.utcnow().timestamp())
-        self.database_handler.add(tg_message_id, discord_message, ts)
+        self.database_handler.add(tg_message_id, discord_message, get_current_timestamp())
 
     async def send_discord_messages(
             self,
@@ -294,8 +302,7 @@ class TelegramCog(commands.Cog):
         for discord_message in discord_messages:
             new_discord_message = await discord_message.reply(content=content, embed=reply_embed, mention_author=False)
             self.serialize_discord_message(tg_message_id, new_discord_message)
-            utc_timestamp = int(datetime.datetime.utcnow().timestamp())
-            self.database_handler.update_ts(replied_tg_message_id, utc_timestamp)
+            self.database_handler.update_ts(replied_tg_message_id, get_current_timestamp())
 
     async def edit_discord_messages(
             self,
@@ -320,7 +327,7 @@ class TelegramCog(commands.Cog):
 
         for discord_message in discord_messages:
             await discord_message.edit(content=content, embed=new_embed, attachments=discord_message.attachments)
-            self.database_handler.update_ts(tg_message_id, int(datetime.datetime.utcnow().timestamp()))
+            self.database_handler.update_ts(tg_message_id, get_current_timestamp())
 
     async def get_discord_messages(self, tg_message_id: int) -> List[discord.Message]:
         """
