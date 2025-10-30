@@ -46,7 +46,7 @@ class TelegramCog(commands.Cog):
     """
 
     def __init__(self, bot: DiscordBot):
-        self.config_path: str = "config.toml"
+        self.config = Config("config.toml")
 
         self.database_name: str = Missing
         self.tg_channel_id: int = Missing
@@ -61,26 +61,23 @@ class TelegramCog(commands.Cog):
         self.bot = bot
         self.database_handler = DatabaseHandler(self.database_name)
 
-    def load_configuration(self) -> Config:
-        config = Config(self.config_path)
+    def load_configuration(self):
+        self.config.load()
 
-        self.tg_channel_id = config.channel_ids.telegram
-        self.discord_channel_ids = config.channel_ids.discord
-        self.prefer_telegram_usernames = config.preferences.prefer_telegram_usernames
-        self.send_orphans_as_new_message = config.preferences.send_orphans_as_new_message
-        self.update_age_threshold = config.preferences.update_age_threshold
-        self.message_cleanup_threshold = config.preferences.message_cleanup_threshold
-        self.database_name = config.preferences.database_path
+        self.tg_channel_id = self.config.channel_ids.telegram
+        self.discord_channel_ids = self.config.channel_ids.discord
 
-        return config
+        self.prefer_telegram_usernames = self.config.preferences.prefer_telegram_usernames
+        self.send_orphans_as_new_message = self.config.preferences.send_orphans_as_new_message
+        self.update_age_threshold = self.config.preferences.update_age_threshold
+        self.message_cleanup_threshold = self.config.preferences.message_cleanup_threshold
+        self.database_name = self.config.preferences.database_path
 
     async def cog_load(self) -> None:
         _logger.debug(f"Starting Telegram polling before loading {__name__}")
 
-        config = Config(self.config_path)
-        telegram_token = config.credentials.telegram
         try:
-            self.tg_bot.start(telegram_token)
+            self.tg_bot.start(self.config.credentials.telegram)
         except ValueError:
             _logger.error("Cannot start Telegram polling. Already polling.")
 
@@ -356,10 +353,10 @@ class TelegramCog(commands.Cog):
         """
         Reload Telegram and Discord channel IDs and preferences from the configuration files.
         """
-        configuration = self.load_configuration()
+        self.load_configuration()
 
         await ctx.send(f"Configuration reloaded! IDs and preferences are now as follows:\n "
-                       f"```toml\n{configuration}```")
+                       f"```toml\n{self.config}```")
 
 
 async def setup(bot: DiscordBot):
