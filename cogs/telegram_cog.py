@@ -355,7 +355,11 @@ class TelegramCog(commands.Cog):
         Reload Telegram and Discord channel IDs and preferences from the configuration files.
         """
         old_config = self.config.as_dict()
-        self.load_configuration()
+        try:
+            self.load_configuration()
+        except toml.decoder.TomlDecodeError:
+            await ctx.send("Invalid configuration file syntax. Cannot reload.")
+            return
 
         updated_sections = {}
         for section, section_dict in self.config.as_dict().items():
