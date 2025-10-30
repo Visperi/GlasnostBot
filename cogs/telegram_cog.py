@@ -352,7 +352,6 @@ class TelegramCog(commands.Cog):
         return messages
 
     @commands.is_owner()
-    @commands.dm_only()
     @commands.command("reload", description="Reload channel IDs and preferences in runtime.")
     async def reload_configuration(self, ctx: commands.Context):
         """
