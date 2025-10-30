@@ -367,6 +367,13 @@ class TelegramCog(commands.Cog):
                 if old_config[section][variable] != value:
                     updated_sections[variable] = value
 
+        if "activity_status" in updated_sections:
+            await self.bot.update_activity_status(self.config.bot_settings.activity_status)
+        if "dm_only_commands" in updated_sections:
+            self.bot.set_dm_only_check(self.config.bot_settings.dm_only_commands)
+        if "command_prefix" in updated_sections:
+            self.bot.set_command_prefix(self.config.bot_settings.command_prefix)
+
         if not updated_sections:
             await ctx.send("Configuration reloaded with no updates.")
         else:

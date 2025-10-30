@@ -23,9 +23,14 @@ as soon as they are received, but discord.py internal ratelimiting may affect th
 
 ## Configuration 
 
+Most of the bot behaviour can be controlled through configuration in `config.toml`. Discord command `reload` can be 
+used to reload the configuration at runtime. Bot restart is required only when changing API tokens.
+
 #### Credentials
 
 Remember to keep the tokens safe and never make them public. Anyone with the tokens has access to your bots.
+
+Changing bot credentials require a complete restart for the bot.
 
 |  variable  | value type | function           |
 |:----------:|:----------:|--------------------|
@@ -51,8 +56,6 @@ Remember to keep the tokens safe and never make them public. Anyone with the tok
 
 #### Channel IDs
 
-Channel IDs can be reloaded at runtime by using Discord command `reload`.
-
 |  variable  |    value type    | function                                                                                                                                                         |
 |:----------:|:----------------:|------------------------------------------------------------------------------------------------------------------------------------------------------------------|
 | `telegram` |     Integer      | ID of a Telegram channel to listen to. Always starts with `-100`. Only one channel is currently supported.                                                       |
@@ -60,18 +63,17 @@ Channel IDs can be reloaded at runtime by using Discord command `reload`.
 
 #### Bot settings
 
-Bot settings are used to control the bot behavior in Discord. Modifying these variables always require restart 
-for the bot.
+Bot settings are used to control the bot presence and behaviour in Discord.
 
-|      variable      |          value type           | function                                                                                                                                                                                                                                  |
-|:------------------:|:-----------------------------:|-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-|  `command_prefix`  | String or iterable of strings | Determines accepted command prefix(es) in Discord. For iterable prefixes, see discord.py [documentation](https://discordpy.readthedocs.io/en/stable/ext/commands/api.html?highlight=prefix#discord.ext.commands.Bot.command_prefix). |
-| `activity_status`  |            String             | Used to set the bot status message in Discord. Leave as an empty string for no Discord status.                                                                                                                                       |
-| `dm_only_commands` |            Boolean            | Accept bot commands in Discord only through direct messages. Otherwise the commands can be executed in any Discord channel the bot can read.                                                                                              |
+|      variable      |          value type           | function                                                                                                                                                                                                                                         |
+|:------------------:|:-----------------------------:|--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+|  `command_prefix`  | String or iterable of strings | Determines accepted command prefix(es) in Discord. For iterable prefixes, see the note in discord.py [documentation](https://discordpy.readthedocs.io/en/stable/ext/commands/api.html?highlight=prefix#discord.ext.commands.Bot.command_prefix). |
+| `activity_status`  |            String             | Used to set the bot status message in Discord. Leave as an empty string for no Discord status.                                                                                                                                                   |
+| `dm_only_commands` |            Boolean            | Accept bot commands in Discord only through direct messages. Otherwise the commands can be executed in any Discord channel the bot can read.                                                                                                     |
 
 #### Preferences
 
-Preferences are used to control the Discord message forwarding behaviour. These values can be reloaded at bot runtime by using discord command `reload`.
+Preferences are used to control the Discord message forwarding behaviour.
 
 |           variable            | value type | function                                                                                                                                                                                                       |
 |:-----------------------------:|:----------:|----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|

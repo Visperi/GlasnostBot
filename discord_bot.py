@@ -76,3 +76,15 @@ class DiscordBot(commands.Bot):
 
         if self.dm_only_commands:
             self.add_check(self.is_dm)
+
+    async def update_activity_status(self, new_status: str):
+        await self.change_presence(activity=discord.Game(new_status))
+
+    def set_dm_only_check(self, enabled: bool):
+        if enabled:
+            self.add_check(self.is_dm)
+        else:
+            self.remove_check(self.is_dm)
+
+    def set_command_prefix(self, prefixes: Union[str, Iterable[str]]):
+        self.command_prefix = prefixes
