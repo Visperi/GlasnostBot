@@ -22,11 +22,12 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 """
 
-import aiohttp
+from typing import List, Optional
 import datetime
 import logging
-from typing import List, Optional
 
+import toml
+import aiohttp
 import discord
 from discord.ext import commands, tasks
 from discord_bot import DiscordBot
@@ -353,10 +354,21 @@ class TelegramCog(commands.Cog):
         """
         Reload Telegram and Discord channel IDs and preferences from the configuration files.
         """
+        old_config = self.config.as_dict()
         self.load_configuration()
 
-        await ctx.send(f"Configuration reloaded! IDs and preferences are now as follows:\n "
-                       f"```toml\n{self.config}```")
+        updated_sections = {}
+        for section, section_dict in self.config.as_dict().items():
+            for variable, value in section_dict.items():
+                if old_config[section][variable] != value:
+                    updated_sections[variable] = value
+
+        if not updated_sections:
+            await ctx.send("Configuration reloaded with no updates.")
+        else:
+            current_config = f"```toml\n{self.config}```"
+            updated = f"Following variables were updated:\n```toml\n{toml.dumps(updated_sections)}```"
+            await ctx.send(f"Configuration reloaded. Configuration is now as follows:\n{current_config}\n{updated}")
 
 
 async def setup(bot: DiscordBot):
