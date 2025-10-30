@@ -78,7 +78,7 @@ class TelegramCog(commands.Cog):
     async def cog_load(self) -> None:
         _logger.debug(f"Starting Telegram polling before loading {__name__}")
 
-        config = Config("config.toml")
+        config = Config(self.config_path)
         telegram_token = config.credentials.telegram
         try:
             self.tg_bot.start(telegram_token)
