@@ -125,7 +125,7 @@ class _Credentials(__ConfigSection):
 
 class Config:
 
-    def __init__(self, config_path: str = "config.toml"):
+    def __init__(self, config_path: str):
         self.config_path = config_path
         self.credentials: _Credentials = Missing
         self.channel_ids: _ChannelIds = Missing
