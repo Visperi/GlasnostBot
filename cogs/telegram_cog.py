@@ -47,7 +47,6 @@ class TelegramCog(commands.Cog):
 
     def __init__(self, bot: DiscordBot):
         self.config_path: str = "config.toml"
-        self.load_configuration()
 
         self.database_name: str = Missing
         self.tg_channel_id: int = Missing
