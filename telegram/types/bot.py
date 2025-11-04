@@ -4,7 +4,7 @@ from typing_extensions import TypedDict, NotRequired
 
 from .chat import Chat
 from .user import User
-from .document import PhotoSize
+from .media import PhotoSize
 
 
 class WriteAccessAllowed(TypedDict):

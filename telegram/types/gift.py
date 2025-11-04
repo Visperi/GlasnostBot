@@ -3,7 +3,7 @@ from typing import List
 from typing_extensions import TypedDict, NotRequired
 
 from .message import MessageEntity
-from .document import Sticker
+from .media import Sticker
 from .chat import Chat
 
 

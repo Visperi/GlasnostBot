@@ -2,7 +2,7 @@ from typing import List
 
 from typing_extensions import TypedDict, NotRequired
 
-from .document import Document
+from .media import Document
 
 
 class BackgroundFill(TypedDict):

@@ -24,7 +24,7 @@ SOFTWARE.
 
 
 from typing import Union
-from .types.document import (
+from .types.media import (
     DocumentBase as DocumentBasePayload,
     Document as DocumentPayload,
     PhotoSize as PhotoSizePayload,
