@@ -26,23 +26,34 @@ SOFTWARE.
 from typing import List
 from typing_extensions import TypedDict, NotRequired
 from .user import User
+from .chat import Chat
 from .message import MessageEntity
 
 
-class PollOption(TypedDict):
+class PollOptionBase(TypedDict):
     text: str
+    text_entities: NotRequired[List[MessageEntity]]
+
+
+class InputPollOption(PollOptionBase):
+    text_parse_mode: NotRequired[str]
+
+
+class PollOption(PollOptionBase):
     voter_count: int
 
 
 class PollAnswer(TypedDict):
     poll_id: str
-    user: User
+    voter_chat: NotRequired[Chat]
+    user: NotRequired[User]
     option_ids: List[int]
 
 
 class Poll(TypedDict):
     id: str
     question: str
+    question_entities: NotRequired[List[MessageEntity]]
     options: List[PollOption]
     total_voter_count: int
     is_closed: bool
