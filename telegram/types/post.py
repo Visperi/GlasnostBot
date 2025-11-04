@@ -9,35 +9,39 @@ class SuggestedPostPrice(TypedDict):
     amount: int
 
 
+class SuggestedPostParameters(TypedDict):
+    price: NotRequired[SuggestedPostPrice]
+    send_date: NotRequired[int]
+
+
 class SuggestedPostInfo(TypedDict):
     state: str
     price: NotRequired[SuggestedPostPrice]
     send_date: NotRequired[int]
 
 
-class SuggestedPostApproved(TypedDict):
+class SuggestedPostEvent(TypedDict):
     suggested_post_message: NotRequired[Message]
+
+
+class SuggestedPostApproved(SuggestedPostEvent):
     price: NotRequired[SuggestedPostPrice]
     send_date: int
 
 
-class SuggestedPostApprovalFailed(TypedDict):
-    suggested_post_message: NotRequired[Message]
+class SuggestedPostApprovalFailed(SuggestedPostEvent):
     price: SuggestedPostPrice
 
 
-class SuggestedPostDeclined(TypedDict):
-    suggested_post_message: NotRequired[Message]
+class SuggestedPostDeclined(SuggestedPostEvent):
     comment: NotRequired[str]
 
 
-class SuggestedPostPaid(TypedDict):
-    suggested_post_message: NotRequired[Message]
+class SuggestedPostPaid(SuggestedPostEvent):
     currency: str
     amount: NotRequired[int]
     star_amount: NotRequired[StarAmount]
 
 
-class SuggestedPostRefunded(TypedDict):
-    suggested_post_message: NotRequired[Message]
+class SuggestedPostRefunded(SuggestedPostEvent):
     reason: str
