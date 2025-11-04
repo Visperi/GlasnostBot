@@ -47,7 +47,8 @@ from .media import (
     VideoNote,
     Voice,
     Sticker,
-    PaidMediaInfo
+    PaidMediaInfo,
+    Story
 )
 from .forum import (
     ForumTopicCreated,
@@ -111,11 +112,6 @@ class MessageEntity(TypedDict):
     user: NotRequired[User]
     language: NotRequired[str]
     custom_emoji_id: NotRequired[str]
-
-
-class Story(TypedDict):
-    chat: Chat
-    id: int
 
 
 class LinkPreviewOptions(TypedDict):

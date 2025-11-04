@@ -53,6 +53,13 @@ class PreCheckoutQuery(TypedDict):
     order_info: NotRequired[OrderInfo]
 
 
+class ShippingQuery(TypedDict):
+    id: str
+    from_: User
+    invoice_payload: str
+    shipping_address: ShippingAddress
+
+
 class Invoice(TypedDict):
     title: str
     description: str
