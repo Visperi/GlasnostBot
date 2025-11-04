@@ -10,6 +10,7 @@ from .chat import Chat
 class GiftBase(TypedDict):
     publisher_chat: NotRequired[Chat]
 
+
 class Gift(GiftBase):
     id: str
     sticker: Sticker
@@ -53,7 +54,6 @@ class UniqueGift(GiftBase):
     model: UniqueGiftModel
     symbol: UniqueGiftSymbol
     backdrop: UniqueGiftBackdrop
-
 
 
 class GiftInfoBase(TypedDict):

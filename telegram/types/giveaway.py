@@ -7,31 +7,28 @@ from .user import User
 from .message import Message
 
 
-class Giveaway(TypedDict):
-    chats: List[Chat]
+class GiveawayBase(TypedDict):
     winners_selection_date: int
     winner_count: int
     only_new_members: NotRequired[bool]
-    has_public_winners: NotRequired[bool]
     prize_description: NotRequired[str]
-    country_codes: NotRequired[List[str]]
     prize_star_count: NotRequired[int]
     premium_subscription_month_count: NotRequired[int]
 
 
-class GiveawayWinners(TypedDict):
+class Giveaway(GiveawayBase):
+    chats: List[Chat]
+    has_public_winners: NotRequired[bool]
+    country_codes: NotRequired[List[str]]
+
+
+class GiveawayWinners(GiveawayBase):
     chat: Chat
     giveaway_message_id: int
-    winners_selection_date: int
-    winner_count: int
     winners: List[User]
     additional_chat_count: NotRequired[int]
-    prize_star_count: NotRequired[int]
-    premium_subscription_month_count: NotRequired[int]
     unclaimed_prize_count: NotRequired[int]
-    only_new_members: NotRequired[bool]
     was_refunded: NotRequired[bool]
-    prize_description: NotRequired[str]
 
 
 class GiveawayCreated(TypedDict):
