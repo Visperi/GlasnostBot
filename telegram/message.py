@@ -29,9 +29,9 @@ from .chat import Chat
 from .user import User
 from .contact import Contact
 from .poll import Poll
-from .game import Game, Dice
+from .games import Game, Dice
 from .location import Location, Venue
-from .document import (
+from .media import (
     PhotoSize,
     Animation,
     Audio,

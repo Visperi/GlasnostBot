@@ -25,10 +25,10 @@ SOFTWARE.
 
 from typing import Union
 from .types.media import (
-    DocumentBase as DocumentBasePayload,
+    MediaBase as DocumentBasePayload,
     Document as DocumentPayload,
     PhotoSize as PhotoSizePayload,
-    PlaybackDocument as PlaybackDocumentPayload,
+    PlaybackMediaBase as PlaybackDocumentPayload,
     Audio as AudioPayload,
     Animation as AnimationPayload,
     Video as VideoPayload,

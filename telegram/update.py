@@ -27,7 +27,7 @@ from .types.update import Update as UpdatePayload
 from .message import Message
 from .poll import Poll, PollAnswer
 from .chat import ChatMemberUpdated, ChatJoinRequest
-from .inline_query import (
+from .inline import (
     InlineQuery,
     ChosenInlineResult,
     CallbackQuery,
