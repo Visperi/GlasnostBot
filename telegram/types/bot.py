@@ -4,9 +4,9 @@ from typing_extensions import TypedDict, NotRequired
 
 from .chat import Chat
 from .user import User
+from .document import PhotoSize
 
 
-# TODO: Is this module really necessary?
 class WriteAccessAllowed(TypedDict):
     from_request: NotRequired[bool]
     web_app_name: NotRequired[str]
@@ -43,3 +43,11 @@ class BusinessMessagesDeleted(TypedDict):
     business_connection_id: str
     chat: Chat
     message_ids: List[int]
+
+
+class ChatShared(TypedDict):
+    request_id: int
+    chat_id: int
+    title: NotRequired[str]
+    username: NotRequired[str]
+    photo: NotRequired[List[PhotoSize]]

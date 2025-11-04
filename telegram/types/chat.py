@@ -29,7 +29,6 @@ from typing import List
 from typing_extensions import TypedDict, NotRequired
 from .location import Location
 from .user import User
-from .document import PhotoSize
 from .background import BackgroundType
 
 
@@ -65,15 +64,6 @@ class Chat(TypedDict):
     last_name: NotRequired[str]
     is_forum: NotRequired[bool]
     is_direct_messages: NotRequired[bool]
-
-
-# TODO: MOVE
-class ChatShared(TypedDict):
-    request_id: int
-    chat_id: int
-    title: NotRequired[str]
-    username: NotRequired[str]
-    photo: NotRequired[List[PhotoSize]]
 
 
 class ChatInviteLink(TypedDict):
