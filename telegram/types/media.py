@@ -27,50 +27,72 @@ from typing import List
 
 from typing_extensions import TypedDict, NotRequired
 
+from .chat import Chat
 
-class DocumentBase(TypedDict):
+
+class MediaBase(TypedDict):
     file_id: str
     file_unique_id: str
     file_size: NotRequired[int]
 
 
-class PhotoSize(DocumentBase):
+# TODO: Rename to e.g. DownloadableFile
+class File(MediaBase):
+    """
+    A file ready to be downloaded. Type File in Telegram API.
+    """
+    file_path: NotRequired[str]
+
+
+class PhotoSize(MediaBase):
     width: int
     height: int
 
 
-class Document(DocumentBase):
+class FileMedia(TypedDict):
     thumbnail: NotRequired[PhotoSize]
+    mime_type: NotRequired[str]
     file_name: NotRequired[str]
-    mime_type: NotRequired[str]
 
 
-class PlaybackDocument(Document):
+class PlaybackMedia(MediaBase):
     duration: int
-    mime_type: NotRequired[str]
 
 
-class Audio(PlaybackDocument):
+class Document(MediaBase, FileMedia):
+    # Stores no additional data
+    pass
+
+
+class Video(FileMedia, PlaybackMedia):
+    width: int
+    height: int
+    cover: NotRequired[List[PhotoSize]]
+    start_timestamp: NotRequired[int]
+
+
+class Audio(FileMedia, PlaybackMedia):
     performer: NotRequired[str]
     title: NotRequired[str]
 
 
-class Animation(PlaybackDocument):
+class Animation(FileMedia, PlaybackMedia):
     width: int
     height: int
 
 
-class Video(PlaybackDocument):
-    width: int
-    height: int
-
-
-class VideoNote(PlaybackDocument):
+class VideoNote(FileMedia, PlaybackMedia):
     length: int
 
 
-class Voice(PlaybackDocument):
+class Voice(PlaybackMedia):
+    # Stores no additional data
     pass
+
+
+class Story(TypedDict):
+    chat: Chat
+    id: int
 
 
 class MaskPosition(TypedDict):
@@ -80,17 +102,35 @@ class MaskPosition(TypedDict):
     scale: float
 
 
-class Sticker(Document):
+class Sticker(MediaBase):
     type: str
     width: int
     height: int
     is_animated: bool
     is_video: bool
+    thumbnail: NotRequired[PhotoSize]
     emoji: NotRequired[str]
     set_name: NotRequired[str]
-    premium_animation: NotRequired[Document]
+    premium_animation: NotRequired[File]
     mask_position: NotRequired[MaskPosition]
     custom_emoji_id: NotRequired[str]
+    needs_repainting: NotRequired[bool]
+
+
+class StickerSet(TypedDict):
+    name: str
+    title: str
+    sticker_type: str
+    stickers: List[Sticker]
+    thumbnail: NotRequired[PhotoSize]
+
+
+class InputSticker(TypedDict):
+    sticker: str
+    format: str
+    emoji_list: List[str]
+    mask_position: NotRequired[MaskPosition]
+    keywords: NotRequired[List[str]]
 
 
 class PaidMedia(TypedDict):
