@@ -30,6 +30,7 @@ from .user import User
 from .location import Location
 from .message import MaybeInaccessibleMessage
 from .web_app import WebAppInfo
+from .payments import ShippingAddress, OrderInfo
 
 
 class InlineQueryBase(TypedDict):
@@ -106,3 +107,20 @@ class InlineKeyboardButton(TypedDict):
 
 class InlineKeyboardMarkup(TypedDict):
     inline_keyboard: List[InlineKeyboardButton]
+
+
+class PreCheckoutQuery(TypedDict):
+    id: str
+    from_: User
+    currency: str
+    total_amount: int
+    invoice_payload: str
+    shipping_option_id: NotRequired[str]
+    order_info: NotRequired[OrderInfo]
+
+
+class ShippingQuery(TypedDict):
+    id: str
+    from_: User
+    invoice_payload: str
+    shipping_address: ShippingAddress

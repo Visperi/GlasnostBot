@@ -24,7 +24,6 @@ SOFTWARE.
 
 
 from typing_extensions import TypedDict, NotRequired
-from .user import User
 
 
 class ShippingAddress(TypedDict):
@@ -41,23 +40,6 @@ class OrderInfo(TypedDict):
     phone_number: NotRequired[str]
     email: NotRequired[str]
     shipping_address: NotRequired[ShippingAddress]
-
-
-class PreCheckoutQuery(TypedDict):
-    id: str
-    from_: User
-    currency: str
-    total_amount: int
-    invoice_payload: str
-    shipping_option_id: NotRequired[str]
-    order_info: NotRequired[OrderInfo]
-
-
-class ShippingQuery(TypedDict):
-    id: str
-    from_: User
-    invoice_payload: str
-    shipping_address: ShippingAddress
 
 
 class Invoice(TypedDict):
