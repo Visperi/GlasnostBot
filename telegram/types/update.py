@@ -28,7 +28,7 @@ from .message import Message, MessageReactionUpdated, MessageReactionCountUpdate
 from .poll import Poll, PollAnswer
 from .chat import ChatJoinRequest, ChatMemberUpdated
 from .chat_boost import ChatBoostUpdated, ChatBoostRemoved
-from .bot import BusinessConnection, BusinessMessagesDeleted
+from .user import BusinessConnection, BusinessMessagesDeleted
 from .inline_query import (
     InlineQuery,
     ChosenInlineResult,

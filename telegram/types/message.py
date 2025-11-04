@@ -28,13 +28,12 @@ from typing import List
 
 from typing_extensions import TypedDict, NotRequired, TYPE_CHECKING
 
-from .user import User, UsersShared
+from .user import User, UsersShared, WriteAccessAllowed, ChatShared
 from .location import Location, Venue, ProximityAlertTriggered
 from .contact import Contact
 from .reaction import ReactionType, ReactionCount
 from .payments import SuccessfulPayment, RefundedPayment, Invoice
 from .gift import GiftInfo, UniqueGiftInfo
-from .bot import WriteAccessAllowed, ChatShared
 from .passport import PassportData
 from .chat_boost import ChatBoostAdded
 from .web_app import WebAppData
