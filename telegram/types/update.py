@@ -29,7 +29,7 @@ from .poll import Poll, PollAnswer
 from .chat import ChatJoinRequest, ChatMemberUpdated
 from .chat_boost import ChatBoostUpdated, ChatBoostRemoved
 from .user import BusinessConnection, BusinessMessagesDeleted
-from .inline_query import (
+from .inline import (
     InlineQuery,
     ChosenInlineResult,
     CallbackQuery,

@@ -37,7 +37,7 @@ from .gift import GiftInfo, UniqueGiftInfo
 from .passport import PassportData
 from .chat_boost import ChatBoostAdded
 from .web_app import WebAppData
-from .inline_query import InlineKeyboardMarkup
+from .inline import InlineKeyboardMarkup
 from .media import (
     Animation,
     Audio,

@@ -23,7 +23,7 @@ SOFTWARE.
 """
 
 
-from .types.inline_query import (
+from .types.inline import (
     InlineQueryBase as InlineQueryBasePayload,
     InlineQuery as InlineQueryPayload,
     CallbackQuery as CallbackQueryPayload,
