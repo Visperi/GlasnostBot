@@ -2,8 +2,15 @@ from typing import List
 
 from typing_extensions import TypedDict, NotRequired
 
-from .user import User
 from .chat import Chat
+from .user import User
+
+
+# TODO: Is this module really necessary?
+class WriteAccessAllowed(TypedDict):
+    from_request: NotRequired[bool]
+    web_app_name: NotRequired[str]
+    from_attachment_menu: NotRequired[bool]
 
 
 class BusinessBotRights(TypedDict):

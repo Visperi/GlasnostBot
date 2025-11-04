@@ -23,7 +23,11 @@ SOFTWARE.
 """
 
 
+from typing import List
+
 from typing_extensions import TypedDict, NotRequired
+
+from telegram import PhotoSize
 
 
 class User(TypedDict):
@@ -38,3 +42,16 @@ class User(TypedDict):
     can_join_groups: NotRequired[bool]
     can_read_all_group_messages: NotRequired[bool]
     supports_inline_queries: NotRequired[bool]
+
+
+class SharedUser(TypedDict):
+    user_id: int
+    first_name: NotRequired[str]
+    last_name: NotRequired[str]
+    username: NotRequired[str]
+    photo: NotRequired[List[PhotoSize]]
+
+
+class UsersShared(TypedDict):
+    request_id: int
+    users: List[SharedUser]

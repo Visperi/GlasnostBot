@@ -24,6 +24,7 @@ SOFTWARE.
 
 
 from typing_extensions import TypedDict, NotRequired
+from .user import User
 
 
 class Location(TypedDict):
@@ -43,3 +44,9 @@ class Venue(TypedDict):
     foursquare_type: NotRequired[str]
     google_place_id: NotRequired[str]
     google_place_type: NotRequired[str]
+
+
+class ProximityAlertTriggered(TypedDict):
+    traveler: User
+    watcher: User
+    distance: int

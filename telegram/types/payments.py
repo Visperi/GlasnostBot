@@ -51,3 +51,31 @@ class PreCheckoutQuery(TypedDict):
     invoice_payload: str
     shipping_option_id: NotRequired[str]
     order_info: NotRequired[OrderInfo]
+
+
+class Payment(TypedDict):
+    currency: str
+    total_amount: int
+    invoice_payload: str
+    telegram_payment_charge_id: str
+
+
+class Invoice(TypedDict):
+    title: str
+    description: str
+    start_parameter: str
+    currency: str
+    total_amount: int
+
+
+# TODO: How to differentiate successful payment and refunded payment?
+class SuccessfulPayment(Payment):
+    provider_payment_charge_id: str
+    subscription_expiration_date: NotRequired[int]
+    is_recurring: NotRequired[bool]
+    is_first_recurring: NotRequired[bool]
+    shipping_option_id: NotRequired[str]
+    order_info: NotRequired[OrderInfo]
+
+class RefundedPayment(Payment):
+    provider_payment_charge_id: NotRequired[str]

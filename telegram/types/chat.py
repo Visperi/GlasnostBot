@@ -24,9 +24,12 @@ SOFTWARE.
 
 
 from __future__ import annotations
-from typing_extensions import TypedDict, NotRequired, TYPE_CHECKING
+from typing import List, TYPE_CHECKING
+
+from typing_extensions import TypedDict, NotRequired
 from .location import Location
 from .user import User
+from .document import PhotoSize
 
 
 if TYPE_CHECKING:
@@ -82,6 +85,14 @@ class Chat(TypedDict):
     location: NotRequired[ChatLocation]
 
 
+class ChatShared(TypedDict):
+    request_id: int
+    chat_id: int
+    title: NotRequired[str]
+    username: NotRequired[str]
+    photo: NotRequired[List[PhotoSize]]
+
+
 class ChatInviteLink(TypedDict):
     invite_link: str
     creator: User
@@ -114,3 +125,24 @@ class ChatMemberUpdated(TypedDict):
     old_chat_member: ChatMember
     new_chat_member: ChatMember
     invite_link: NotRequired[ChatInviteLink]
+
+
+class ChatBackground(TypedDict):
+    type: BackgroundType
+
+
+class VideoChatScheduled(TypedDict):
+    start_date: int
+
+
+class VideoChatStarted(TypedDict):
+    # Holds no data
+    pass
+
+
+class VideoChatEnded(TypedDict):
+    duration: int
+
+
+class VideoChatParticipantsInvited(TypedDict):
+    users: List[User]

@@ -22,8 +22,10 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 """
 
+from typing import List
 
 from typing_extensions import TypedDict, NotRequired
+
 from .user import User
 from .location import Location
 from .message import Message
@@ -69,3 +71,7 @@ class ChosenInlineResult(TypedDict):
     location: NotRequired[Location]
     inline_message_id: NotRequired[str]
     query: NotRequired[str]
+
+
+class InlineKeyboardMarkup(TypedDict):
+    inline_keyboard: List[InlineKeyboardButton]

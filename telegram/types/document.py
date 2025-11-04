@@ -23,6 +23,8 @@ SOFTWARE.
 """
 
 
+from typing import List
+
 from typing_extensions import TypedDict, NotRequired
 
 
@@ -38,8 +40,9 @@ class PhotoSize(DocumentBase):
 
 
 class Document(DocumentBase):
-    thumb: NotRequired[PhotoSize]
+    thumbnail: NotRequired[PhotoSize]
     file_name: NotRequired[str]
+    mime_type: NotRequired[str]
 
 
 class PlaybackDocument(Document):
@@ -88,3 +91,26 @@ class Sticker(Document):
     premium_animation: NotRequired[Document]
     mask_position: NotRequired[MaskPosition]
     custom_emoji_id: NotRequired[str]
+
+
+class PaidMedia(TypedDict):
+    type: str
+
+
+class PaidMediaPreview(PaidMedia):
+    width: NotRequired[int]
+    height: NotRequired[int]
+    duration: NotRequired[int]
+
+
+class PaidMediaPhoto(PaidMedia):
+    photo: List[PhotoSize]
+
+
+class PaidMediaVideo(PaidMedia):
+    video: Video
+
+
+class PaidMediaInfo(TypedDict):
+    star_count: int
+    paid_media: List[PaidMedia]

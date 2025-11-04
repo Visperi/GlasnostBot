@@ -41,3 +41,7 @@ class ChatBoostRemoved(TypedDict):
 class ChatBoostUpdated(TypedDict):
     chat: Chat
     boost: ChatBoost
+
+
+class ChatBoostAdded(TypedDict):
+    boost_count: int

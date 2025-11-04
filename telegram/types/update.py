@@ -24,9 +24,11 @@ SOFTWARE.
 
 
 from typing_extensions import TypedDict, NotRequired
-from .message import Message
+from .message import Message, MessageReactionUpdated, MessageReactionCountUpdated
 from .poll import Poll, PollAnswer
 from .chat import ChatJoinRequest, ChatMemberUpdated
+from .chat_boost import ChatBoostUpdated, ChatBoostRemoved
+from .bot import BusinessConnection, BusinessMessagesDeleted
 from .inline_query import (
     InlineQuery,
     ChosenInlineResult,
@@ -42,6 +44,12 @@ class Update(TypedDict):
     edited_message: NotRequired[Message]
     channel_post: NotRequired[Message]
     edited_channel_post: NotRequired[Message]
+    business_connection: NotRequired[BusinessConnection]
+    business_message: NotRequired[Message]
+    edited_business_message: NotRequired[Message]
+    deleted_business_messages: NotRequired[BusinessMessagesDeleted]
+    message_reaction: NotRequired[MessageReactionUpdated]
+    message_reaction_count: NotRequired[MessageReactionCountUpdated]
     inline_query: NotRequired[InlineQuery]
     chosen_inline_result: NotRequired[ChosenInlineResult]
     callback_query: NotRequired[CallbackQuery]
@@ -52,3 +60,5 @@ class Update(TypedDict):
     my_chat_member: NotRequired[ChatMemberUpdated]
     chat_member: NotRequired[ChatMemberUpdated]
     chat_join_request: NotRequired[ChatJoinRequest]
+    chat_boost: NotRequired[ChatBoostUpdated]
+    removed_chat_boost: NotRequired[ChatBoostRemoved]
