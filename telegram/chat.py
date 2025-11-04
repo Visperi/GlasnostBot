@@ -23,7 +23,6 @@ SOFTWARE.
 """
 
 
-from typing_extensions import TYPE_CHECKING
 from .location import Location
 from .user import User
 from .types.chat import (
@@ -37,10 +36,6 @@ from .types.chat import (
     ChatMemberUpdated as ChatMemberUpdatedPayload
 )
 from .utils import flatten_handlers
-
-
-if TYPE_CHECKING:
-    from .message import Message
 
 
 class ChatPhoto:
@@ -130,43 +125,6 @@ class Chat:
         self.username = payload.get("username")
         self.first_name = payload.get("first_name")
         self.last_name = payload.get("last_name")
-        self.photo = payload.get("photo")
-        self.bio = payload.get("bio")
-        self.has_private_forwards = payload.get("has_private_forwards", False)
-        self.has_restricted_voice_and_video_messages = payload.get("has_restricted_voice_and_video_messages", False)
-        self.join_to_send_messages = payload.get("join_to_send_messages", False)
-        self.join_by_request = payload.get("join_by_request", False)
-        self.description = payload.get("description")
-        self.invite_link = payload.get("invite_link")
-        self.pinned_message = payload.get("pinned_message")
-        self.permissions = payload.get("permissions")
-        self.slow_mode_delay = payload.get("slow_mode_delay", -1)
-        self.message_auto_delete_time = payload.get("message_auto_delete_time", -1)
-        self.has_protected_content = payload.get("has_protected_content", False)
-        self.sticker_set_name = payload.get("sticker_set_name")
-        self.can_set_sticker_set = payload.get("can_set_sticker_set", False)
-        self.linked_chat_id = payload.get("linked_chat_id", -1)
-        self.location = payload.get("location")
-
-        for key, func in self._HANDLERS:
-            try:
-                value = payload[key]  # type: ignore
-            except KeyError:
-                continue
-            else:
-                func(self, value)
-
-    def _handle_photo(self, value):
-        self.photo = ChatPhoto(value)
-
-    def _handle_pinned_message(self, value):
-        self.pinned_message = Message(value)
-
-    def _handle_permissions(self, value):
-        self.permissions = ChatPermissions(value)
-
-    def _handle_location(self, value):
-        self.location = ChatLocation(value)
 
 
 class ChatInviteLink:
