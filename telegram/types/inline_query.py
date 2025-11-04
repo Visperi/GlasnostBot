@@ -28,8 +28,8 @@ from typing_extensions import TypedDict, NotRequired
 
 from .user import User
 from .location import Location
-from .message import Message
-from .payments import ShippingAddress, OrderInfo
+from .message import MaybeInaccessibleMessage
+from .web_app import WebAppInfo
 
 
 class InlineQueryBase(TypedDict):
@@ -45,24 +45,19 @@ class InlineQuery(InlineQueryBase):
 
 
 class CallbackQuery(InlineQueryBase):
-    message: NotRequired[Message]
+    message: NotRequired[MaybeInaccessibleMessage]
     inline_message_id: NotRequired[str]
     chat_instance: str
     data: NotRequired[str]
     game_short_name: NotRequired[str]
 
 
-class ShippingQuery(InlineQueryBase):
-    invoice_payload: str
-    shipping_address: ShippingAddress
-
-
-class PreCheckoutQuery(InlineQueryBase):
-    currency: str
-    total_amount: int
-    invoice_payload: str
-    shipping_option_id: NotRequired[str]
-    order_info: NotRequired[OrderInfo]
+class AnswerCallbackQuery(TypedDict):
+    callback_query_id: str
+    text: NotRequired[str]
+    show_alert: NotRequired[bool]
+    url: NotRequired[str]
+    cache_time: NotRequired[int]
 
 
 class ChosenInlineResult(TypedDict):
@@ -71,6 +66,42 @@ class ChosenInlineResult(TypedDict):
     location: NotRequired[Location]
     inline_message_id: NotRequired[str]
     query: NotRequired[str]
+
+
+class LoginUrl(TypedDict):
+    url: str
+    forward_text: NotRequired[str]
+    bot_username: NotRequired[str]
+    request_write_access: NotRequired[bool]
+
+
+class SwitchInlineQueryChosenChat(TypedDict):
+    query: NotRequired[str]
+    allow_user_chats: NotRequired[bool]
+    allow_bot_chats: NotRequired[bool]
+    allow_group_chats: NotRequired[bool]
+    allow_channel_posts: NotRequired[bool]
+
+
+class CopyTextButton(TypedDict):
+    text: str
+
+
+class CallbackGame(TypedDict):
+    pass
+
+
+class InlineKeyboardButton(TypedDict):
+    text: str
+    url: NotRequired[str]
+    callback_data: NotRequired[str]
+    web_app: NotRequired[WebAppInfo]
+    login_url: NotRequired[LoginUrl]
+    switch_inline_query: NotRequired[str]
+    switch_inline_query_current_chat: NotRequired[SwitchInlineQueryChosenChat]
+    copy_text: NotRequired[CopyTextButton]
+    callback_game: NotRequired[CallbackGame]
+    pay: NotRequired[bool]
 
 
 class InlineKeyboardMarkup(TypedDict):
