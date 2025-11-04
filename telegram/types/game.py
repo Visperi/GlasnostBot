@@ -40,4 +40,4 @@ class Game(TypedDict):
     photo: List[PhotoSize]
     text: NotRequired[str]
     text_entities: NotRequired[List[MessageEntity]]
-    animation: Animation
+    animation: NotRequired[Animation]
