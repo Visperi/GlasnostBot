@@ -34,7 +34,7 @@ from .contact import Contact
 from .reaction import ReactionType, ReactionCount
 from .payments import SuccessfulPayment, RefundedPayment, Invoice
 from .gift import GiftInfo, UniqueGiftInfo
-from .bot import WriteAccessAllowed
+from .bot import WriteAccessAllowed, ChatShared
 from .passport import PassportData
 from .chat_boost import ChatBoostAdded
 from .web_app import WebAppData
@@ -59,7 +59,6 @@ from .forum import (
     GeneralForumTopicUnhidden
 )
 from .chat import (
-    ChatShared,
     ChatBackground,
     VideoChatStarted,
     VideoChatEnded,
@@ -89,7 +88,7 @@ from .post import (
 
 if TYPE_CHECKING:
     from .chat import Chat
-    from .game import Game, Dice
+    from .games import Game, Dice
     from .poll import Poll
 
 

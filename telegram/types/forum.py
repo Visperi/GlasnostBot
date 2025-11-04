@@ -13,6 +13,7 @@ class ForumTopicEdited(TypedDict):
     name: NotRequired[str]
     icon_custom_emoji_id: NotRequired[str]
 
+
 # TODO: How to represent the 4 below empty classes properly?
 class ForumTopicClosed(TypedDict):
     pass

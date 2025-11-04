@@ -25,7 +25,7 @@ SOFTWARE.
 
 from typing_extensions import TYPE_CHECKING
 from .document import PhotoSize
-from .types.game import (
+from .types.games import (
     Game as GamePayload,
     Dice as DicePayload
 )
