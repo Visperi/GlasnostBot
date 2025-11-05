@@ -23,42 +23,78 @@ SOFTWARE.
 """
 
 
-from typing_extensions import TYPE_CHECKING
 from .types.poll import (
     PollOption as PollOptionPayload,
     PollAnswer as PollAnswerPayload,
-    Poll as PollPayload
+    Poll as PollPayload,
+    PollOptionBase as PollOptionBasePayload,
+    InputPollOption as InputPollOptionPayload
 )
+from .message import MessageEntity
+from .user import User
+from .chat import Chat
 
 
-if TYPE_CHECKING:
-    from .message import MessageEntity
-
-
-class PollOption:
+class PollOptionBase:
 
     __slots__ = (
         "text",
+        "text_entities"
+    )
+
+    def __init__(self, payload: PollOptionBasePayload):
+        self.text = payload["text"]
+
+        try:
+            self.text_entities = [MessageEntity(e) for e in payload["text_entities"]]
+        except KeyError:
+            self.text_entities = []
+
+
+class PollOption(PollOptionBase):
+
+    __slots__ = (
         "voter_count"
     )
 
     def __init__(self, payload: PollOptionPayload):
-        self.text = payload["text"]
+        super().__init__(payload)
         self.voter_count = payload["voter_count"]
+
+
+class InputPollOption(PollOptionBase):
+
+    __slots__ = (
+        "text_parse_mode"
+    )
+
+    def __init__(self, payload: InputPollOptionPayload):
+        super().__init__(payload)
+        self.text_parse_mode = payload.get("text_parse_mode")
 
 
 class PollAnswer:
 
     __slots__ = (
         "poll_id",
+        "voter_chat",
         "user",
         "option_ids"
     )
 
     def __init__(self, payload: PollAnswerPayload):
         self.poll_id = payload["poll_id"]
-        self.user = payload["user"]
         self.option_ids = payload["option_ids"]
+
+        try:
+            self.voter_chat = Chat(payload["voter_chat"])
+        except KeyError:
+            self.voter_chat = None
+
+        try:
+            self.user = User(payload["user"])
+        except KeyError:
+            self.user = None
 
 
 class Poll:
@@ -66,6 +102,7 @@ class Poll:
     __slots__ = (
         "id",
         "question",
+        "question_entities",
         "options",
         "total_voter_count",
         "is_closed",
@@ -80,11 +117,9 @@ class Poll:
     )
 
     def __init__(self, payload: PollPayload):
-        self._update(payload)
-
-    def _update(self, payload: PollPayload):
         self.id = payload["id"]
         self.question = payload["question"]
+        self.question_entities = payload.get("question_entities", [])
         self.options = [PollOption(o) for o in payload["options"]]
         self.total_voter_count = payload["total_voter_count"]
         self.is_closed = payload["is_closed"]
@@ -93,10 +128,9 @@ class Poll:
         self.allows_multiple_answers = payload["allows_multiple_answers"]
         self.correct_option_id = payload.get("correct_option_id", -1)
         self.explanation = payload.get("explanation")
+        self.explanation_entities = payload.get("explanation_entities", [])
         self.open_period = payload.get("open_period", -1)
         self.close_date = payload.get("close_date", -1)
 
-        try:
-            self.explanation_entities = [MessageEntity(e) for e in payload["explanation_entities"]]
-        except KeyError:
-            self.explanation_entities = []
+        self.question_entities = [MessageEntity(e) for e in self.question_entities]
+        self.explanation_entities = [MessageEntity(e) for e in self.explanation_entities]
