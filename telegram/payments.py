@@ -23,11 +23,13 @@ SOFTWARE.
 """
 
 
-from .user import User
 from .types.payments import (
     ShippingAddress as ShippingAddressPayload,
     OrderInfo as OrderInfoPayload,
-    PreCheckoutQuery as PreCheckoutQueryPayload
+    Invoice as InvoicePayload,
+    Payment as PaymentPayload,
+    SuccessfulPayment as SuccessfulPaymentPayload,
+    RefundedPayment as RefundedPaymentPayload
 )
 
 
@@ -43,9 +45,6 @@ class ShippingAddress:
     )
 
     def __init__(self, payload: ShippingAddressPayload):
-        self._update(payload)
-
-    def _update(self, payload: ShippingAddressPayload):
         self.country_code = payload["country_code"]
         self.state = payload["state"]
         self.city = payload["city"]
@@ -64,9 +63,6 @@ class OrderInfo:
     )
 
     def __init__(self, payload: OrderInfoPayload):
-        self._update(payload)
-
-    def _update(self, payload: OrderInfoPayload):
         self.name = payload.get("name")
         self.phone_number = payload.get("phone_number")
         self.email = payload.get("email")
@@ -77,32 +73,71 @@ class OrderInfo:
             self.shipping_address = None
 
 
-class PreCheckoutQuery:
+class Invoice:
 
     __slots__ = (
-        "id",
-        "from_",
+        "title",
+        "description",
+        "start_parameter",
+        "currency",
+        "total_amount"
+    )
+
+    def __init__(self, payload: InvoicePayload):
+        self.title = payload["title"]
+        self.description = payload["description"]
+        self.start_parameter = payload["start_parameter"]
+        self.currency = payload["currency"]
+        self.total_amount = payload["total_amount"]
+
+
+class Payment:
+
+    __slots__ = (
         "currency",
         "total_amount",
         "invoice_payload",
+        "telegram_payment_charge_id"
+    )
+
+    def __init__(self, payload: PaymentPayload):
+        self.currency = payload["currency"]
+        self.total_amount = payload["total_amount"]
+        self.invoice_payload = payload["invoice_payload"]
+        self.telegram_payment_charge_id = payload["telegram_payment_charge_id"]
+
+
+class SuccessfulPayment(Payment):
+
+    __slots__ = (
+        "provider_payment_charge_id",
+        "subscription_expiration_date",
+        "is_recurring",
+        "is_first_recurring",
         "shipping_option_id",
         "order_info"
     )
 
-    def __init__(self, payload: PreCheckoutQueryPayload):
-        self._update(payload)
-
-    # TODO: Figure out how to read variable 'from' to 'from_' from payload!
-    # noinspection Duplicates
-    def _update(self, payload: PreCheckoutQueryPayload):
-        self.id = payload["id"]
-        self.from_ = User(payload["from_"])
-        self.currency = payload["currency"]
-        self.total_amount = payload["total_amount"]
-        self.invoice_payload = payload["invoice_payload"]
+    def __init__(self, payload: SuccessfulPaymentPayload):
+        super().__init__(payload)
+        self.provider_payment_charge_id = payload["provider_payment_charge_id"]
+        self.subscription_expiration_date = payload.get("subscription_expiration_date")
+        self.is_recurring = payload.get("is_recurring", False)
+        self.is_first_recurring = payload.get("is_first_recurring", False)
         self.shipping_option_id = payload.get("shipping_option_id")
 
         try:
             self.order_info = OrderInfo(payload["order_info"])
         except KeyError:
             self.order_info = None
+
+
+class RefundedPayment(Payment):
+
+    __slots__ = (
+        "provider_payment_charge_id"
+    )
+
+    def __init__(self, payload: RefundedPaymentPayload):
+        super().__init__(payload)
+        self.provider_payment_charge_id = payload.get("provider_payment_charge_id")
