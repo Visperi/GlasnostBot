@@ -52,9 +52,9 @@ class Game:
     def _update(self, payload: GamePayload):
         self.title = payload["title"]
         self.description = payload["title"]
-        self.photo = [PhotoSize(p) for p in payload["photo"]]
+        self.photo = [PhotoSize(p) for p in payload.get("photo", [])]
         self.text = payload.get("text")
-        self.animation = payload["animation"]
+        self.animation = payload.get("animation")
 
         try:
             self.text_entities = [MessageEntity(t) for t in payload["text_entities"]]
