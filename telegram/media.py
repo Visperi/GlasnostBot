@@ -23,23 +23,34 @@ SOFTWARE.
 """
 
 
-from typing import Union
+from .utils import flatten_handlers
 from .types.media import (
-    MediaBase as DocumentBasePayload,
+    MediaBase as MediaBasePayload,
     Document as DocumentPayload,
     PhotoSize as PhotoSizePayload,
-    PlaybackMediaBase as PlaybackDocumentPayload,
     Audio as AudioPayload,
     Animation as AnimationPayload,
     Video as VideoPayload,
     VideoNote as VideoNotePayload,
     Voice as VoicePayload,
     MaskPosition as MaskPositionPayload,
-    Sticker as StickerPayload
+    Sticker as StickerPayload,
+    File as FilePayload,
+    FileMedia as FileMediaPayload,
+    PlaybackMedia as PlaybackMediaPayload,
+    Story as StoryPayload,
+    StickerSet as StickerSetPayload,
+    InputSticker as InputStickerPayload,
+    PaidMedia as PaidMediaPayload,
+    PaidMediaPreview as PaidMediaPreviewPayload,
+    PaidMediaPhoto as PaidMediaPhotoPayload,
+    PaidMediaVideo as PaidMediaVideoPayload,
+    PaidMediaInfo as PaidMediaInfoPayload
 )
+from .chat import Chat
 
 
-class DocumentBase:
+class MediaBase:
 
     __slots__ = (
         "file_id",
@@ -47,13 +58,24 @@ class DocumentBase:
         "file_size"
     )
 
-    def __init__(self, payload: DocumentBasePayload):
+    def __init__(self, payload: MediaBasePayload):
         self.file_id = payload["file_id"]
         self.file_unique_id = payload["file_unique_id"]
         self.file_size = payload.get("file_size", -1)
 
 
-class PhotoSize(DocumentBase):
+class File(MediaBase):
+
+    __slots__ = (
+        "file_path"
+    )
+
+    def __init__(self, payload: FilePayload):
+        super().__init__(payload)
+        self.file_path = payload.get("file_path")
+
+
+class PhotoSize(MediaBase):
 
     __slots__ = (
         "width",
@@ -62,50 +84,46 @@ class PhotoSize(DocumentBase):
 
     def __init__(self, payload: PhotoSizePayload):
         super().__init__(payload)
-        self._update(payload)
-
-    def _update(self, payload: PhotoSizePayload):
         self.width = payload["width"]
         self.height = payload["height"]
 
 
-class Document(DocumentBase):
+class FileMedia:
 
     __slots__ = (
-        "thumb",
+        "thumbnail",
+        "mime_type",
         "file_name"
     )
 
-    def __init__(self, payload: DocumentPayload):
-        super().__init__(payload)
-        self._update(payload)
-
-    def _update(self, payload: DocumentPayload):
+    def __init__(self, payload: FileMediaPayload):
+        self.mime_type = payload.get("mime_type")
         self.file_name = payload.get("file_name")
 
         try:
-            self.thumb = PhotoSize(payload["thumb"])
+            self.thumbnail = PhotoSize(payload["thumbnail"])
         except KeyError:
-            self.thumb = None
+            self.thumbnail = None
 
 
-class PlaybackDocument(Document):
+class PlaybackMedia(MediaBase):
 
     __slots__ = (
-        "duration",
-        "mime_type"
+        "duration"
     )
 
-    def __init__(self, payload: PlaybackDocumentPayload):
+    def __init__(self, payload: PlaybackMediaPayload):
         super().__init__(payload)
-        self._update(payload)
-
-    def _update(self, payload: PlaybackDocumentPayload):
         self.duration = payload["duration"]
-        self.mime_type = payload.get("mime_type")
 
 
-class Audio(PlaybackDocument):
+class Document(MediaBase, FileMedia):
+
+    def __init__(self, payload: DocumentPayload):
+        super().__init__(payload)
+
+
+class Audio(FileMedia, PlaybackMedia):
 
     __slots__ = (
         "performer",
@@ -114,51 +132,67 @@ class Audio(PlaybackDocument):
 
     def __init__(self, payload: AudioPayload):
         super().__init__(payload)
-        self._update(payload)
-
-    def _update(self, payload: AudioPayload):
         self.performer = payload.get("performer")
         self.title = payload.get("title")
 
 
-class VisualPlaybackDocument(PlaybackDocument):
+class Video(FileMedia, PlaybackMedia):
+
+    __slots__ = (
+        "width",
+        "height",
+        "cover",
+        "start_timestamp"
+    )
+
+    def __init__(self, payload: VideoPayload):
+        super().__init__(payload)
+        self.width = payload["width"]
+        self.height = payload["height"]
+        self.cover = [PhotoSize(p) for p in payload.get("cover", [])]
+        self.start_timestamp = payload.get("start_timestamp", 0)
+
+
+class Animation(FileMedia, PlaybackMedia):
 
     __slots__ = (
         "width",
         "height"
     )
 
-    def __init__(self, payload: Union[AnimationPayload, VideoPayload]):
+    def __init__(self, payload: AnimationPayload):
         super().__init__(payload)
         self.width = payload["width"]
         self.height = payload["height"]
 
 
-class Animation(VisualPlaybackDocument):
+class VideoNote(FileMedia, PlaybackMedia):
 
-    def __init__(self, payload: AnimationPayload):
-        super().__init__(payload)
-
-
-class Video(VisualPlaybackDocument):
-
-    def __init__(self, payload: VideoPayload):
-        super().__init__(payload)
-
-
-class VideoNote(PlaybackDocument):
-
-    __slots__ = "length"
+    __slots__ = (
+        "length"
+    )
 
     def __init__(self, payload: VideoNotePayload):
         super().__init__(payload)
         self.length = payload["length"]
 
 
-class Voice(PlaybackDocument):
+class Voice(PlaybackMedia):
 
     def __init__(self, payload: VoicePayload):
         super().__init__(payload)
+
+
+class Story:
+
+    __slots__ = (
+        "chat",
+        "id"
+    )
+
+    def __init__(self, payload: StoryPayload):
+        self.chat = Chat(payload["chat"])
+        self.id = payload["id"]
 
 
 class MaskPosition:
@@ -171,16 +205,14 @@ class MaskPosition:
     )
 
     def __init__(self, payload: MaskPositionPayload):
-        self._update(payload)
-
-    def _update(self, payload: MaskPositionPayload):
         self.point = payload["point"]
         self.x_shift = payload["x_shift"]
         self.y_shift = payload["y_shift"]
         self.scale = payload["scale"]
 
 
-class Sticker(Document):
+class Sticker(MediaBase):
+    _HANDLERS = []
 
     __slots__ = (
         "type",
@@ -188,37 +220,149 @@ class Sticker(Document):
         "height",
         "is_animated",
         "is_video",
+        "thumbnail",
         "emoji",
         "set_name",
         "premium_animation",
         "mask_position",
-        "custom_emoji_id"
+        "custom_emoji_id",
+        "needs_repainting"
     )
 
     def __init__(self, payload: StickerPayload):
         super().__init__(payload)
-        self._update(payload)
 
-    def _update(self, payload: StickerPayload):
         self.type = payload["type"]
         self.width = payload["width"]
         self.height = payload["height"]
         self.is_animated = payload["is_animated"]
         self.is_video = payload["is_video"]
+        self.thumbnail = payload.get("thumbnail")
         self.emoji = payload.get("emoji")
         self.set_name = payload.get("set_name")
         self.premium_animation = payload.get("premium_animation")
         self.mask_position = payload.get("mask_position")
         self.custom_emoji_id = payload.get("custom_emoji_id")
+        self.needs_repainting = payload.get("needs_repainting", False)
 
-        for slot in ("premium_animation", "mask_position"):
+        for key, func in self._HANDLERS:
             try:
-                getattr(self, f"_handle_{slot}")(payload[slot])  # type: ignore
+                value = payload[key]  # type: ignore
             except KeyError:
                 continue
+            else:
+                func(self, value)
 
     def _handle_premium_animation(self, value):
         self.premium_animation = Document(value)
 
     def _handle_mask_position(self, value):
         self.mask_position = MaskPosition(value)
+
+    def _handle_thumbnail(self, value):
+        self.thumbnail = [PhotoSize(p) for p in value]
+
+
+class StickerSet:
+
+    __slots__ = (
+        "name",
+        "title",
+        "sticker_type",
+        "stickers",
+        "thumbnail"
+    )
+
+    def __init__(self, payload: StickerSetPayload):
+        self.name = payload["name"]
+        self.title = payload["title"]
+        self.sticker_type = payload["sticker_type"]
+        self.stickers = [Sticker(s) for s in payload["stickers"]]
+
+        try:
+            self.thumbnail = payload["thumbnail"]
+        except KeyError:
+            self.thumbnail = None
+
+
+@flatten_handlers
+class InputSticker:
+    _HANDLERS = []
+
+    __slots__ = (
+        "sticker",
+        "format",
+        "emoji_list",
+        "mask_position",
+        "keywords"
+    )
+
+    def __init__(self, payload: InputStickerPayload):
+        self.sticker = payload["sticker"]
+        self.format = payload["format"]
+        self.emoji_list = payload["emoji_list"]
+        self.keywords = payload.get("keywords")
+
+        try:
+            self.mask_position = MaskPosition(payload["mask_position"])
+        except KeyError:
+            self.mask_position = None
+
+
+class PaidMedia:
+
+    __slots__ = (
+        "type"
+    )
+
+    def __init__(self, payload: PaidMediaPayload):
+        self.type = payload["type"]
+
+
+class PaidMediaPreview(PaidMedia):
+
+    __slots__ = (
+        "width",
+        "height",
+        "duration"
+    )
+
+    def __init__(self, payload: PaidMediaPreviewPayload):
+        super().__init__(payload)
+        self.width = payload.get("width")
+        self.height = payload.get("height")
+        self.duration = payload.get("duration")
+
+
+class PaidMediaPhoto(PaidMedia):
+
+    __slots__ = (
+        "photo"
+    )
+
+    def __init__(self, payload: PaidMediaPhotoPayload):
+        super().__init__(payload)
+        self.photo = [PhotoSize(p) for p in payload["photo"]]
+
+
+class PaidMediaVideo(PaidMedia):
+
+    __slots__ = (
+        "video"
+    )
+
+    def __init__(self, payload: PaidMediaVideoPayload):
+        super().__init__(payload)
+        self.video = Video(payload["video"])
+
+
+class PaidMediaInfo:
+
+    __slots__ = (
+        "star_count",
+        "paid_media"
+    )
+
+    def __init__(self, payload: PaidMediaInfoPayload):
+        self.star_count = payload["star_count"]
+        self.paid_media = [PaidMedia(p) for p in payload["paid_media"]]
