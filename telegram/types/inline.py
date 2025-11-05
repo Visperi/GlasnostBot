@@ -109,9 +109,7 @@ class InlineKeyboardMarkup(TypedDict):
     inline_keyboard: List[InlineKeyboardButton]
 
 
-class PreCheckoutQuery(TypedDict):
-    id: str
-    from_: User
+class PreCheckoutQuery(InlineQueryBase):
     currency: str
     total_amount: int
     invoice_payload: str
@@ -119,8 +117,6 @@ class PreCheckoutQuery(TypedDict):
     order_info: NotRequired[OrderInfo]
 
 
-class ShippingQuery(TypedDict):
-    id: str
-    from_: User
+class ShippingQuery(InlineQueryBase):
     invoice_payload: str
     shipping_address: ShippingAddress
