@@ -83,7 +83,7 @@ class ChatInviteLink(TypedDict):
 class ChatJoinRequest(TypedDict):
     chat: Chat
     from_: User
-    user_cht_id: int
+    user_chat_id: int
     date: int
     bio: NotRequired[str]
     invite_link: NotRequired[ChatInviteLink]

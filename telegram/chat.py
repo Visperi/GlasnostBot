@@ -33,9 +33,12 @@ from .types.chat import (
     ChatInviteLink as ChatInviteLinkPayload,
     ChatPermissions as ChatPermissionsPayload,
     ChatJoinRequest as ChatJoinRequestPayload,
-    ChatMemberUpdated as ChatMemberUpdatedPayload
+    ChatMemberUpdated as ChatMemberUpdatedPayload,
+    ChatBackground as ChatBackgroundPayload,
+    VideoChatScheduled as VideoChatScheduledPayload,
+    VideoChatEnded as VideoChatEndedPayload,
+    VideoChatParticipantsInvited as VideoChatParticipantsInvitedPayload
 )
-from .utils import flatten_handlers
 
 
 class ChatPhoto:
@@ -85,9 +88,7 @@ class ChatPermissions:
         self.can_pin_messages = payload.get("can_pin_messages", False)
 
 
-@flatten_handlers
 class Chat:
-    _HANDLERS = []
 
     __slots__ = (
         "id",
@@ -96,29 +97,11 @@ class Chat:
         "username",
         "first_name",
         "last_name",
-        "photo",
-        "bio",
-        "has_private_forwards",
-        "has_restricted_voice_and_video_messages",
-        "join_to_send_messages",
-        "join_by_request",
-        "description",
-        "invite_link",
-        "pinned_message",
-        "permissions",
-        "slow_mode_delay",
-        "message_auto_delete_time",
-        "has_protected_content",
-        "sticker_set_name",
-        "can_set_sticker_set",
-        "linked_chat_id",
-        "location"
+        "is_forum",
+        "is_direct_messages"
     )
 
     def __init__(self, payload: ChatPayload) -> None:
-        self._update(payload)
-
-    def _update(self, payload: ChatPayload) -> None:
         self.id = payload["id"]
         self.type = payload["type"]
         self.title = payload.get("title")
@@ -138,7 +121,9 @@ class ChatInviteLink:
         "name",
         "expire_date",
         "member_limit",
-        "pending_join_request_count"
+        "pending_join_request_count",
+        "subscription_period",
+        "subscription_price"
     )
 
     def __init__(self, payload: ChatInviteLinkPayload):
@@ -151,13 +136,15 @@ class ChatInviteLink:
         self.expire_date = payload.get("expire_date", -1)
         self.member_limit = payload.get("member_limit", -1)
         self.pending_join_request_count = payload.get("pending_join_request_count", -1)
-
+        self.subscription_period = payload.get("subscription_period", -1)
+        self.subscription_price = payload.get("subscription_price", -1)
 
 class ChatJoinRequest:
 
     __slots__ = (
         "chat",
         "from_",
+        "user_chat_id",
         "date",
         "bio",
         "invite_link"
@@ -167,11 +154,17 @@ class ChatJoinRequest:
     def __init__(self, payload: ChatJoinRequestPayload):
         self.chat = Chat(payload["chat"])
         self.from_ = User(payload["from_"])
+        self.user_chat_id = payload["user_chat_id"]
         self.date = payload["date"]
         self.bio = payload.get("bio")
-        self.invite_link = ChatInviteLink(payload["invite_link"])
+
+        try:
+            self.invite_link = ChatInviteLink(payload["invite_link"])
+        except KeyError:
+            self.invite_link = None
 
 
+# TODO: Refactor ChatMember classes
 class ChatMember:
 
     __slots__ = (
@@ -182,6 +175,132 @@ class ChatMember:
     def __init__(self, payload: ChatMemberPayload):
         self.status = payload["status"]
         self.user = User(payload["user"])
+
+
+class ChatMemberOwner(ChatMember):
+
+    __slots__ = (
+        "is_anonymous",
+        "custom_title"
+    )
+
+    def __init__(self, payload: ChatMemberPayload):
+        super().__init__(payload)
+        self.is_anonymous = payload["is_anonymous"]
+        self.custom_title = payload.get("custom_title")
+
+
+class ChatMemberAdministrator(ChatMember):
+
+    __slots__ = (
+        "can_be_edited",
+        "is_anonymous",
+        "can_manage_chat",
+        "can_delete_messages",
+        "can_manage_video_chats",
+        "can_restrict_members",
+        "can_promote_members",
+        "can_change_info",
+        "can_invite_users",
+        "can_post_stories",
+        "can_edit_stories",
+        "can_delete_stories",
+        "can_post_messages",
+        "can_edit_messages",
+        "can_pin_messages",
+        "can_manage_topics",
+        "can_manage_direct_messages",
+        "custom_title"
+    )
+
+    def __init__(self, payload: ChatMemberPayload):
+        super().__init__(payload)
+        self.can_be_edited = payload["can_be_edited"]
+        self.is_anonymous = payload["is_anonymous"]
+        self.can_manage_chat = payload["can_manage_chat"]
+        self.can_delete_messages = payload["can_delete_messages"]
+        self.can_manage_video_chats = payload["can_manage_video_chats"]
+        self.can_restrict_members = payload["can_restrict_members"]
+        self.can_promote_members = payload["can_pmote_members"]
+        self.can_change_info =  payload["can_change_info"]
+        self.can_invite_users = payload["can_invite_users"]
+        self.can_post_stories = payload["can_post_stories"]
+        self.can_edit_stories = payload["can_edit_stories"]
+        self.can_delete_stories = payload["can_delete_stories"]
+        self.can_post_messages = payload.get("can_post_messages", False)
+        self.can_edit_messages = payload.get("can_edit_messages", False)
+        self.can_pin_messages = payload.get("can_pin_messages", False)
+        self.can_manage_topics = payload.get("can_manage_topics", False)
+        self.can_manage_direct_messages = payload.get("can_manage_direct_messages", False)
+        self.custom_title = payload.get("custom_title")
+
+
+class ChatMemberMember(ChatMember):
+
+    __slots__ = (
+        "until_date"
+    )
+
+    def __init__(self, payload: ChatMemberPayload):
+        super().__init__(payload)
+        self.until_date = payload["until_date"]
+
+
+class ChatMemberRestricted(ChatMember):
+
+    __slots__ = (
+        "is_member",
+        "can_send_messages",
+        "can_send_audios",
+        "can_send_documents",
+        "can_send_photos",
+        "can_send_videos",
+        "can_send_video_notes",
+        "can_send_voice_notes",
+        "can_send_polls",
+        "can_send_other_messages",
+        "can_add_web_page_reviews",
+        "can_change_info",
+        "can_invite_users",
+        "can_pin_messages",
+        "can_manage_topics",
+        "until_date"
+    )
+
+    def __init__(self, payload: ChatMemberPayload):
+        super().__init__(payload)
+        self.is_member = payload["is_member"]
+        self.can_send_messages = payload["can_send_messages"]
+        self.can_send_audios = payload["can_send_audios"]
+        self.can_send_documents = payload["can_send_documents"]
+        self.can_send_photos = payload["can_send_photos"]
+        self.can_send_videos = payload["can_send_videos"]
+        self.can_send_video_notes = payload["can_send_video_notes"]
+        self.can_send_voice_notes = payload["can_send_voice_notes"]
+        self.can_send_polls = payload["can_send_polls"]
+        self.can_send_other_messages = payload["can_send_other_messages"]
+        self.can_add_web_page_reviews = payload["can_add_web_page_reviews"]
+        self.can_change_info = payload["can_change_info"]
+        self.can_invite_users = payload["can_invite_users"]
+        self.can_pin_messages = payload["can_pin_messages"]
+        self.can_manage_topics = payload["can_manage_topics"]
+        self.until_date = payload["until_date"]  # 0 if restricted forever
+
+
+class ChatMemberLeft(ChatMember):
+    # Stores no additional data
+    pass
+
+
+class ChatMemberBanned(ChatMember):
+
+    __slots__ = (
+        "until_date"
+    )
+
+    def __init__(self, payload: ChatMemberPayload):
+        super().__init__(payload)
+        self.until_date = payload["until_date"]  # 0 if permaban
 
 
 class ChatMemberUpdated:
@@ -208,3 +327,48 @@ class ChatMemberUpdated:
             self.invite_link = ChatInviteLink(payload["invite_link"])
         except KeyError:
             self.invite_link = None
+
+
+class ChatBackground:
+
+    __slots__ = (
+        "type"
+    )
+
+    def __init__(self, payload: ChatBackgroundPayload):
+        self.type = payload["type"]
+
+
+class VideoChatScheduled:
+
+    __slots__ = (
+        "start_date"
+    )
+
+    def __init__(self, payload: VideoChatScheduledPayload):
+        self.start_date = payload["start_date"]
+
+
+class VideoChatStarted:
+    # Stores no data
+    pass
+
+
+class VideoChatEnded:
+
+    __slots__ = (
+        "duration"
+    )
+
+    def __init__(self, payload: VideoChatEndedPayload):
+        self.duration = payload["duration"]
+
+
+class VideoChatParticipantsInvited:
+
+    __slots__ = (
+        "users"
+    )
+
+    def __init__(self, payload: VideoChatParticipantsInvitedPayload):
+        self.users = [User(u) for u in payload["users"]]
