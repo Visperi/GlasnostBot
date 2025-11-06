@@ -1,0 +1,146 @@
+from .types.query import (
+    InlineQueryBase as InlineQueryBasePayload,
+    InlineQuery as InlineQueryPayload,
+    CallbackQuery as CallbackQueryPayload,
+    AnswerCallbackQuery as AnswerCallbackQueryPayload,
+    ShippingQuery as ShippingQueryPayload,
+    PreCheckoutQuery as PreCheckoutQueryPayload,
+    ChosenInlineResult as ChosenInlineResultPayload
+)
+
+from .user import User
+from .location import Location
+from .message import MaybeInaccessibleMessage
+from .payments import OrderInfo, ShippingAddress
+
+
+class InlineQueryBase:
+
+    __slots__ = (
+        "id",
+        "from_"
+    )
+
+    def __init__(self, payload: InlineQueryBasePayload):
+        self.id = payload["id"]
+        self.from_ = User(payload["from_"])
+
+
+class InlineQuery(InlineQueryBase):
+
+    __slots__ = (
+        "query",
+        "offset",
+        "chat_type",
+        "location"
+    )
+
+    def __init__(self, payload: InlineQueryPayload):
+        super().__init__(payload)
+        self.query = payload["query"]
+        self.offset = payload["offset"]
+        self.chat_type = payload.get("chat_type")
+
+        try:
+            self.location = Location(payload["location"])
+        except KeyError:
+            self.location = None
+
+
+class CallbackQuery(InlineQueryBase):
+
+    __slots__ = (
+        "message",
+        "inline_message_id",
+        "chat_instance",
+        "data",
+        "game_short_name"
+    )
+
+    def __init__(self, payload: CallbackQueryPayload):
+        super().__init__(payload)
+        self.inline_message_id = payload.get("inline_message_id")
+        self.chat_instance = payload["chat_instance"]
+        self.data = payload.get("data")
+        self.game_short_name = payload.get("game_short_name")
+
+        try:
+            self.message = (MaybeInaccessibleMessage(payload["message"]))
+        except KeyError:
+            self.message = None
+
+
+class AnswerCallbackQuery:
+
+    __slots__ = (
+        "callback_query_id",
+        "text",
+        "show_alert",
+        "url",
+        "cache_time"
+    )
+
+    def __init__(self, payload: AnswerCallbackQueryPayload):
+        self.callback_query_id = payload["callback_query_id"]
+        self.text = payload.get("text")
+        self.show_alert = payload.get("show_alert")
+        self.url = payload.get("url")
+        self.cache_time = payload.get("cache_time", -1)
+
+
+class ShippingQuery(InlineQueryBase):
+
+    __slots__ = (
+        "invoice_payload",
+        "shipping_address"
+    )
+
+    def __init__(self, payload: ShippingQueryPayload):
+        super().__init__(payload)
+        self.invoice_payload = payload["invoice_payload"]
+        self.shipping_address = ShippingAddress(payload["shipping_address"])
+
+
+class PreCheckoutQuery(InlineQueryBase):
+
+    __slots__ = (
+        "currency",
+        "total_amount",
+        "invoice_payload",
+        "shipping_option_id",
+        "order_info"
+    )
+
+    def __init__(self, payload: PreCheckoutQueryPayload):
+        super().__init__(payload)
+        self.currency = payload["currency"]
+        self.total_amount = payload["total_amount"]
+        self.invoice_payload = payload["invoice_payload"]
+        self.shipping_option_id = payload.get("shipping_option_id")
+
+        try:
+            self.order_info = OrderInfo(payload["order_info"])
+        except KeyError:
+            self.order_info = None
+
+
+class ChosenInlineResult:
+
+    __slots__ = (
+        "result_id",
+        "from_",
+        "location",
+        "inline_message_id",
+        "query"
+    )
+
+    def __init__(self, payload: ChosenInlineResultPayload):
+        self.result_id = payload["result_id"]
+        self.from_ = User(payload["from_"])
+        self.inline_message_id = payload.get("inline_message_id")
+        self.query = payload.get("query")
+
+        try:
+            self.location = Location(payload["location"])
+        except KeyError:
+            self.location = None

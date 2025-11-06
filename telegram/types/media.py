@@ -27,8 +27,6 @@ from typing import List
 
 from typing_extensions import TypedDict, NotRequired
 
-from .chat import Chat
-
 
 class MediaBase(TypedDict):
     file_id: str
@@ -49,50 +47,42 @@ class PhotoSize(MediaBase):
     height: int
 
 
-class FileMedia(TypedDict):
+class Document(MediaBase):
     thumbnail: NotRequired[PhotoSize]
-    mime_type: NotRequired[str]
     file_name: NotRequired[str]
+    mime_type: NotRequired[str]
 
 
-class PlaybackMedia(MediaBase):
+class PlaybackDocument(Document):
     duration: int
 
 
-class Document(MediaBase, FileMedia):
-    # Stores no additional data
-    pass
-
-
-class Video(FileMedia, PlaybackMedia):
+class Video(PlaybackDocument):
     width: int
     height: int
     cover: NotRequired[List[PhotoSize]]
     start_timestamp: NotRequired[int]
 
 
-class Audio(FileMedia, PlaybackMedia):
+class Audio(PlaybackDocument):
     performer: NotRequired[str]
     title: NotRequired[str]
 
 
-class Animation(FileMedia, PlaybackMedia):
+class Animation(PlaybackDocument):
     width: int
     height: int
 
 
-class VideoNote(FileMedia, PlaybackMedia):
+class VideoNote(MediaBase):
     length: int
+    duration: int
+    thumbnail: NotRequired[PhotoSize]
 
 
-class Voice(PlaybackMedia):
-    # Stores no additional data
-    pass
-
-
-class Story(TypedDict):
-    chat: Chat
-    id: int
+class Voice(MediaBase):
+    duration: int
+    mime_type: str
 
 
 class MaskPosition(TypedDict):

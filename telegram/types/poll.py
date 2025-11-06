@@ -27,7 +27,7 @@ from typing import List
 from typing_extensions import TypedDict, NotRequired
 from .user import User
 from .chat import Chat
-from .message import MessageEntity
+from .message_entity import MessageEntity
 
 
 class PollOptionBase(TypedDict):

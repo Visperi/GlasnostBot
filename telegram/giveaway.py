@@ -2,12 +2,10 @@ from .types.giveaway import (
     GiveawayBase as GiveawayBasePayload,
     Giveaway as GiveawayPayload,
     GiveawayWinners as GiveawayWinnersPayload,
-    GiveawayCreated as GiveawayCreatedPayload,
-    GiveawayCompleted as GiveawayCompletedPayload
+    GiveawayCreated as GiveawayCreatedPayload
 )
 from .chat import Chat
 from .user import User
-from .message import Message
 
 
 class GiveawayBase:
@@ -74,23 +72,3 @@ class GiveawayCreated:
 
     def __init__(self, payload: GiveawayCreatedPayload):
         self.prize_star_count = payload.get("prize_star_count", 0)
-
-
-class GiveawayCompleted:
-
-    __slots__ = (
-        "winner_count",
-        "unclaimed_prize_count",
-        "giveaway_message",
-        "is_star_giveaway"
-    )
-
-    def __init__(self, payload: GiveawayCompletedPayload):
-        self.winner_count = payload["winner_count"]
-        self.unclaimed_prize_count = payload.get("unclaimed_prize_count", 0)
-        self.is_star_giveaway = payload.get("is_star_giveaway", False)
-
-        try:
-            self.giveaway_message = Message(payload["giveaway_message"])
-        except KeyError:
-            self.giveaway_message = None

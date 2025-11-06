@@ -26,17 +26,20 @@ SOFTWARE.
 from __future__ import annotations
 from typing import List
 
-from typing_extensions import TypedDict, NotRequired, TYPE_CHECKING
+from typing_extensions import TypedDict, NotRequired
 
-from .user import User, UsersShared, WriteAccessAllowed, ChatShared
+from .user import User, UsersShared, ChatShared
 from .location import Location, Venue, ProximityAlertTriggered
 from .contact import Contact
 from .reaction import ReactionType, ReactionCount
 from .payments import SuccessfulPayment, RefundedPayment, Invoice
-from .gift import GiftInfo, UniqueGiftInfo
+from .gift import Gift, UniqueGift
 from .passport import PassportData
 from .chat_boost import ChatBoostAdded
-from .inline import InlineKeyboardMarkup, WebAppData
+from .inline import InlineKeyboardMarkup, WebAppData, WriteAccessAllowed
+from .message_entity import MessageEntity
+from .post import SuggestedPostInfo, SuggestedPostPrice
+from .star import StarAmount
 from .media import (
     Animation,
     Audio,
@@ -46,8 +49,7 @@ from .media import (
     VideoNote,
     Voice,
     Sticker,
-    PaidMediaInfo,
-    Story
+    PaidMediaInfo
 )
 from .forum import (
     ForumTopicCreated,
@@ -58,37 +60,22 @@ from .forum import (
     GeneralForumTopicUnhidden
 )
 from .chat import (
+    Chat,
+    Story,
     ChatBackground,
     VideoChatStarted,
     VideoChatEnded,
     VideoChatScheduled,
     VideoChatParticipantsInvited
 )
-from .checklist import (
-    Checklist,
-    ChecklistTasksDone,
-    ChecklistTasksAdded
-)
 from .giveaway import (
     Giveaway,
     GiveawayWinners,
-    GiveawayCreated,
-    GiveawayCompleted
-)
-from .post import (
-    SuggestedPostInfo,
-    SuggestedPostApproved,
-    SuggestedPostApprovalFailed,
-    SuggestedPostDeclined,
-    SuggestedPostRefunded,
-    SuggestedPostPaid
+    GiveawayCreated
 )
 
-
-if TYPE_CHECKING:
-    from .chat import Chat
-    from .games import Game, Dice
-    from .poll import Poll
+from .games import Game, Dice
+from .poll import Poll
 
 
 class DirectMessagesTopic(TypedDict):
@@ -103,16 +90,6 @@ class TextQuote(TypedDict):
     is_manual: NotRequired[bool]
 
 
-class MessageEntity(TypedDict):
-    type: str
-    offset: int
-    length: int
-    url: NotRequired[str]
-    user: NotRequired[User]
-    language: NotRequired[str]
-    custom_emoji_id: NotRequired[str]
-
-
 class LinkPreviewOptions(TypedDict):
     is_disabled: NotRequired[bool]
     url: NotRequired[str]
@@ -123,6 +100,68 @@ class LinkPreviewOptions(TypedDict):
 
 class MessageAutoDeleteTimerChanged(TypedDict):
     message_auto_delete_time: int
+
+
+class SuggestedPostEvent(TypedDict):
+    suggested_post_message: NotRequired[Message]
+
+
+# TODO: Inherit from SuggestedPostParameters
+class SuggestedPostApproved(SuggestedPostEvent):
+    price: NotRequired[SuggestedPostPrice]
+    send_date: int
+
+
+class SuggestedPostApprovalFailed(SuggestedPostEvent):
+    price: SuggestedPostPrice
+
+
+class SuggestedPostDeclined(SuggestedPostEvent):
+    comment: NotRequired[str]
+
+
+class SuggestedPostPaid(SuggestedPostEvent):
+    currency: str
+    amount: NotRequired[int]
+    star_amount: NotRequired[StarAmount]
+
+
+class SuggestedPostRefunded(SuggestedPostEvent):
+    reason: str
+
+
+class GiveawayCompleted(TypedDict):
+    winner_count: int
+    unclaimed_prize_count: NotRequired[int]
+    giveaway_message: NotRequired[Message]
+    is_star_giveaway: NotRequired[bool]
+
+
+class ChecklistTask(TypedDict):
+    id: int
+    text: str
+    text_entities: NotRequired[List[MessageEntity]]
+    completed_by_user: NotRequired[User]
+    completion_date: NotRequired[int]
+
+
+class Checklist(TypedDict):
+    title: str
+    title_entities: NotRequired[List[MessageEntity]]
+    tasks: List[ChecklistTask]
+    others_can_add_tasks: NotRequired[bool]
+    others_can_mark_tasks_as_done: NotRequired[bool]
+
+
+class ChecklistTasksDone(TypedDict):
+    checklist_message: NotRequired[Message]
+    marked_as_done_task_ids: NotRequired[List[int]]
+    marked_as_not_done_task_ids: NotRequired[List[int]]
+
+
+class ChecklistTasksAdded(TypedDict):
+    checklist_message: NotRequired[Message]
+    tasks: List[ChecklistTask]
 
 
 class MessageReactionUpdated(TypedDict):
@@ -215,6 +254,28 @@ class InaccessibleMessage(MaybeInaccessibleMessage):
     chat: Chat
     message_id: int
     date: int
+
+
+class GiftInfoBase(TypedDict):
+    owned_gift_id: NotRequired[str]
+
+
+class GiftInfo(GiftInfoBase):
+    gift: Gift
+    convert_star_count: NotRequired[int]
+    prepaid_upgrade_star_count: NotRequired[int]
+    can_be_upgraded: NotRequired[bool]
+    text: NotRequired[str]
+    entities: NotRequired[List[MessageEntity]]
+    is_private: NotRequired[bool]
+
+
+class UniqueGiftInfo(GiftInfoBase):
+    gift: UniqueGift
+    origin: str
+    last_resale_star_count: NotRequired[int]
+    transfer_star_count: NotRequired[int]
+    next_transfer_date: NotRequired[int]
 
 
 class Message(MaybeInaccessibleMessage):

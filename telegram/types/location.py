@@ -36,6 +36,11 @@ class Location(TypedDict):
     proximity_alert_radius: NotRequired[int]
 
 
+class ChatLocation(TypedDict):
+    location: Location
+    address: str
+
+
 class Venue(TypedDict):
     location: Location
     title: str

@@ -29,7 +29,6 @@ from .types.chat import (
     Chat as ChatPayload,
     ChatPhoto as ChatPhotoPayload,
     ChatMember as ChatMemberPayload,
-    ChatLocation as ChatLocationPayload,
     ChatInviteLink as ChatInviteLinkPayload,
     ChatPermissions as ChatPermissionsPayload,
     ChatJoinRequest as ChatJoinRequestPayload,
@@ -43,8 +42,10 @@ from .types.chat import (
     ChatMemberMember as ChatMemberMemberPayload,
     ChatMemberRestricted as ChatMemberRestrictedPayload,
     ChatMemberLeft as ChatMemberLeftPayload,
-    ChatMemerBanned as ChatMemberBannedPayload
+    ChatMemerBanned as ChatMemberBannedPayload,
+    Story as StoryPayload
 )
+from .types.location import ChatLocation as ChatLocationPayload
 
 
 class ChatPhoto:
@@ -377,3 +378,15 @@ class VideoChatParticipantsInvited:
 
     def __init__(self, payload: VideoChatParticipantsInvitedPayload):
         self.users = [User(u) for u in payload["users"]]
+
+
+class Story:
+
+    __slots__ = (
+        "chat",
+        "id"
+    )
+
+    def __init__(self, payload: StoryPayload):
+        self.chat = Chat(payload["chat"])
+        self.id = payload["id"]

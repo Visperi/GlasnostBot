@@ -26,10 +26,10 @@ SOFTWARE.
 from .utils import flatten_handlers
 from .types.update import Update as UpdatePayload
 from .poll import Poll, PollAnswer
-from .user import BusinessConnection, BusinessMessagesDeleted
+from .business import BusinessConnection, BusinessMessagesDeleted
 from .chat_boost import ChatBoostUpdated, ChatBoostRemoved
 from .chat import ChatMemberUpdated, ChatJoinRequest
-from .inline import (
+from .query import (
     InlineQuery,
     ChosenInlineResult,
     CallbackQuery,

@@ -1,7 +1,9 @@
 from .types.post import (
     SuggestedPostPrice as SuggestedPostPricePayload,
     SuggestedPostParameters as SuggestedPostParametersPayload,
-    SuggestedPostInfo as SuggestedPostInfoPayload,
+    SuggestedPostInfo as SuggestedPostInfoPayload
+)
+from .types.message import (
     SuggestedPostEvent as SuggestedPostEventPayload,
     SuggestedPostApproved as SuggestedPostApprovedPayload,
     SuggestedPostApprovalFailed as SuggestedPostApprovalFailedPayload,

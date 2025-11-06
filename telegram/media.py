@@ -36,9 +36,7 @@ from .types.media import (
     MaskPosition as MaskPositionPayload,
     Sticker as StickerPayload,
     File as FilePayload,
-    FileMedia as FileMediaPayload,
-    PlaybackMedia as PlaybackMediaPayload,
-    Story as StoryPayload,
+    PlaybackDocument as PlaybackDocumentPayload,
     StickerSet as StickerSetPayload,
     InputSticker as InputStickerPayload,
     PaidMedia as PaidMediaPayload,
@@ -47,7 +45,6 @@ from .types.media import (
     PaidMediaVideo as PaidMediaVideoPayload,
     PaidMediaInfo as PaidMediaInfoPayload
 )
-from .chat import Chat
 
 
 class MediaBase:
@@ -88,55 +85,31 @@ class PhotoSize(MediaBase):
         self.height = payload["height"]
 
 
-class FileMedia:
+class Document(MediaBase):
 
     __slots__ = (
         "thumbnail",
-        "mime_type",
-        "file_name"
+        "file_name",
+        "mime_type"
     )
 
-    def __init__(self, payload: FileMediaPayload):
-        self.mime_type = payload.get("mime_type")
+    def __init__(self, payload: DocumentPayload):
+        super().__init__(payload)
         self.file_name = payload.get("file_name")
+        self.mime_type = payload.get("mime_type")
 
-        try:
-            self.thumbnail = PhotoSize(payload["thumbnail"])
-        except KeyError:
-            self.thumbnail = None
-
-
-class PlaybackMedia(MediaBase):
+class PlaybackDocument(Document):
 
     __slots__ = (
         "duration"
     )
 
-    def __init__(self, payload: PlaybackMediaPayload):
+    def __init__(self, payload: PlaybackDocumentPayload):
         super().__init__(payload)
         self.duration = payload["duration"]
 
 
-class Document(MediaBase, FileMedia):
-
-    def __init__(self, payload: DocumentPayload):
-        super().__init__(payload)
-
-
-class Audio(FileMedia, PlaybackMedia):
-
-    __slots__ = (
-        "performer",
-        "title"
-    )
-
-    def __init__(self, payload: AudioPayload):
-        super().__init__(payload)
-        self.performer = payload.get("performer")
-        self.title = payload.get("title")
-
-
-class Video(FileMedia, PlaybackMedia):
+class Video(PlaybackDocument):
 
     __slots__ = (
         "width",
@@ -153,7 +126,20 @@ class Video(FileMedia, PlaybackMedia):
         self.start_timestamp = payload.get("start_timestamp", 0)
 
 
-class Animation(FileMedia, PlaybackMedia):
+class Audio(PlaybackDocument):
+
+    __slots__ = (
+        "performer",
+        "title"
+    )
+
+    def __init__(self, payload: AudioPayload):
+        super().__init__(payload)
+        self.performer = payload.get("performer")
+        self.title = payload.get("title")
+
+
+class Animation(PlaybackDocument):
 
     __slots__ = (
         "width",
@@ -166,33 +152,36 @@ class Animation(FileMedia, PlaybackMedia):
         self.height = payload["height"]
 
 
-class VideoNote(FileMedia, PlaybackMedia):
+class VideoNote(MediaBase):
 
     __slots__ = (
-        "length"
+        "length",
+        "duration",
+        "thumbnail"
     )
 
     def __init__(self, payload: VideoNotePayload):
         super().__init__(payload)
         self.length = payload["length"]
+        self.duration = payload["duration"]
+
+        try:
+            self.thumbnail = PhotoSize(payload["thumbnail"])
+        except KeyError:
+            self.thumbnail = None
 
 
-class Voice(PlaybackMedia):
+class Voice(MediaBase):
+
+    __slots__ = (
+        "duration",
+        "mime_type"
+    )
 
     def __init__(self, payload: VoicePayload):
         super().__init__(payload)
-
-
-class Story:
-
-    __slots__ = (
-        "chat",
-        "id"
-    )
-
-    def __init__(self, payload: StoryPayload):
-        self.chat = Chat(payload["chat"])
-        self.id = payload["id"]
+        self.duration = payload["duration"]
+        self.mime_type = payload["mime_type"]
 
 
 class MaskPosition:

@@ -25,21 +25,21 @@ SOFTWARE.
 
 from __future__ import annotations
 
-from typing import Optional, List, Dict
-from urllib.parse import urlparse, urlunparse
+from typing import List, Dict
 
 from .utils import flatten_handlers
-from .user import User, UsersShared, WriteAccessAllowed, ChatShared
+from .user import User, UsersShared, ChatShared
 from .contact import Contact
-from .poll import Poll
 from .games import Game, Dice
 from .location import Location, Venue, ProximityAlertTriggered
 from .reaction import ReactionType, ReactionCount
 from .payments import SuccessfulPayment, RefundedPayment, Invoice
-from .gift import GiftInfo, UniqueGiftInfo
+from .gift import Gift, UniqueGift
 from .passport import PassportData
 from .chat_boost import ChatBoostAdded
-from .inline import InlineKeyboardMarkup, WebAppData
+from .inline import InlineKeyboardMarkup, WebAppData, WriteAccessAllowed
+from .message_entity import MessageEntity
+from .poll import Poll
 from .media import (
     PhotoSize,
     Animation,
@@ -49,7 +49,6 @@ from .media import (
     Sticker,
     VideoNote,
     Voice,
-    Story,
     PaidMediaInfo
 )
 from .forum import (
@@ -62,22 +61,17 @@ from .forum import (
 )
 from .chat import (
     Chat,
+    Story,
     ChatBackground,
     VideoChatStarted,
     VideoChatEnded,
     VideoChatScheduled,
     VideoChatParticipantsInvited
 )
-from .checklist import (
-    Checklist,
-    ChecklistTasksDone,
-    ChecklistTasksAdded
-)
 from .giveaway import (
     Giveaway,
     GiveawayWinners,
-    GiveawayCreated,
-    GiveawayCompleted
+    GiveawayCreated
 )
 from .post import (
     SuggestedPostInfo,
@@ -89,7 +83,6 @@ from .post import (
 )
 from .types.message import (
     Message as MessagePayload,
-    MessageEntity as MessageEntityPayload,
     MessageAutoDeleteTimerChanged as MessageAutoDeleteTimerChangedPayload,
     MaybeInaccessibleMessage as MaybeInaccessibleMessagePayload,
     MessageOrigin as MessageOriginPayload,
@@ -104,8 +97,18 @@ from .types.message import (
     MessageReactionCountUpdated as MessageReactionCountUpdatedPayload,
     DirectMessagePriceChanged as DirectMessagePriceChangedPayload,
     PaidMessagePriceChanged as PaidMessagePriceChangedPayload,
-    ExternalReplyInfo as ExternalReplyInfoPayload
+    ExternalReplyInfo as ExternalReplyInfoPayload,
+    GiftInfoBase as GiftInfoBasePayload,
+    GiftInfo as GiftInfoPayload,
+    UniqueGiftInfo as UniqueGiftInfoPayload,
+    Checklist as ChecklistPayload,
+    ChecklistTask as ChecklistTaskPayload,
+    ChecklistTasksDone as ChecklistTasksDonePayload,
+    ChecklistTasksAdded as ChecklistTasksAddedPayload,
+    GiveawayCompleted as GiveawayCompletedPayload
 )
+
+# TODO: Refactor some classes out of message modules
 
 
 class DirectMessagesTopic:
@@ -140,144 +143,6 @@ class TextQuote:
         self.is_manual = payload.get("is_manual", False)
 
 
-class EntityType:
-
-    Bold = "bold"
-    Italic = "italic"
-    Underline = "underline"
-    Strikethrough = "strikethrough"
-    Spoiler = "spoiler"
-    Code = "code"
-    Codeblock = "pre"
-    Mention = "mention"
-    Hashtag = "hashtag"
-    Cashtag = "cashtag"
-    BotCommand = "bot_command"
-    Url = "url"
-    Email = "email"
-    PhoneNumber = "phone_number"
-    TextLink = "text_link"
-    TextMention = "text_mention"
-    CustomEmoji = "custom_emoji"
-
-    @classmethod
-    def supports_markdown(cls, entity_type: str) -> bool:
-        return entity_type not in [
-            cls.Mention,
-            cls.Hashtag,
-            cls.Cashtag,
-            cls.BotCommand,
-            cls.Email,
-            cls.PhoneNumber,
-            cls.TextMention,
-            cls.CustomEmoji
-        ]
-
-
-class MessageEntity:
-
-    __slots__ = (
-        "type",
-        "offset",
-        "length",
-        "url",
-        "user",
-        "language",
-        "custom_emoji_id"
-    )
-
-    def __init__(self, payload: MessageEntityPayload):
-        self._update(payload)
-
-    def _update(self, payload: MessageEntityPayload):
-        self.type = payload["type"]
-        self.offset = payload["offset"]
-        self.length = payload["length"]
-        self.url = payload.get("url")
-        self.user = payload.get("user")
-        self.language = payload.get("language")
-        self.custom_emoji_id = payload.get("custom_emoji_id")
-
-    @staticmethod
-    def _complete_url(url: str) -> str:
-        """
-        Complete partial url so that it has scheme and starts with www. Does nothing for already complete urls.
-
-        :param url: Url to be completed.
-        :return: Completed url including scheme and starting with www.
-        """
-        tmp = urlparse(url, "http")
-        netloc = tmp.netloc or tmp.path
-        path = tmp.path if tmp.netloc else ""
-
-        filled = tmp._replace(netloc=netloc, path=path)
-        return str(urlunparse(filled))
-
-    @staticmethod
-    def _make_hyperlink(text: str, url: str) -> str:
-        """
-        Convert bare text to a hyperlink.
-
-        :param text: Hyperlink text
-        :param url: Hyperlink url
-        :return: Hyperlink with given text and url
-        """
-        return f"[{text}]({url})"
-
-    def markdown(self, text: str, make_url_to_hyperlink: bool) -> Optional[str]:
-        """
-        Convert entity to Markdown syntax with given text.
-
-        :param text: Content for the Markdown conversion.
-        :param make_url_to_hyperlink: Make bare text urls to hyperlinks.
-        :return: Given text converted to Entity Markdown syntax
-        """
-
-        if self.type == EntityType.Bold:
-            return f"**{text}**"
-        elif self.type == EntityType.Italic:
-            return f"_{text}_"
-        elif self.type == EntityType.Underline:
-            return f"__{text}__"
-        elif self.type == EntityType.Strikethrough:
-            return f"~~{text}~~"
-        elif self.type == EntityType.Spoiler:
-            return f"||{text}||"
-        elif self.type == EntityType.Code:
-            return f"`{text}`"
-        elif self.type == EntityType.Codeblock:
-            return f"```\n{text}\n```"
-        elif self.type == EntityType.TextLink:
-            return self._make_hyperlink(text, self.url)
-        elif self.type == EntityType.Url:
-            complete_url = self._complete_url(text)
-            if make_url_to_hyperlink:
-                return self._make_hyperlink(text, complete_url)
-            else:
-                return complete_url
-        else:
-            return text
-
-    @property
-    def one_way_markdown_offset(self):
-        """
-        One-way Markdown offset of the entity, i.e. how many characters are added to the left side of given text on
-        Markdown conversion. Apart from TextLinks this is same as total added characters divided by two.
-        Internally used especially in converting nested markdown in text.
-
-        :return: Amount of characters added to both sides of string in Markdown for this entity.
-        """
-        if self.type == EntityType.TextLink:
-            # TextLink has extra characters also in the middle, but only one character is added left side
-            # e.g. www.example.com -> [www.example.com](www.example.com)
-            return 1
-        else:
-            # For generic cases use simple calculation instead of hard coding
-            tmp = "__dummy__"
-            md = self.markdown(tmp, False)
-            return (len(md) - len(tmp)) // 2
-
-
 class LinkPreviewOptions:
 
     __slots__ = (
@@ -302,6 +167,100 @@ class MessageAutoDeleteTimerChanged:
 
     def __init__(self, payload: MessageAutoDeleteTimerChangedPayload):
         self.message_auto_delete_time = payload["message_auto_delete_time"]
+
+
+class GiveawayCompleted:
+
+    __slots__ = (
+        "winner_count",
+        "unclaimed_prize_count",
+        "giveaway_message",
+        "is_star_giveaway"
+    )
+
+    def __init__(self, payload: GiveawayCompletedPayload):
+        self.winner_count = payload["winner_count"]
+        self.unclaimed_prize_count = payload.get("unclaimed_prize_count", 0)
+        self.is_star_giveaway = payload.get("is_star_giveaway", False)
+
+        try:
+            self.giveaway_message = Message(payload["giveaway_message"])
+        except KeyError:
+            self.giveaway_message = None
+
+
+class ChecklistTask:
+
+    __slots__ = (
+        "id",
+        "text",
+        "text_entities",
+        "completed_by_user",
+        "completion_date"
+    )
+
+    def __init__(self, payload: ChecklistTaskPayload):
+        self.id = payload["id"]
+        self.text = payload["text"]
+        self.text_entities = [MessageEntity(e) for e in payload.get("text_entities", [])]
+        self.completion_date = payload.get("completion_date", -1)
+
+        try:
+            self.completed_by_user = User(payload["completed_by_user"])
+        except KeyError:
+            self.completed_by_user = None
+
+
+class Checklist:
+
+    __slots__ = (
+        "title",
+        "title_entities",
+        "tasks",
+        "others_can_add_tasks",
+        "others_can_mark_tasks_as_done"
+    )
+
+    def __init__(self, payload: ChecklistPayload):
+        self.title = payload["title"]
+        self.title_entities = [MessageEntity(e) for e in payload.get("title_entities", [])]
+        self.tasks = [ChecklistTask(t) for t in payload["tasks"]]
+        self.others_can_add_tasks = payload.get("others_can_add_tasks", False)
+        self.others_can_mark_tasks_as_done = payload.get("others_can_mark_tasks_as_done", False)
+
+
+class ChecklistTasksDone:
+
+    __slots__ = (
+        "checklist_message",
+        "marked_as_done_task_ids",
+        "marked_as_not_done_task_ids"
+    )
+
+    def __init__(self, payload: ChecklistTasksDonePayload):
+        self.marked_as_done_task_ids = payload.get("marked_as_done_task_ids", [])
+        self.marked_as_not_done_task_ids = payload.get("marked_as_not_done_task_ids", [])
+
+        try:
+            self.checklist_message = Message(payload["checklist_message"])
+        except KeyError:
+            self.checklist_message = None
+
+
+class ChecklistTasksAdded:
+
+    __slots__ = (
+        "checklist_message",
+        "tasks"
+    )
+
+    def __init__(self, payload: ChecklistTasksAddedPayload):
+        self.tasks = [ChecklistTask(t) for t in payload["tasks"]]
+
+        try:
+            self.checklist_message = Message(payload["checklist_message"])
+        except KeyError:
+            self.checklist_message = None
 
 
 class MessageReactionUpdated:
@@ -568,6 +527,58 @@ class PaidMessagePriceChanged:
 
     def __init__(self, payload: PaidMessagePriceChangedPayload):
         self.paid_message_star_count = payload["paid_message_star_count"]
+
+
+class GiftInfoBase:
+
+    __slots__ = (
+        "owned_gift_id"
+    )
+
+    def __init__(self, payload: GiftInfoBasePayload):
+        self.owned_gift_id = payload.get("owned_gift_id")
+
+
+class GiftInfo(GiftInfoBase):
+
+    __slots__ = (
+        "gift",
+        "convert_star_count",
+        "prepaid_upgrade_star_count",
+        "can_be_upgraded",
+        "text",
+        "entities",
+        "is_private"
+    )
+
+    def __init__(self, payload: GiftInfoPayload):
+        super().__init__(payload)
+        self.gift = Gift(payload["gift"])
+        self.convert_star_count = payload.get("convert_star_count", 0)
+        self.prepaid_upgrade_star_count = payload.get("prepaid_upgrade_star_count", 0)
+        self.can_be_upgraded = payload.get("can_be_upgraded", False)
+        self.text = payload.get("text")
+        self.entities = [MessageEntity(e) for e in payload.get("entities", [])]
+        self.is_private = payload.get("is_private", False)
+
+
+class UniqueGiftInfo(GiftInfoBase):
+
+    __slots__ = (
+        "gift",
+        "origin",
+        "last_resale_star_count",
+        "transfer_star_count",
+        "next_transfer_date"
+    )
+
+    def __init__(self, payload: UniqueGiftInfoPayload):
+        super().__init__(payload)
+        self.gift = UniqueGift(payload["gift"])
+        self.origin = payload["origin"]
+        self.last_resale_star_count = payload.get("last_resale_star_count")
+        self.transfer_star_count = payload.get("transfer_star_count", 0)
+        self.next_transfer_date = payload.get("next_transfer_date", -1)
 
 
 class MaybeInaccessibleMessage:

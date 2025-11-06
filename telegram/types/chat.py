@@ -27,7 +27,6 @@ from __future__ import annotations
 from typing import List
 
 from typing_extensions import TypedDict, NotRequired
-from .location import Location
 from .user import User
 from .background import BackgroundType
 
@@ -48,11 +47,6 @@ class ChatPermissions(TypedDict):
     can_change_info: NotRequired[bool]
     can_invite_users: NotRequired[bool]
     can_pin_messages: NotRequired[bool]
-
-
-class ChatLocation(TypedDict):
-    location: Location
-    address: str
 
 
 class Chat(TypedDict):
@@ -180,3 +174,8 @@ class VideoChatEnded(TypedDict):
 
 class VideoChatParticipantsInvited(TypedDict):
     users: List[User]
+
+
+class Story(TypedDict):
+    chat: Chat
+    id: int

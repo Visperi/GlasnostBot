@@ -4,7 +4,6 @@ from typing_extensions import TypedDict, NotRequired
 
 from .chat import Chat
 from .user import User
-from .message import Message
 
 
 class GiveawayBase(TypedDict):
@@ -33,10 +32,3 @@ class GiveawayWinners(GiveawayBase):
 
 class GiveawayCreated(TypedDict):
     prize_star_count: NotRequired[int]
-
-
-class GiveawayCompleted(TypedDict):
-    winner_count: int
-    unclaimed_prize_count: NotRequired[int]
-    giveaway_message: NotRequired[Message]
-    is_star_giveaway: NotRequired[bool]
