@@ -1,6 +1,4 @@
-from typing import NotRequired
-
-from typing_extensions import TypedDict
+from typing_extensions import TypedDict, NotRequired
 
 
 class ForumTopicCreated(TypedDict):
