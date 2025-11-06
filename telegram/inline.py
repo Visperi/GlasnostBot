@@ -35,6 +35,7 @@ from .types.inline import (
     WebAppData as WebAppDataPayload,
     WebAppInfo as WebAppInfoPayload,
     InlineKeyboardButton as InlineKeyboardButtonPayload,
+    InlineKeyboardMarkup as InlineKeyboardMarkupPayload,
     CopyTextButton as CopyTextButtonPayload,
     SwitchInlineQueryChosenChat as SwitchInlineQueryChosenChatPayload
 )
@@ -298,3 +299,13 @@ class InlineKeyboardButton:
 
     def _handle_callback_game(self, value):
         self.callback_game = CallbackGame(value)
+
+
+class InlineKeyboardMarkup:
+
+    __slots__ = (
+        "inline_keyboard"
+    )
+
+    def __init__(self, payload: InlineKeyboardMarkupPayload):
+        self.inline_keyboard = [InlineKeyboardButton(b) for b in payload["inline_keyboard"]]
