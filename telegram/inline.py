@@ -32,11 +32,12 @@ from .types.inline import (
     ChosenInlineResult as ChosenInlineResultPayload,
     AnswerCallbackQuery as AnswerCallbackQueryPayload,
     LoginUrl as LoginUrlPayload,
+    WebAppData as WebAppDataPayload,
+    WebAppInfo as WebAppInfoPayload,
     InlineKeyboardButton as InlineKeyboardButtonPayload,
     CopyTextButton as CopyTextButtonPayload,
     SwitchInlineQueryChosenChat as SwitchInlineQueryChosenChatPayload
 )
-from .types.web_app import WebAppInfo
 from .user import User
 from .location import Location
 from .message import MaybeInaccessibleMessage
@@ -223,8 +224,30 @@ class CallbackGame:
     """
     Reserver by Telegram API.
     """
-    def __init__(self):
+    def __init__(self, payload):
         pass
+
+
+class WebAppData:
+
+    __slots__ = (
+        "data",
+        "button_text"
+    )
+
+    def __init__(self, payload: WebAppDataPayload):
+        self.data = payload["data"]
+        self.button_text = payload["button_text"]
+
+
+class WebAppInfo:
+
+    __slots__ = (
+        "url"
+    )
+
+    def __init__(self, payload: WebAppInfoPayload):
+        self.url = payload["url"]
 
 
 @flatten_handlers

@@ -37,7 +37,13 @@ from .types.chat import (
     ChatBackground as ChatBackgroundPayload,
     VideoChatScheduled as VideoChatScheduledPayload,
     VideoChatEnded as VideoChatEndedPayload,
-    VideoChatParticipantsInvited as VideoChatParticipantsInvitedPayload
+    VideoChatParticipantsInvited as VideoChatParticipantsInvitedPayload,
+    ChatMemberOwner as ChatMemberOwnerPayload,
+    ChatMemberAdministrator as ChatMemberAdministratorPayload,
+    ChatMemberMember as ChatMemberMemberPayload,
+    ChatMemberRestricted as ChatMemberRestrictedPayload,
+    ChatMemberLeft as ChatMemberLeftPayload,
+    ChatMemerBanned as ChatMemberBannedPayload
 )
 
 
@@ -150,7 +156,6 @@ class ChatJoinRequest:
         "invite_link"
     )
 
-    # TODO: Figure out how to read variable 'from' to 'from_' from payload!
     def __init__(self, payload: ChatJoinRequestPayload):
         self.chat = Chat(payload["chat"])
         self.from_ = User(payload["from_"])
@@ -184,7 +189,7 @@ class ChatMemberOwner(ChatMember):
         "custom_title"
     )
 
-    def __init__(self, payload: ChatMemberPayload):
+    def __init__(self, payload: ChatMemberOwnerPayload):
         super().__init__(payload)
         self.is_anonymous = payload["is_anonymous"]
         self.custom_title = payload.get("custom_title")
@@ -213,7 +218,7 @@ class ChatMemberAdministrator(ChatMember):
         "custom_title"
     )
 
-    def __init__(self, payload: ChatMemberPayload):
+    def __init__(self, payload: ChatMemberAdministratorPayload):
         super().__init__(payload)
         self.can_be_edited = payload["can_be_edited"]
         self.is_anonymous = payload["is_anonymous"]
@@ -221,7 +226,7 @@ class ChatMemberAdministrator(ChatMember):
         self.can_delete_messages = payload["can_delete_messages"]
         self.can_manage_video_chats = payload["can_manage_video_chats"]
         self.can_restrict_members = payload["can_restrict_members"]
-        self.can_promote_members = payload["can_pmote_members"]
+        self.can_promote_members = payload["can_promote_members"]
         self.can_change_info =  payload["can_change_info"]
         self.can_invite_users = payload["can_invite_users"]
         self.can_post_stories = payload["can_post_stories"]
@@ -241,7 +246,7 @@ class ChatMemberMember(ChatMember):
         "until_date"
     )
 
-    def __init__(self, payload: ChatMemberPayload):
+    def __init__(self, payload: ChatMemberMemberPayload):
         super().__init__(payload)
         self.until_date = payload["until_date"]
 
@@ -267,7 +272,7 @@ class ChatMemberRestricted(ChatMember):
         "until_date"
     )
 
-    def __init__(self, payload: ChatMemberPayload):
+    def __init__(self, payload: ChatMemberRestrictedPayload):
         super().__init__(payload)
         self.is_member = payload["is_member"]
         self.can_send_messages = payload["can_send_messages"]
@@ -289,7 +294,8 @@ class ChatMemberRestricted(ChatMember):
 
 class ChatMemberLeft(ChatMember):
     # Stores no additional data
-    pass
+    def __init__(self, payload: ChatMemberLeftPayload):
+        super().__init__(payload)
 
 
 class ChatMemberBanned(ChatMember):
@@ -298,7 +304,7 @@ class ChatMemberBanned(ChatMember):
         "until_date"
     )
 
-    def __init__(self, payload: ChatMemberPayload):
+    def __init__(self, payload: ChatMemberBannedPayload):
         super().__init__(payload)
         self.until_date = payload["until_date"]  # 0 if permaban
 
@@ -313,8 +319,6 @@ class ChatMemberUpdated:
         "new_chat_member",
         "invite_link"
     )
-
-    # TODO: Figure out how to read variable 'from' to 'from_' from payload!
 
     def __init__(self, payload: ChatMemberUpdatedPayload):
         self.chat = Chat(payload["chat"])
@@ -351,7 +355,8 @@ class VideoChatScheduled:
 
 class VideoChatStarted:
     # Stores no data
-    pass
+    def __init__(self, payload):
+        pass
 
 
 class VideoChatEnded:

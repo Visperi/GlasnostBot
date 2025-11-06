@@ -29,7 +29,6 @@ from typing_extensions import TypedDict, NotRequired
 from .user import User
 from .location import Location
 from .message import MaybeInaccessibleMessage
-from .web_app import WebAppInfo
 from .payments import ShippingAddress, OrderInfo
 
 
@@ -90,6 +89,15 @@ class CopyTextButton(TypedDict):
 
 class CallbackGame(TypedDict):
     pass
+
+
+class WebAppData(TypedDict):
+    data: str
+    button_text: str
+
+
+class WebAppInfo(TypedDict):
+    url: str
 
 
 class InlineKeyboardButton(TypedDict):

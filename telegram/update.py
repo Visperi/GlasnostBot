@@ -23,10 +23,16 @@ SOFTWARE.
 """
 
 
+from .utils import flatten_handlers
 from .types.update import Update as UpdatePayload
-from .message import Message
 from .poll import Poll, PollAnswer
-from .chat import ChatMemberUpdated, ChatJoinRequest
+from .user import BusinessConnection, BusinessMessagesDeleted
+from .chat import (
+    ChatMemberUpdated,
+    ChatJoinRequest,
+    ChatBoostUpdated,
+    ChatBoostRemoved
+)
 from .inline import (
     InlineQuery,
     ChosenInlineResult,
@@ -34,7 +40,11 @@ from .inline import (
     PreCheckoutQuery,
     ShippingQuery
 )
-from .utils import flatten_handlers
+from .message import (
+    Message,
+    MessageReactionUpdated,
+    MessageReactionCountUpdated
+)
 
 
 @flatten_handlers
@@ -47,6 +57,12 @@ class Update:
         "edited_message",
         "channel_post",
         "edited_channel_post",
+        "business_connection",
+        "business_message",
+        "edited_business_message",
+        "deleted_business_messages",
+        "message_reaction",
+        "message_reaction_count",
         "inline_query",
         "chosen_inline_result",
         "callback_query",
@@ -56,18 +72,23 @@ class Update:
         "poll_answer",
         "my_chat_member",
         "chat_member",
-        "chat_join_request"
+        "chat_join_request",
+        "chat_boost",
+        "removed_chat_boost"
     )
 
     def __init__(self, payload: UpdatePayload) -> None:
-        self._update(payload)
-
-    def _update(self, payload: UpdatePayload) -> None:
         self.update_id = payload["update_id"]  # ID is the only required value
         self.message = payload.get("message")
         self.edited_message = payload.get("edited_message")
         self.channel_post = payload.get("channel_post")
         self.edited_channel_post = payload.get("edited_channel_post")
+        self.business_connection = payload.get("business_connection")
+        self.business_message = payload.get("business_message")
+        self.edited_business_message = payload.get("edited_business_message")
+        self.deleted_business_messages = payload.get("deleted_business_messages")
+        self.message_reaction = payload.get("message_reaction")
+        self.message_reaction_count = payload.get("message_reaction_count")
         self.inline_query = payload.get("inline_query")
         self.chosen_inline_result = payload.get("chosen_inline_result")
         self.callback_query = payload.get("callback_query")
@@ -78,6 +99,8 @@ class Update:
         self.my_chat_member = payload.get("my_chat_member")
         self.chat_member = payload.get("chat_member")
         self.chat_join_request = payload.get("chat_join_request")
+        self.chat_boost = payload.get("chat_boost")
+        self.removed_chat_boost = payload.get("removed_chat_boost")
 
         for key, func in self._HANDLERS:
             try:
@@ -98,6 +121,24 @@ class Update:
 
     def _handle_edited_channel_post(self, value):
         self.edited_channel_post = Message(value)
+
+    def _handle_business_connection(self, value):
+        self.business_connection = BusinessConnection(value)
+
+    def _handle_business_message(self, value):
+        self.business_message = Message(value)
+
+    def _handle_edited_business_message(self, value):
+        self.edited_business_message = Message(value)
+
+    def _handle_deleted_business_messages(self, value):
+        self.deleted_business_messages = BusinessMessagesDeleted(value)
+
+    def _handle_message_reaction(self, value):
+        self.message_reaction = MessageReactionUpdated(value)
+
+    def _handle_message_reaction_count(self, value):
+        self.message_reaction_count = MessageReactionCountUpdated(value)
 
     def _handle_inline_query(self, value):
         self.inline_query = InlineQuery(value)
@@ -128,3 +169,9 @@ class Update:
 
     def _handle_chat_join_request(self, value):
         self.chat_join_request = ChatJoinRequest(value)
+
+    def _handle_chat_boost(self, value):
+        self.chat_boost = ChatBoostUpdated(value)
+
+    def _handle_removed_chat_boost(self, value):
+        self.removed_chat_boost = ChatBoostRemoved(value)

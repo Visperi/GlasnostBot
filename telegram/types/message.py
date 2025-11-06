@@ -36,8 +36,7 @@ from .payments import SuccessfulPayment, RefundedPayment, Invoice
 from .gift import GiftInfo, UniqueGiftInfo
 from .passport import PassportData
 from .chat_boost import ChatBoostAdded
-from .web_app import WebAppData
-from .inline import InlineKeyboardMarkup
+from .inline import InlineKeyboardMarkup, WebAppData
 from .media import (
     Animation,
     Audio,
@@ -184,7 +183,7 @@ class ExternalReplyInfo(TypedDict):
     video_note: NotRequired[VideoNote]
     voice: NotRequired[Voice]
     has_media_spoiler: NotRequired[bool]
-    checlist: NotRequired[Checklist]
+    checklist: NotRequired[Checklist]
     contact: NotRequired[Contact]
     dice: NotRequired[Dice]
     game: NotRequired[Game]
