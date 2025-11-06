@@ -14,16 +14,15 @@ class SuggestedPostParameters(TypedDict):
     send_date: NotRequired[int]
 
 
-class SuggestedPostInfo(TypedDict):
+class SuggestedPostInfo(SuggestedPostParameters):
     state: str
-    price: NotRequired[SuggestedPostPrice]
-    send_date: NotRequired[int]
 
 
 class SuggestedPostEvent(TypedDict):
     suggested_post_message: NotRequired[Message]
 
 
+# TODO: Inherit from SuggestedPostParameters
 class SuggestedPostApproved(SuggestedPostEvent):
     price: NotRequired[SuggestedPostPrice]
     send_date: int

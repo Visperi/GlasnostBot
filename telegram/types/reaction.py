@@ -14,7 +14,7 @@ class ReactionTypeCustomEmoji(ReactionType):
 
 
 class ReactionTypePaid(ReactionType):
-    type: str
+    pass
 
 
 class ReactionCount(TypedDict):
