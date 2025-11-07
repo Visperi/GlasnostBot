@@ -1,9 +1,13 @@
+from .chat import Chat
+from .user import User
 from .types.reaction import (
     ReactionType as ReactionTypePayload,
     ReactionTypeEmoji as ReactionTypeEmojiPayload,
     ReactionTypeCustomEmoji as ReactionTypeCustomEmojiPayload,
     ReactionTypePaid as ReactionTypePaidPayload,
-    ReactionCount as ReactionCountPayload
+    ReactionCount as ReactionCountPayload,
+    MessageReactionUpdated as MessageReactionUpdatedPayload,
+    MessageReactionCountUpdated as MessageReactionCountUpdatedPayload
 )
 
 
@@ -55,3 +59,49 @@ class ReactionCount:
     def __init__(self, payload: ReactionCountPayload):
         self.type = ReactionType(payload["type"])
         self.total_count = payload["total_count"]
+
+
+class MessageReactionUpdated:
+
+    __slots__ = (
+        "chat",
+        "message_id",
+        "user",
+        "actor_chat",
+        "date",
+        "old_reaction",
+        "new_reaction"
+    )
+
+    def __init__(self, payload: MessageReactionUpdatedPayload):
+        self.chat = Chat(payload["chat"])
+        self.message_id = payload["message_id"]
+        self.date = payload["date"]
+        self.old_reaction = [ReactionType(r) for r in payload["old_reaction"]]
+        self.new_reaction = [ReactionType(r) for r in payload["new_reaction"]]
+
+        try:
+            self.user = User(payload["user"])
+        except KeyError:
+            self.user = None
+
+        try:
+            self.actor_chat = Chat(payload["actor_chat"])
+        except KeyError:
+            self.actor_chat = None
+
+
+class MessageReactionCountUpdated:
+
+    __slots__ = (
+        "chat",
+        "message_id",
+        "date",
+        "reactions"
+    )
+
+    def __init__(self, payload: MessageReactionCountUpdatedPayload):
+        self.chat = Chat(payload["chat"])
+        self.message_id = payload["message_id"]
+        self.date = payload["date"]
+        self.reactions = [ReactionCount(r) for r in payload["reactions"]]

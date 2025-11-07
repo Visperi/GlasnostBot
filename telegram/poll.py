@@ -51,17 +51,6 @@ class PollOptionBase:
             self.text_entities = []
 
 
-class PollOption(PollOptionBase):
-
-    __slots__ = (
-        "voter_count"
-    )
-
-    def __init__(self, payload: PollOptionPayload):
-        super().__init__(payload)
-        self.voter_count = payload["voter_count"]
-
-
 class InputPollOption(PollOptionBase):
 
     __slots__ = (
@@ -71,6 +60,17 @@ class InputPollOption(PollOptionBase):
     def __init__(self, payload: InputPollOptionPayload):
         super().__init__(payload)
         self.text_parse_mode = payload.get("text_parse_mode")
+
+
+class PollOption(PollOptionBase):
+
+    __slots__ = (
+        "voter_count"
+    )
+
+    def __init__(self, payload: PollOptionPayload):
+        super().__init__(payload)
+        self.voter_count = payload["voter_count"]
 
 
 class PollAnswer:

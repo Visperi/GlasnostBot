@@ -28,18 +28,26 @@ from typing import List
 
 from typing_extensions import TypedDict, NotRequired
 
-from .user import User, UsersShared, ChatShared
-from .location import Location, Venue, ProximityAlertTriggered
+from .poll import Poll
 from .contact import Contact
-from .reaction import ReactionType, ReactionCount
-from .payments import SuccessfulPayment, RefundedPayment, Invoice
-from .gift import Gift, UniqueGift
+from .star import StarAmount
+from .games import Game, Dice
 from .passport import PassportData
 from .chat_boost import ChatBoostAdded
-from .inline import InlineKeyboardMarkup, WebAppData, WriteAccessAllowed
-from .message_entity import MessageEntity
+from .gift import GiftInfo, UniqueGiftInfo
+from .user import User, UsersShared, ChatShared
+from .checklist import Checklist, ChecklistTask
 from .post import SuggestedPostInfo, SuggestedPostPrice
-from .star import StarAmount
+from .location import Location, Venue, ProximityAlertTriggered
+from .payments import SuccessfulPayment, RefundedPayment, Invoice
+from .inline import InlineKeyboardMarkup, WebAppData, WriteAccessAllowed
+from .message_entity import (
+    MessageEntity,
+    MessageOrigin,
+    LinkPreviewOptions,
+    DirectMessagesTopic,
+    TextQuote
+)
 from .media import (
     Animation,
     Audio,
@@ -73,29 +81,6 @@ from .giveaway import (
     GiveawayWinners,
     GiveawayCreated
 )
-
-from .games import Game, Dice
-from .poll import Poll
-
-
-class DirectMessagesTopic(TypedDict):
-    topic_id: int
-    user: NotRequired[User]
-
-
-class TextQuote(TypedDict):
-    text: str
-    entities: NotRequired[List[MessageEntity]]
-    position: int
-    is_manual: NotRequired[bool]
-
-
-class LinkPreviewOptions(TypedDict):
-    is_disabled: NotRequired[bool]
-    url: NotRequired[str]
-    prefer_small_media: NotRequired[bool]
-    prefer_large_media: NotRequired[bool]
-    show_above_text: NotRequired[bool]
 
 
 class MessageAutoDeleteTimerChanged(TypedDict):
@@ -137,22 +122,6 @@ class GiveawayCompleted(TypedDict):
     is_star_giveaway: NotRequired[bool]
 
 
-class ChecklistTask(TypedDict):
-    id: int
-    text: str
-    text_entities: NotRequired[List[MessageEntity]]
-    completed_by_user: NotRequired[User]
-    completion_date: NotRequired[int]
-
-
-class Checklist(TypedDict):
-    title: str
-    title_entities: NotRequired[List[MessageEntity]]
-    tasks: List[ChecklistTask]
-    others_can_add_tasks: NotRequired[bool]
-    others_can_mark_tasks_as_done: NotRequired[bool]
-
-
 class ChecklistTasksDone(TypedDict):
     checklist_message: NotRequired[Message]
     marked_as_done_task_ids: NotRequired[List[int]]
@@ -164,48 +133,16 @@ class ChecklistTasksAdded(TypedDict):
     tasks: List[ChecklistTask]
 
 
-class MessageReactionUpdated(TypedDict):
-    chat: Chat
-    message_id: int
-    user: NotRequired[User]
-    actor_chat: NotRequired[Chat]
-    date: int
-    old_reaction: List[ReactionType]
-    new_reaction: List[ReactionType]
+class DirectMessagePriceChanged(TypedDict):
+    are_direct_messages_enabled: bool
+    direct_message_star_count: int
 
 
-class MessageReactionCountUpdated(TypedDict):
-    chat: Chat
-    message_id: int
-    date: int
-    reactions: List[ReactionCount]
+class PaidMessagePriceChanged(TypedDict):
+    paid_message_star_count: int
 
 
-# TODO: Combine/refactor the message origin classes
-class MessageOrigin(TypedDict):
-    type: str
-    date: int
-
-
-class MessageOriginUser(MessageOrigin):
-    sender_user: User
-
-
-class MessageOriginHiddenUser(MessageOrigin):
-    sender_user_name: str
-
-
-class MessageOriginChat(MessageOrigin):
-    sender_chat: Chat
-    author_signature: NotRequired[str]
-
-
-class MessageOriginChannel(MessageOrigin):
-    chat: Chat
-    message_id: int
-    author_signature: NotRequired[str]
-
-
+# TODO: Combine with Message
 class ExternalReplyInfo(TypedDict):
     origin: MessageOrigin
     chat: NotRequired[Chat]
@@ -234,15 +171,6 @@ class ExternalReplyInfo(TypedDict):
     venue: NotRequired[Venue]
 
 
-class DirectMessagePriceChanged(TypedDict):
-    are_direct_messages_enabled: bool
-    direct_message_star_count: int
-
-
-class PaidMessagePriceChanged(TypedDict):
-    paid_message_star_count: int
-
-
 class MaybeInaccessibleMessage(TypedDict):
     message_id: int
     chat: Chat
@@ -254,28 +182,6 @@ class InaccessibleMessage(MaybeInaccessibleMessage):
     chat: Chat
     message_id: int
     date: int
-
-
-class GiftInfoBase(TypedDict):
-    owned_gift_id: NotRequired[str]
-
-
-class GiftInfo(GiftInfoBase):
-    gift: Gift
-    convert_star_count: NotRequired[int]
-    prepaid_upgrade_star_count: NotRequired[int]
-    can_be_upgraded: NotRequired[bool]
-    text: NotRequired[str]
-    entities: NotRequired[List[MessageEntity]]
-    is_private: NotRequired[bool]
-
-
-class UniqueGiftInfo(GiftInfoBase):
-    gift: UniqueGift
-    origin: str
-    last_resale_star_count: NotRequired[int]
-    transfer_star_count: NotRequired[int]
-    next_transfer_date: NotRequired[int]
 
 
 class Message(MaybeInaccessibleMessage):

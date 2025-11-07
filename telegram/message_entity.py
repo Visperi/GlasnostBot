@@ -1,8 +1,115 @@
 from urllib.parse import urlparse, urlunparse
 from typing import Optional
 
-from .types.message_entity import MessageEntity as MessageEntityPayload
 from .user import User
+from .chat import Chat
+from .types.message_entity import (
+    MessageOrigin as MessageOriginPayload,
+    MessageOriginUser as MessageOriginUserPayload,
+    MessageOriginHiddenUser as MessageOriginHiddenUserPayload,
+    MessageOriginChat as MessageOriginChatPayload,
+    MessageOriginChannel as MessageOriginChannelPayload,
+    DirectMessagesTopic as DirectMessagesTopicPayload,
+    LinkPreviewOptions as LinkPreviewOptionsPayload,
+    MessageEntity as MessageEntityPayload,
+    TextQuote as TextQuotePayload
+)
+
+
+class MessageOrigin:
+
+    __slots__ = (
+        "type",
+        "date"
+    )
+
+    def __init__(self, payload: MessageOriginPayload):
+        self.type = payload["type"]
+        self.date = payload["date"]
+
+
+class MessageOriginUser(MessageOrigin):
+
+    __slots__ = (
+        "sender_user"
+    )
+
+    def __init__(self, payload: MessageOriginUserPayload):
+        super().__init__(payload)
+        self.sender_user = User(payload["sender_user"])
+
+
+class MessageOriginHiddenUser(MessageOrigin):
+
+    __slots__ = (
+        "sender_user_name"
+    )
+
+    def __init__(self, payload: MessageOriginHiddenUserPayload):
+        super().__init__(payload)
+        self.sender_user_name = payload["sender_user_name"]
+
+
+class MessageOriginChat(MessageOrigin):
+
+    __slots__ = (
+        "sender_chat",
+        "author_signature"
+    )
+
+    def __init__(self, payload: MessageOriginChatPayload):
+        super().__init__(payload)
+        self.sender_chat = Chat(payload["sender_chat"])
+        self.author_signature = payload.get("author_signature")
+
+
+class MessageOriginChannel(MessageOrigin):
+
+    __slots__ = (
+        "chat",
+        "message_id",
+        "author_signature"
+    )
+
+    def __init__(self, payload: MessageOriginChannelPayload):
+        super().__init__(payload)
+        self.chat = Chat(payload["chat"])
+        self.message_id = payload["message_id"]
+        self.author_signature = payload.get("author_signature")
+
+
+class DirectMessagesTopic:
+
+    __slots__ = (
+        "topic_id",
+        "user"
+    )
+
+    def __init__(self, payload: DirectMessagesTopicPayload):
+        self.topic_id = payload["topic_id"]
+
+        try:
+            self.user = User(payload["user"])
+        except KeyError:
+            self.user = None
+
+
+class LinkPreviewOptions:
+
+    __slots__ = (
+        "is_disabled",
+        "url",
+        "prefer_small_media",
+        "prefer_large_media",
+        "show_above_text"
+    )
+
+    def __init__(self, payload: LinkPreviewOptionsPayload):
+        self.is_disabled = payload.get("is_disabled", False)
+        self.url = payload.get("url")
+        self.prefer_small_media = payload.get("prefer_small_media", False)
+        self.prefer_large_media = payload.get("prefer_large_media", False)
+        self.show_above_text = payload.get("show_above_text", False)
 
 
 class EntityType:
@@ -142,3 +249,19 @@ class MessageEntity:
             tmp = "__dummy__"
             md = self.markdown(tmp, False)
             return (len(md) - len(tmp)) // 2
+
+
+class TextQuote:
+
+    __slots__ = (
+        "text",
+        "entities",
+        "position",
+        "is_manual"
+    )
+
+    def __init__(self, payload: TextQuotePayload):
+        self.text = payload["text"]
+        self.entities = payload.get("entities", [])
+        self.position = payload["position"]
+        self.is_manual = payload.get("is_manual", False)

@@ -24,22 +24,19 @@ SOFTWARE.
 
 
 from .utils import flatten_handlers
-from .types.update import Update as UpdatePayload
+from .message import Message
 from .poll import Poll, PollAnswer
-from .business import BusinessConnection, BusinessMessagesDeleted
-from .chat_boost import ChatBoostUpdated, ChatBoostRemoved
+from .types.update import Update as UpdatePayload
 from .chat import ChatMemberUpdated, ChatJoinRequest
+from .chat_boost import ChatBoostUpdated, ChatBoostRemoved
+from .business import BusinessConnection, BusinessMessagesDeleted
+from .reaction import MessageReactionUpdated, MessageReactionCountUpdated
 from .query import (
     InlineQuery,
     ChosenInlineResult,
     CallbackQuery,
     PreCheckoutQuery,
     ShippingQuery
-)
-from .message import (
-    Message,
-    MessageReactionUpdated,
-    MessageReactionCountUpdated
 )
 
 

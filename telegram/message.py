@@ -28,27 +28,35 @@ from __future__ import annotations
 from typing import List, Dict
 
 from .utils import flatten_handlers
-from .user import User, UsersShared, ChatShared
+from .poll import Poll
 from .contact import Contact
+from .star import StarAmount
 from .games import Game, Dice
-from .location import Location, Venue, ProximityAlertTriggered
-from .reaction import ReactionType, ReactionCount
-from .payments import SuccessfulPayment, RefundedPayment, Invoice
-from .gift import Gift, UniqueGift
 from .passport import PassportData
 from .chat_boost import ChatBoostAdded
+from .gift import GiftInfo, UniqueGiftInfo
+from .user import User, UsersShared, ChatShared
+from .checklist import Checklist, ChecklistTask
+from .post import SuggestedPostInfo, SuggestedPostPrice
+from .location import Location, Venue, ProximityAlertTriggered
+from .payments import SuccessfulPayment, RefundedPayment, Invoice
 from .inline import InlineKeyboardMarkup, WebAppData, WriteAccessAllowed
-from .message_entity import MessageEntity
-from .poll import Poll
+from .message_entity import (
+    MessageEntity,
+    MessageOrigin,
+    LinkPreviewOptions,
+    DirectMessagesTopic,
+    TextQuote
+)
 from .media import (
-    PhotoSize,
     Animation,
     Audio,
     Document,
+    PhotoSize,
     Video,
-    Sticker,
     VideoNote,
     Voice,
+    Sticker,
     PaidMediaInfo
 )
 from .forum import (
@@ -73,92 +81,24 @@ from .giveaway import (
     GiveawayWinners,
     GiveawayCreated
 )
-from .post import (
-    SuggestedPostInfo,
-    SuggestedPostApproved,
-    SuggestedPostApprovalFailed,
-    SuggestedPostDeclined,
-    SuggestedPostRefunded,
-    SuggestedPostPaid
-)
 from .types.message import (
-    Message as MessagePayload,
     MessageAutoDeleteTimerChanged as MessageAutoDeleteTimerChangedPayload,
-    MaybeInaccessibleMessage as MaybeInaccessibleMessagePayload,
-    MessageOrigin as MessageOriginPayload,
-    MessageOriginUser as MessageOriginUserPayload,
-    MessageOriginHiddenUser as MessageOriginHiddenUserPayload,
-    MessageOriginChat as MessageOriginChatPayload,
-    MessageOriginChannel as MessageOriginChannelPayload,
-    DirectMessagesTopic as DirectMessagesTopicPayload,
-    TextQuote as TextQuotePayload,
-    LinkPreviewOptions as LinkPreviewOptionsPayload,
-    MessageReactionUpdated as MessageReactionUpdatedPayload,
-    MessageReactionCountUpdated as MessageReactionCountUpdatedPayload,
+    SuggestedPostEvent as SuggestedPostEventPayload,
+    SuggestedPostApproved as SuggestedPostApprovedPayload,
+    SuggestedPostApprovalFailed as SuggestedPostApprovalFailedPayload,
+    SuggestedPostDeclined as SuggestedPostDeclinedPayload,
+    SuggestedPostPaid as SuggestedPostPaidPayload,
+    SuggestedPostRefunded as SuggestedPostRefundedPayload,
+    GiveawayCompleted as GiveawayCompletedPayload,
+    ChecklistTasksDone as ChecklistTasksDonePayload,
+    ChecklistTasksAdded as ChecklistTasksAddedPayload,
     DirectMessagePriceChanged as DirectMessagePriceChangedPayload,
     PaidMessagePriceChanged as PaidMessagePriceChangedPayload,
     ExternalReplyInfo as ExternalReplyInfoPayload,
-    GiftInfoBase as GiftInfoBasePayload,
-    GiftInfo as GiftInfoPayload,
-    UniqueGiftInfo as UniqueGiftInfoPayload,
-    Checklist as ChecklistPayload,
-    ChecklistTask as ChecklistTaskPayload,
-    ChecklistTasksDone as ChecklistTasksDonePayload,
-    ChecklistTasksAdded as ChecklistTasksAddedPayload,
-    GiveawayCompleted as GiveawayCompletedPayload
+    MaybeInaccessibleMessage as MaybeInaccessibleMessagePayload,
+    InaccessibleMessage as InaccessibleMessagePayload,
+    Message as MessagePayload
 )
-
-# TODO: Refactor some classes out of message modules
-
-
-class DirectMessagesTopic:
-
-    __slots__ = (
-        "topic_id",
-        "user"
-    )
-
-    def __init__(self, payload: DirectMessagesTopicPayload):
-        self.topic_id = payload["topic_id"]
-
-        try:
-            self.user = User(payload["user"])
-        except KeyError:
-            self.user = None
-
-
-class TextQuote:
-
-    __slots__ = (
-        "text",
-        "entities",
-        "position",
-        "is_manual"
-    )
-
-    def __init__(self, payload: TextQuotePayload):
-        self.text = payload["text"]
-        self.entities = payload.get("entities", [])
-        self.position = payload["position"]
-        self.is_manual = payload.get("is_manual", False)
-
-
-class LinkPreviewOptions:
-
-    __slots__ = (
-        "is_disabled",
-        "url",
-        "prefer_small_media",
-        "prefer_large_media",
-        "show_above_text"
-    )
-
-    def __init__(self, payload: LinkPreviewOptionsPayload):
-        self.is_disabled = payload.get("is_disabled", False)
-        self.url = payload.get("url")
-        self.prefer_small_media = payload.get("prefer_small_media", False)
-        self.prefer_large_media = payload.get("prefer_large_media", False)
-        self.show_above_text = payload.get("show_above_text", False)
 
 
 class MessageAutoDeleteTimerChanged:
@@ -167,6 +107,88 @@ class MessageAutoDeleteTimerChanged:
 
     def __init__(self, payload: MessageAutoDeleteTimerChangedPayload):
         self.message_auto_delete_time = payload["message_auto_delete_time"]
+
+
+class SuggestedPostEvent:
+
+    __slots__ = (
+        "suggested_post_message"
+    )
+
+    def __init__(self, payload: SuggestedPostEventPayload):
+        try:
+            self.suggested_post_message = payload.get("suggested_post_message")
+        except KeyError:
+            self.suggested_post_message = None
+
+
+class SuggestedPostApproved(SuggestedPostEvent):
+
+    __slots__ = (
+        "price",
+        "send_date"
+    )
+
+    def __init__(self, payload: SuggestedPostApprovedPayload):
+        super().__init__(payload)
+        self.send_date = payload["send_date"]
+
+        try:
+            self.price = SuggestedPostPrice(payload["price"])
+        except KeyError:
+            self.price = None
+
+
+class SuggestedPostApprovalFailed(SuggestedPostEvent):
+
+    __slots__ = (
+        "price"
+    )
+
+    def __init__(self, payload: SuggestedPostApprovalFailedPayload):
+        super().__init__(payload)
+        self.price = SuggestedPostPrice(payload["price"])
+
+
+class SuggestedPostDeclined(SuggestedPostEvent):
+
+    __slots__ = (
+        "comment"
+    )
+
+    def __init__(self, payload: SuggestedPostDeclinedPayload):
+        super().__init__(payload)
+        self.comment = payload.get("comment")
+
+
+class SuggestedPostPaid(SuggestedPostEvent):
+
+    __slots__ = (
+        "currency",
+        "amount",
+        "star_amount"
+    )
+
+    def __init__(self, payload: SuggestedPostPaidPayload):
+        super().__init__(payload)
+        self.currency = payload["currency"]
+        self.amount = payload.get("amount", -1)
+
+        try:
+            self.star_amount = StarAmount(payload["star_amount"])
+        except KeyError:
+            self.star_amount = None
+
+
+class SuggestedPostRefunded(SuggestedPostEvent):
+
+    __slots__ = (
+        "reason"
+    )
+
+    def __init__(self, payload: SuggestedPostRefundedPayload):
+        super().__init__(payload)
+        self.reason = payload["reason"]
 
 
 class GiveawayCompleted:
@@ -187,46 +209,6 @@ class GiveawayCompleted:
             self.giveaway_message = Message(payload["giveaway_message"])
         except KeyError:
             self.giveaway_message = None
-
-
-class ChecklistTask:
-
-    __slots__ = (
-        "id",
-        "text",
-        "text_entities",
-        "completed_by_user",
-        "completion_date"
-    )
-
-    def __init__(self, payload: ChecklistTaskPayload):
-        self.id = payload["id"]
-        self.text = payload["text"]
-        self.text_entities = [MessageEntity(e) for e in payload.get("text_entities", [])]
-        self.completion_date = payload.get("completion_date", -1)
-
-        try:
-            self.completed_by_user = User(payload["completed_by_user"])
-        except KeyError:
-            self.completed_by_user = None
-
-
-class Checklist:
-
-    __slots__ = (
-        "title",
-        "title_entities",
-        "tasks",
-        "others_can_add_tasks",
-        "others_can_mark_tasks_as_done"
-    )
-
-    def __init__(self, payload: ChecklistPayload):
-        self.title = payload["title"]
-        self.title_entities = [MessageEntity(e) for e in payload.get("title_entities", [])]
-        self.tasks = [ChecklistTask(t) for t in payload["tasks"]]
-        self.others_can_add_tasks = payload.get("others_can_add_tasks", False)
-        self.others_can_mark_tasks_as_done = payload.get("others_can_mark_tasks_as_done", False)
 
 
 class ChecklistTasksDone:
@@ -263,113 +245,26 @@ class ChecklistTasksAdded:
             self.checklist_message = None
 
 
-class MessageReactionUpdated:
+class DirectMessagePriceChanged:
 
     __slots__ = (
-        "chat",
-        "message_id",
-        "user",
-        "actor_chat",
-        "date",
-        "old_reaction",
-        "new_reaction"
+        "are_direct_messages_enabled",
+        "direct_message_star_count"
     )
 
-    def __init__(self, payload: MessageReactionUpdatedPayload):
-        self.chat = Chat(payload["chat"])
-        self.message_id = payload["message_id"]
-        self.date = payload["date"]
-        self.old_reaction = [ReactionType(r) for r in payload["old_reaction"]]
-        self.new_reaction = [ReactionType(r) for r in payload["new_reaction"]]
-
-        try:
-            self.user = User(payload["user"])
-        except KeyError:
-            self.user = None
-
-        try:
-            self.actor_chat = Chat(payload["actor_chat"])
-        except KeyError:
-            self.actor_chat = None
+    def __init__(self, payload: DirectMessagePriceChangedPayload):
+        self.are_direct_messages_enabled = payload["are_direct_messages_enabled"]
+        self.direct_message_star_count = payload["direct_message_star_count"]
 
 
-class MessageReactionCountUpdated:
+class PaidMessagePriceChanged:
 
     __slots__ = (
-        "chat",
-        "message_id",
-        "date",
-        "reactions"
+        "paid_message_star_count"
     )
 
-    def __init__(self, payload: MessageReactionCountUpdatedPayload):
-        self.chat = Chat(payload["chat"])
-        self.message_id = payload["message_id"]
-        self.date = payload["date"]
-        self.reactions = [ReactionCount(r) for r in payload["reactions"]]
-
-
-# TODO: Move message origin classes to module message_origin
-class MessageOrigin:
-
-    __slots__ = (
-        "type",
-        "date"
-    )
-
-    def __init__(self, payload: MessageOriginPayload):
-        self.type = payload["type"]
-        self.date = payload["date"]
-
-
-class MessageOriginUser(MessageOrigin):
-
-    __slots__ = (
-        "sender_user"
-    )
-
-    def __init__(self, payload: MessageOriginUserPayload):
-        super().__init__(payload)
-        self.sender_user = User(payload["sender_user"])
-
-
-class MessageOriginHiddenUser(MessageOrigin):
-
-    __slots__ = (
-        "sender_user_name"
-    )
-
-    def __init__(self, payload: MessageOriginHiddenUserPayload):
-        super().__init__(payload)
-        self.sender_user_name = payload["sender_user_name"]
-
-
-class MessageOriginChat(MessageOrigin):
-
-    __slots__ = (
-        "sender_chat",
-        "author_signature"
-    )
-
-    def __init__(self, payload: MessageOriginChatPayload):
-        super().__init__(payload)
-        self.sender_chat = Chat(payload["sender_chat"])
-        self.author_signature = payload.get("author_signature")
-
-
-class MessageOriginChannel(MessageOrigin):
-
-    __slots__ = (
-        "chat",
-        "message_id",
-        "author_signature"
-    )
-
-    def __init__(self, payload: MessageOriginChannelPayload):
-        super().__init__(payload)
-        self.chat = Chat(payload["chat"])
-        self.message_id = payload["message_id"]
-        self.author_signature = payload.get("author_signature")
+    def __init__(self, payload: PaidMessagePriceChangedPayload):
+        self.paid_message_star_count = payload["paid_message_star_count"]
 
 
 # TODO: Combine with Message
@@ -507,80 +402,6 @@ class ExternalReplyInfo:
         self.venue = Venue(value)
 
 
-class DirectMessagePriceChanged:
-
-    __slots__ = (
-        "are_direct_messages_enabled",
-        "direct_message_star_count"
-    )
-
-    def __init__(self, payload: DirectMessagePriceChangedPayload):
-        self.are_direct_messages_enabled = payload["are_direct_messages_enabled"]
-        self.direct_message_star_count = payload["direct_message_star_count"]
-
-
-class PaidMessagePriceChanged:
-
-    __slots__ = (
-        "paid_message_star_count"
-    )
-
-    def __init__(self, payload: PaidMessagePriceChangedPayload):
-        self.paid_message_star_count = payload["paid_message_star_count"]
-
-
-class GiftInfoBase:
-
-    __slots__ = (
-        "owned_gift_id"
-    )
-
-    def __init__(self, payload: GiftInfoBasePayload):
-        self.owned_gift_id = payload.get("owned_gift_id")
-
-
-class GiftInfo(GiftInfoBase):
-
-    __slots__ = (
-        "gift",
-        "convert_star_count",
-        "prepaid_upgrade_star_count",
-        "can_be_upgraded",
-        "text",
-        "entities",
-        "is_private"
-    )
-
-    def __init__(self, payload: GiftInfoPayload):
-        super().__init__(payload)
-        self.gift = Gift(payload["gift"])
-        self.convert_star_count = payload.get("convert_star_count", 0)
-        self.prepaid_upgrade_star_count = payload.get("prepaid_upgrade_star_count", 0)
-        self.can_be_upgraded = payload.get("can_be_upgraded", False)
-        self.text = payload.get("text")
-        self.entities = [MessageEntity(e) for e in payload.get("entities", [])]
-        self.is_private = payload.get("is_private", False)
-
-
-class UniqueGiftInfo(GiftInfoBase):
-
-    __slots__ = (
-        "gift",
-        "origin",
-        "last_resale_star_count",
-        "transfer_star_count",
-        "next_transfer_date"
-    )
-
-    def __init__(self, payload: UniqueGiftInfoPayload):
-        super().__init__(payload)
-        self.gift = UniqueGift(payload["gift"])
-        self.origin = payload["origin"]
-        self.last_resale_star_count = payload.get("last_resale_star_count")
-        self.transfer_star_count = payload.get("transfer_star_count", 0)
-        self.next_transfer_date = payload.get("next_transfer_date", -1)
-
-
 class MaybeInaccessibleMessage:
 
     __slots__ = (
@@ -597,7 +418,7 @@ class MaybeInaccessibleMessage:
 
 class InaccessibleMessage(MaybeInaccessibleMessage):
 
-    def __init__(self, payload):
+    def __init__(self, payload: InaccessibleMessagePayload):
         # TODO: Delete this class is plausible
         super().__init__(payload)
 

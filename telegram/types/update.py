@@ -24,7 +24,8 @@ SOFTWARE.
 
 
 from typing_extensions import TypedDict, NotRequired
-from .message import Message, MessageReactionUpdated, MessageReactionCountUpdated
+from .message import Message
+from .reaction import MessageReactionUpdated, MessageReactionCountUpdated
 from .poll import Poll, PollAnswer
 from .chat import ChatJoinRequest, ChatMemberUpdated
 from .chat_boost import ChatBoostUpdated, ChatBoostRemoved

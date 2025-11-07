@@ -1,3 +1,6 @@
+from .chat import Chat
+from .media import Sticker
+from .message_entity import MessageEntity
 from .types.gift import (
     GiftBase as GiftBasePayload,
     Gift as GiftPayload,
@@ -6,10 +9,11 @@ from .types.gift import (
     UniqueGiftSymbol as UniqueGiftSymbolPayload,
     UniqueGiftBackdropColors as UniqueGiftBackdropColorsPayload,
     UniqueGiftBackdrop as UniqueGiftBackdropPayload,
-    UniqueGift as UniqueGiftPayload
+    UniqueGift as UniqueGiftPayload,
+    GiftInfoBase as GiftInfoBasePayload,
+    GiftInfo as GiftInfoPayload,
+    UniqueGiftInfo as UniqueGiftInfoPayload
 )
-from .chat import Chat
-from .media import Sticker
 
 
 class GiftBase:
@@ -121,3 +125,56 @@ class UniqueGift(GiftBase):
         self.model = UniqueGiftModel(payload["model"])
         self.symbol = UniqueGiftSymbol(payload["symbol"])
         self.backdrop = UniqueGiftBackdrop(payload["backdrop"])
+
+
+class GiftInfoBase:
+
+    __slots__ = (
+        "owned_gift_id"
+    )
+
+    def __init__(self, payload: GiftInfoBasePayload):
+        self.owned_gift_id = payload.get("owned_gift_id")
+
+
+class GiftInfo(GiftInfoBase):
+
+    __slots__ = (
+        "gift",
+        "convert_star_count",
+        "prepaid_upgrade_star_count",
+        "can_be_upgraded",
+        "text",
+        "entities",
+        "is_private"
+    )
+
+    def __init__(self, payload: GiftInfoPayload):
+        super().__init__(payload)
+        self.gift = Gift(payload["gift"])
+        self.convert_star_count = payload.get("convert_star_count", 0)
+        self.prepaid_upgrade_star_count = payload.get("prepaid_upgrade_star_count", 0)
+        self.can_be_upgraded = payload.get("can_be_upgraded", False)
+        self.text = payload.get("text")
+        self.entities = [MessageEntity(e) for e in payload.get("entities", [])]
+        self.is_private = payload.get("is_private", False)
+
+
+class UniqueGiftInfo(GiftInfoBase):
+
+    __slots__ = (
+        "gift",
+        "origin",
+        "last_resale_star_count",
+        "transfer_star_count",
+        "next_transfer_date"
+    )
+
+    def __init__(self, payload: UniqueGiftInfoPayload):
+        super().__init__(payload)
+        self.gift = UniqueGift(payload["gift"])
+        self.origin = payload["origin"]
+        self.last_resale_star_count = payload.get("last_resale_star_count")
+        self.transfer_star_count = payload.get("transfer_star_count", 0)
+        self.next_transfer_date = payload.get("next_transfer_date", -1)
+
