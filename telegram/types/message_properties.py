@@ -61,7 +61,6 @@ class DirectMessagesTopic(TypedDict):
     user: NotRequired[User]
 
 
-# TODO: Move
 class LinkPreviewOptions(TypedDict):
     is_disabled: NotRequired[bool]
     url: NotRequired[str]
@@ -80,7 +79,6 @@ class MessageEntity(TypedDict):
     custom_emoji_id: NotRequired[str]
 
 
-# TODO: Move
 class TextQuote(TypedDict):
     text: str
     entities: NotRequired[List[MessageEntity]]

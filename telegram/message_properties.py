@@ -28,7 +28,7 @@ from typing import Optional
 
 from .user import User
 from .chat import Chat
-from .types.message_entity import (
+from .types.message_properties import (
     MessageOrigin as MessageOriginPayload,
     MessageOriginUser as MessageOriginUserPayload,
     MessageOriginHiddenUser as MessageOriginHiddenUserPayload,

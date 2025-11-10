@@ -26,7 +26,7 @@ SOFTWARE.
 from typing import List
 from typing_extensions import TypedDict, NotRequired
 from .media import PhotoSize, Animation
-from .message_entity import MessageEntity
+from .message_properties import MessageEntity
 
 
 class Dice(TypedDict):

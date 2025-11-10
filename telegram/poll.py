@@ -30,7 +30,7 @@ from .types.poll import (
     PollOptionBase as PollOptionBasePayload,
     InputPollOption as InputPollOptionPayload
 )
-from .message_entity import MessageEntity
+from .message_properties import MessageEntity
 from .user import User
 from .chat import Chat
 

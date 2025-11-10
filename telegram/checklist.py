@@ -23,7 +23,7 @@ SOFTWARE.
 """
 
 
-from .message_entity import MessageEntity
+from .message_properties import MessageEntity
 from .user import User
 from .types.checklist import (
     ChecklistTask as ChecklistTaskPayload,

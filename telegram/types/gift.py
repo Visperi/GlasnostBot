@@ -29,7 +29,7 @@ from typing_extensions import TypedDict, NotRequired
 
 from .media import Sticker
 from .chat import Chat
-from .message_entity import MessageEntity
+from .message_properties import MessageEntity
 
 
 class GiftBase(TypedDict):

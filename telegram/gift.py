@@ -25,7 +25,7 @@ SOFTWARE.
 
 from .chat import Chat
 from .media import Sticker
-from .message_entity import MessageEntity
+from .message_properties import MessageEntity
 from .types.gift import (
     GiftBase as GiftBasePayload,
     Gift as GiftPayload,

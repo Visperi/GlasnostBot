@@ -41,7 +41,7 @@ from .post import SuggestedPostInfo, SuggestedPostPrice
 from .location import Location, Venue, ProximityAlertTriggered
 from .payments import SuccessfulPayment, RefundedPayment, Invoice
 from .inline import InlineKeyboardMarkup, WebAppData, WriteAccessAllowed
-from .message_entity import (
+from .message_properties import (
     MessageEntity,
     MessageOrigin,
     LinkPreviewOptions,
