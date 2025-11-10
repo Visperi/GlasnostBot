@@ -61,6 +61,16 @@ class User:
         self.can_read_all_group_messages = payload.get("can_read_all_group_messages", False)
         self.supports_inline_queries = payload.get("supports_inline_queries", False)
 
+    @property
+    def full_name(self) -> str:
+        """
+        :return: Full name of the user. If the user has no last name set, this is equal to the users first name.
+        """
+        if self.last_name:
+            return f"{self.first_name} {self.last_name}"
+        else:
+            return self.first_name
+
 
 class SharedUser:
 

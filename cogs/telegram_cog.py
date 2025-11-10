@@ -115,16 +115,30 @@ class TelegramCog(commands.Cog):
         upper_threshold_limit = datetime.now(UTC) - timedelta(days=threshold)
         self.database_handler.delete_by_age(upper_threshold_limit)
 
-    @staticmethod
-    def create_discord_embed(message: telegram.Message) -> discord.Embed:
-        embed = discord.Embed(description=message.markdownify(make_urls_to_hyperlink=False))
+    def create_discord_embed(self, message: telegram.Message) -> discord.Embed:
+        """
+        Create a Discord embed from a Telegram message. The embed can then be forwarded to Discord as is.
 
-        # TODO: Fetch the forward origin from the message
-        forwarded_from = None
+        :param message: A Telegram message object.
+        :return: A Discord Embed object.
+        """
+        embed = discord.Embed(description=message.markdownify(make_urls_to_hyperlink=False))
+        forwarded_from = message.original_sender
+
         if forwarded_from is not None:
-            forward_notification = f"Forwarded from {forwarded_from}"
+            if isinstance(forwarded_from, telegram.User):
+                if self.prefer_telegram_usernames and forwarded_from.username:
+                    sender_name = forwarded_from.username
+                else:
+                    sender_name = forwarded_from.full_name
+            elif isinstance(forwarded_from, telegram.Chat):
+                sender_name = forwarded_from.title
+            else:
+                sender_name = forwarded_from.sender_user_name
+
+            forward_notification = f"Forwarded from {sender_name}"
             if len(forward_notification) < 256:
-                embed.title = f"Forwarded from {forwarded_from}"
+                embed.title = f"Forwarded from {sender_name}"
             else:
                 embed.description = f"**{forward_notification}\n\n{embed.description}**"
 

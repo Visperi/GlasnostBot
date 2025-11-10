@@ -24,7 +24,7 @@ SOFTWARE.
 
 
 from urllib.parse import urlparse, urlunparse
-from typing import Optional
+from typing import Optional, Union
 
 from .user import User
 from .chat import Chat
@@ -51,6 +51,25 @@ class MessageOrigin:
     def __init__(self, payload: MessageOriginPayload):
         self.type = payload["type"]
         self.date = payload["date"]
+
+    @property
+    def sender(self) -> Union[User, str, Chat]:
+        """
+        :return: Original sender for the message. The origin type is ``telegram.User`` for messages originally sent by a
+                 known users, or ``Chat`` for messages in channel chats and messages sent behalf of chat into groups.
+                 For unknown users the origin is their Telegram username as a string.
+        :raises ValueError: If the origin type is unknown and correct origin attribute cannot be fetched.
+        """
+        if isinstance(self, MessageOriginUser):
+            return self.sender_user
+        elif isinstance(self, MessageOriginHiddenUser):
+            return self.sender_user_name
+        elif isinstance(self, MessageOriginChat):
+            return self.sender_chat
+        elif isinstance(self, MessageOriginChannel):
+            return self.chat
+        else:
+            raise ValueError(f"Unknown MessageOrigin instance type: {type(self)}")
 
 
 class MessageOriginUser(MessageOrigin):

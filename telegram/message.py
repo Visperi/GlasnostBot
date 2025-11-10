@@ -25,7 +25,7 @@ SOFTWARE.
 
 from __future__ import annotations
 
-from typing import List, Dict
+from typing import List, Dict, Optional
 
 from .utils import flatten_handlers
 from .poll import Poll
@@ -44,6 +44,10 @@ from .inline import InlineKeyboardMarkup, WebAppData, WriteAccessAllowed
 from .message_properties import (
     MessageEntity,
     MessageOrigin,
+    MessageOriginUser,
+    MessageOriginHiddenUser,
+    MessageOriginChat,
+    MessageOriginChannel,
     LinkPreviewOptions,
     DirectMessagesTopic,
     TextQuote
@@ -539,7 +543,7 @@ class Message(MaybeInaccessibleMessage):
         self.sender_boost_count = payload.get("sender_boost_count", 0)
         self.sender_business_bot = payload.get("sender_business_bot")
         self.business_connection_id = payload.get("business_connection_id")
-        self.forward_origin = payload.get("forward_origin")
+        self.forward_origin: Optional[MessageOrigin] = payload.get("forward_origin")
         self.is_topic_message = payload.get("is_topic_message", False)
         self.is_automatic_forward = payload.get("is_automatic_forward", False)
         self.reply_to_message = payload.get("reply_to_message")
@@ -653,7 +657,20 @@ class Message(MaybeInaccessibleMessage):
         self.sender_business_bot = User(value)
 
     def _handle_forward_origin(self, value):
-        self.forward_origin = MessageOrigin(value)
+        # TODO: This could probably be done better
+        origin_type = value["type"]
+
+        if origin_type == "user":
+            obj = MessageOriginUser(value)
+        elif origin_type == "hidden_user":
+            obj = MessageOriginHiddenUser(value)
+        elif origin_type == "chat":
+            obj = MessageOriginChat(value)
+        elif origin_type == "channel":
+            obj = MessageOriginChannel(value)
+        else:
+            raise ValueError(f"Unknown message origin type: {origin_type}")
+        self.forward_origin = obj
 
     def _handle_reply_to_message(self, value):
         self.reply_to_message = Message(value)
@@ -901,3 +918,13 @@ class Message(MaybeInaccessibleMessage):
                 total_offset += len(entity_markdown) - len(text_seq)
 
         return markdownified
+
+    @property
+    def original_sender(self):
+        """
+        :return: Original sender for a forwarded message. None if the message is not forwarded or contains no
+                 forward origin.
+        """
+        if not self.forward_origin:
+            return None
+        return self.forward_origin.sender
