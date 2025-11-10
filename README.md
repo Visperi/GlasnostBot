@@ -56,9 +56,9 @@ Changing bot credentials require a complete restart for the bot.
 
 #### Channel IDs
 
-|  variable  |    value type    | function                                                                                                                                                         |
-|:----------:|:----------------:|------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| `telegram` |     Integer      | ID of a Telegram channel to listen to. Always starts with `-100`. Only one channel is currently supported.                                                       |
+|  variable  |    value type    | function                                                                                                                                                          |
+|:----------:|:----------------:|-------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| `telegram` |     Integer      | ID of a Telegram channel to listen to. Always starts with `-100`. Only one channel is currently supported.                                                        |
 | `discord`  | List of integers | List of Discord channel IDs to forward the Telegram messages to. The Discord bot must have a permission to send messages and read old messages in these channels. |
 
 #### Bot settings

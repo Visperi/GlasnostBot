@@ -68,7 +68,7 @@ class TelegramCog(commands.Cog):
         self.load_configuration()
 
         self.tg_bot = telegram.Client(aiohttp.ClientSession(), loop=bot.loop)
-        self.bot = bot
+        self.discord_bot = bot
         self.database_handler = DatabaseHandler(self.database_name)
 
     def load_configuration(self):
@@ -149,7 +149,7 @@ class TelegramCog(commands.Cog):
         return embed
 
     async def on_update(self, update: telegram.Update) -> None:
-        await self.bot.wait_until_ready()
+        await self.discord_bot.wait_until_ready()
         message = update.effective_message
         if not message or message.chat.id != self.tg_channel_id:
             _logger.debug("Discarding update with no message or message not from configured Telegram channel.")
@@ -197,7 +197,7 @@ class TelegramCog(commands.Cog):
         :param content: Text content to send in addition to the Discord embed.
         """
         for channel_id in self.discord_channel_ids:
-            channel = self.bot.get_channel(channel_id)
+            channel = self.discord_bot.get_channel(channel_id)
             if not channel:
                 _logger.error(f"Attempted to forward Telegram message to unknown channel with ID {channel_id}.")
                 continue
@@ -283,7 +283,7 @@ class TelegramCog(commands.Cog):
         message_ids = self.database_handler.get(tg_message_id)
 
         for message_id, channel_id in message_ids:
-            channel = self.bot.get_channel(channel_id)
+            channel = self.discord_bot.get_channel(channel_id)
             if not channel:
                 _logger.error(f"Discord channel with ID {channel_id} not found. Cannot fetch message reference. "
                               f"Skipping.")
@@ -318,11 +318,11 @@ class TelegramCog(commands.Cog):
                     updated_sections[variable] = value
 
         if "activity_status" in updated_sections:
-            await self.bot.update_activity_status(self.config.bot_settings.activity_status)
+            await self.discord_bot.update_activity_status(self.config.bot_settings.activity_status)
         if "dm_only_commands" in updated_sections:
-            self.bot.set_dm_only_check(self.config.bot_settings.dm_only_commands)
+            self.discord_bot.set_dm_only_check(self.config.bot_settings.dm_only_commands)
         if "command_prefix" in updated_sections:
-            self.bot.set_command_prefix(self.config.bot_settings.command_prefix)
+            self.discord_bot.set_command_prefix(self.config.bot_settings.command_prefix)
 
         if not updated_sections:
             await ctx.send("Configuration reloaded with no updates.")
