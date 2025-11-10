@@ -52,7 +52,6 @@ class ReactionCount(TypedDict):
     total_count: int
 
 
-# TODO: Move
 class MessageReactionUpdated(TypedDict):
     chat: Chat
     message_id: int
@@ -63,7 +62,6 @@ class MessageReactionUpdated(TypedDict):
     new_reaction: List[ReactionType]
 
 
-# TODO: Move
 class MessageReactionCountUpdated(TypedDict):
     chat: Chat
     message_id: int

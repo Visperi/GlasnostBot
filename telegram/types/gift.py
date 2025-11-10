@@ -81,12 +81,10 @@ class UniqueGift(GiftBase):
     backdrop: UniqueGiftBackdrop
 
 
-# TODO: Move
 class GiftInfoBase(TypedDict):
     owned_gift_id: NotRequired[str]
 
 
-# TODO: Move
 class GiftInfo(GiftInfoBase):
     gift: Gift
     convert_star_count: NotRequired[int]
@@ -97,7 +95,6 @@ class GiftInfo(GiftInfoBase):
     is_private: NotRequired[bool]
 
 
-# TODO: Move
 class UniqueGiftInfo(GiftInfoBase):
     gift: UniqueGift
     origin: str

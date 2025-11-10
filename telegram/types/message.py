@@ -91,7 +91,6 @@ class SuggestedPostEvent(TypedDict):
     suggested_post_message: NotRequired[Message]
 
 
-# TODO: Inherit from SuggestedPostParameters
 class SuggestedPostApproved(SuggestedPostEvent):
     price: NotRequired[SuggestedPostPrice]
     send_date: int
