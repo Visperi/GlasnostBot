@@ -22,7 +22,7 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 """
 
-from typing import List, Optional
+from typing import List
 from datetime import datetime, UTC, timedelta
 import logging
 
@@ -91,7 +91,7 @@ class TelegramCog(commands.Cog):
         except ValueError:
             _logger.error("Cannot start Telegram polling. Already polling.")
 
-        self.tg_bot.add_listener(self.on_update)
+        self.tg_bot.add_listener(self.on_update, event_name="on_update")
         if not self.database_handler.connection:
             _logger.debug(f"Connecting to dabatase '{self.database_name}'")
             self.database_handler.connect(self.database_name)
@@ -104,42 +104,6 @@ class TelegramCog(commands.Cog):
         self.database_cleanup_loop.cancel()
         self.database_handler.disconnect()
 
-    @staticmethod
-    def fetch_forwarded_from(channel_post: telegram.Message, prefer_username: bool = False) -> Optional[str]:
-        """
-        Fetch the original Telegram messages author name or username.
-
-        :param channel_post: Message forwarded to the channel as a channel post.
-        :param prefer_username: Prefer Telegram username over first name and last name for persons.
-        :return: The Telegram name, or None if not valid user.
-        """
-        if not channel_post.forward_from and not channel_post.forward_from_chat:
-            return None
-
-        # TODO: This can be done inside User object
-        if channel_post.forward_from:
-            original_poster = channel_post.forward_from
-            first_name = original_poster.first_name
-            last_name = original_poster.last_name
-            username = original_poster.username
-
-            if username and prefer_username:
-                return username
-            elif last_name:
-                return f"{first_name} {last_name}"
-            else:
-                return first_name
-
-        else:
-            original_poster = channel_post.forward_from_chat
-            title = original_poster.title
-            username = original_poster.username
-
-            if title:
-                return title
-            else:
-                return username
-
     @tasks.loop(hours=6)
     async def database_cleanup_loop(self) -> None:
         """
@@ -151,45 +115,12 @@ class TelegramCog(commands.Cog):
         upper_threshold_limit = datetime.now(UTC) - timedelta(days=threshold)
         self.database_handler.delete_by_age(upper_threshold_limit)
 
-    async def on_update(self, update: telegram.Update) -> None:
-        """
-        Listener coroutine for the new Telegram Update objects received. Sends channel posts from determined Telegram
-        channels to listening Discord channels.
+    @staticmethod
+    def create_discord_embed(message: telegram.Message) -> discord.Embed:
+        embed = discord.Embed(description=message.markdownify(make_urls_to_hyperlink=False))
 
-        :param update: An update object from Telegram API.
-        """
-        await self.bot.wait_until_ready()
-        # TODO: Simplify when the library is updated
-        if update.channel_post:
-            channel_post = update.channel_post
-            is_edit = False
-        elif update.edited_channel_post:
-            channel_post = update.edited_channel_post
-            is_edit = True
-        else:
-            return
-
-        update_age = get_current_timestamp() - channel_post.date
-        if is_edit is False and update_age > self.update_age_threshold:
-            _logger.warning(f"Got update older than configured threshold age of {self.update_age_threshold} seconds.")
-            return
-
-        tg_channel_id = channel_post.sender_chat.id
-        if tg_channel_id == self.tg_channel_id:
-            await self.forward_channel_post(channel_post, is_edit)
-
-    def format_channel_post(self, message: telegram.Message) -> discord.Embed:
-        """
-        Format a channel post so that stylised text stays as is when sent to discord. Add forwarded messages original
-        author name if it is forwarded message.
-
-        :param message: Channel post to format.
-        :return: Channel post text changed to Discord compatible format.
-        """
-        forwarded_from = self.fetch_forwarded_from(message, prefer_username=self.prefer_telegram_usernames)
-        formatted_message = message.markdownify(make_urls_to_hyperlink=False)  # Discord embeds do not support hyperlinks
-        embed = discord.Embed(description=formatted_message)
-
+        # TODO: Fetch the forward origin from the message
+        forwarded_from = None
         if forwarded_from is not None:
             forward_notification = f"Forwarded from {forwarded_from}"
             if len(forward_notification) < 256:
@@ -203,31 +134,29 @@ class TelegramCog(commands.Cog):
 
         return embed
 
-    async def forward_channel_post(
-            self,
-            channel_post: telegram.Message,
-            is_edit: bool
-    ) -> None:
-        """
-        Send a channel post content to all listening Discord channels specified in the configuration file.
+    async def on_update(self, update: telegram.Update) -> None:
+        await self.bot.wait_until_ready()
+        message = update.effective_message
+        if not message or message.chat.id != self.tg_channel_id:
+            _logger.debug("Discarding update with no message or message not from configured Telegram channel.")
+            return
 
-        :param channel_post: Telegram channel post to forward to Discord.
-        :param is_edit: Tells if the Telegram message was edited. If True, a Discord message reference is searched
-        from the database and then edited with the new embed.
-        """
-        embed = self.format_channel_post(channel_post)
-        content = None
+        update_age = get_current_timestamp() - message.date
+        if update_age > self.update_age_threshold:
+            _logger.warning(f"Got a Telegram update older than configured threshold age of {self.update_age_threshold} "
+                            f"seconds. Discarding the update.")
+            return
 
-        # TODO: Simplify when library is updated
-        if is_edit:
-            await self.edit_discord_messages(embed, channel_post.message_id, content=content)
-        elif channel_post.reply_to_message:
+        embed = self.create_discord_embed(message)
+        if update.is_edited_message:
+            await self.edit_discord_messages(embed, message.message_id)
+        elif message.reply_to_message:
+            # TODO: Properly handle messages that do not come from the same chat and are ExternalReplyInfo
             await self.reply_discord_messages(embed,
-                                              channel_post.message_id,
-                                              channel_post.reply_to_message.message_id,
-                                              content=content)
+                                              message.message_id,
+                                              message.reply_to_message.message_id)
         else:
-            await self.send_discord_messages(embed, channel_post.message_id, content=content)
+            await self.send_discord_messages(embed, message.message_id)
 
     def serialize_discord_message(self, tg_message_id: int, discord_message: discord.Message) -> None:
         """

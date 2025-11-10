@@ -419,7 +419,7 @@ class MaybeInaccessibleMessage:
 class InaccessibleMessage(MaybeInaccessibleMessage):
 
     def __init__(self, payload: InaccessibleMessagePayload):
-        # TODO: Delete this class is plausible
+        # TODO: Delete this class if plausible
         super().__init__(payload)
 
 
@@ -556,7 +556,7 @@ class Message(MaybeInaccessibleMessage):
         self.author_signature = payload.get("author_signature")
         self.paid_star_count = payload.get("paid_star_count", 0)
         self.text = payload.get("text")
-        self.entities = payload.get("entities")
+        self.entities: List[MessageEntity] = payload.get("entities", [])
         self.link_preview_options = payload.get("link_preview_options")
         self.suggested_post_info = payload.get("suggested_post_info")
         self.effect_id = payload.get("effect_id")
@@ -858,14 +858,6 @@ class Message(MaybeInaccessibleMessage):
 
     def _handle_reply_markup(self, value):
         self.reply_markup = InlineKeyboardMarkup(value)
-
-    @property
-    def text_formatted(self) -> str:
-        """
-        Telegram message content and entities combined into Markdown syntax. Uses markdownify method with default
-        settings, so use that method instead if more control is needed.
-        """
-        return self.markdownify()
 
     def _group_entities(self) -> Dict[int, List[MessageEntity]]:
         """

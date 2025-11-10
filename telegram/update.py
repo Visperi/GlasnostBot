@@ -22,6 +22,8 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 """
 
+from typing import Optional
+
 
 from .utils import flatten_handlers
 from .message import Message
@@ -71,14 +73,14 @@ class Update:
     )
 
     def __init__(self, payload: UpdatePayload) -> None:
-        self.update_id = payload["update_id"]  # ID is the only required value
-        self.message = payload.get("message")
-        self.edited_message = payload.get("edited_message")
-        self.channel_post = payload.get("channel_post")
-        self.edited_channel_post = payload.get("edited_channel_post")
+        self.update_id: int = payload["update_id"]  # ID is the only required value
+        self.message: Optional[Message] = payload.get("message")
+        self.edited_message: Optional[Message] = payload.get("edited_message")
+        self.channel_post: Optional[Message] = payload.get("channel_post")
+        self.edited_channel_post: Optional[Message] = payload.get("edited_channel_post")
         self.business_connection = payload.get("business_connection")
-        self.business_message = payload.get("business_message")
-        self.edited_business_message = payload.get("edited_business_message")
+        self.business_message: Optional[Message] = payload.get("business_message")
+        self.edited_business_message: Optional[Message] = payload.get("edited_business_message")
         self.deleted_business_messages = payload.get("deleted_business_messages")
         self.message_reaction = payload.get("message_reaction")
         self.message_reaction_count = payload.get("message_reaction_count")
@@ -168,3 +170,27 @@ class Update:
 
     def _handle_removed_chat_boost(self, value):
         self.removed_chat_boost = ChatBoostRemoved(value)
+
+
+    @property
+    def effective_message(self) -> Optional[Message]:
+        for msg_attr in (self.message,
+                         self.edited_message,
+                         self.channel_post,
+                         self.edited_channel_post,
+                         self.business_message,
+                         self.edited_business_message):
+            if msg_attr is not None:
+                return msg_attr
+
+        return None
+
+    @property
+    def is_edited_message(self) -> bool:
+        for edited_msg_attr in (self.edited_message,
+                                self.edited_channel_post,
+                                self.edited_business_message):
+            if edited_msg_attr is not None:
+                return True
+
+        return False
