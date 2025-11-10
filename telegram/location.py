@@ -1,7 +1,7 @@
 """
 MIT License
 
-Copyright (c) 2022 Niko Mätäsaho
+Copyright (c) 2025 Niko Mätäsaho
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -25,8 +25,10 @@ SOFTWARE.
 
 from .types.location import (
     Location as LocationPayload,
-    Venue as VenuePayload
+    Venue as VenuePayload,
+    ProximityAlertTriggered as ProximityAlertTriggeredPayload
 )
+from .user import User
 
 
 class Location:
@@ -41,9 +43,6 @@ class Location:
     )
 
     def __init__(self, payload: LocationPayload):
-        self._update(payload)
-
-    def _update(self, payload: LocationPayload):
         self.longitude = payload["longitude"]
         self.latitude = payload["latitude"]
         self.horizontal_accuracy = payload.get("horizontal_accuracy", -1)
@@ -65,9 +64,6 @@ class Venue:
     )
 
     def __init__(self, payload: VenuePayload):
-        self._update(payload)
-
-    def _update(self, payload: VenuePayload):
         self.location = Location(payload["location"])
         self.title = payload["title"]
         self.address = payload["address"]
@@ -75,3 +71,17 @@ class Venue:
         self.foursquare_type = payload.get("foursquare_type")
         self.google_place_id = payload.get("google_place_id")
         self.google_place_type = payload.get("google_place_type")
+
+
+class ProximityAlertTriggered:
+
+    __slots__ = (
+        "traveler",
+        "watcher",
+        "distance"
+    )
+
+    def __init__(self, payload: ProximityAlertTriggeredPayload):
+        self.traveler = User(payload["traveler"])
+        self.watcher = User(payload["watcher"])
+        self.distance = payload["distance"]

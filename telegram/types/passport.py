@@ -24,44 +24,36 @@ SOFTWARE.
 
 
 from typing import List
+
 from typing_extensions import TypedDict, NotRequired
-from .user import User
-from .chat import Chat
-from .message_properties import MessageEntity
 
 
-class PollOptionBase(TypedDict):
-    text: str
-    text_entities: NotRequired[List[MessageEntity]]
+class PassportFile(TypedDict):
+    file_id: str
+    file_unique_id: str
+    file_size: int
+    file_date: int
 
 
-class InputPollOption(PollOptionBase):
-    text_parse_mode: NotRequired[str]
-
-
-class PollOption(PollOptionBase):
-    voter_count: int
-
-
-class PollAnswer(TypedDict):
-    poll_id: str
-    voter_chat: NotRequired[Chat]
-    user: NotRequired[User]
-    option_ids: List[int]
-
-
-class Poll(TypedDict):
-    id: str
-    question: str
-    question_entities: NotRequired[List[MessageEntity]]
-    options: List[PollOption]
-    total_voter_count: int
-    is_closed: bool
-    is_anonymous: bool
+class EncryptedPassportElement(TypedDict):
     type: str
-    allows_multiple_answers: bool
-    correct_option_id: NotRequired[int]
-    explanation: NotRequired[str]
-    explanation_entities: NotRequired[List[MessageEntity]]
-    open_period: NotRequired[int]
-    close_date: NotRequired[int]
+    data: NotRequired[str]
+    phone_number: NotRequired[str]
+    email: NotRequired[str]
+    files: NotRequired[List[PassportFile]]
+    front_side: NotRequired[PassportFile]
+    reverse_side: NotRequired[PassportFile]
+    selfie: NotRequired[PassportFile]
+    translation: NotRequired[List[PassportFile]]
+    hash: str
+
+
+class EncryptedCredentials(TypedDict):
+    data: str
+    hash: str
+    secret: str
+
+
+class PassportData(TypedDict):
+    data: List[EncryptedPassportElement]
+    credentials: EncryptedCredentials

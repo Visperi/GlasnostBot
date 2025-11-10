@@ -1,7 +1,7 @@
 """
 MIT License
 
-Copyright (c) 2022 Niko Mätäsaho
+Copyright (c) 2025 Niko Mätäsaho
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -206,27 +206,27 @@ class Client:
                     _logger.error("Ignoring unexpected exception: ", exc_info=e)
                     break
 
-    def add_listener(self, coroutine: Coro, name: str = None) -> Coro:
+    def add_listener(self, coroutine: Coro, event_name: str = None) -> Coro:
         """
         Add a listener to an event method. The amount of listeners per event is unlimited.
 
         :param coroutine: Coroutine function to call when the event occurs.
-        :param name: Name of the event to listen. If omitted, the coroutine name is used and must match an event name.
+        :param event_name: Name of the event to listen. If omitted, the coroutine name is used and must match an event name.
         :return: The decorated function.
         :exception ValueError: The coroutine is not actually a coroutine function.
         """
         if not asyncio.iscoroutinefunction(coroutine):
             raise ValueError("Event listener must be a coroutine function.")
-        if not name:
-            name = coroutine.__name__
+        if not event_name:
+            event_name = coroutine.__name__
 
         try:
-            self.listeners[name].append(coroutine)
+            self.listeners[event_name].append(coroutine)
         except KeyError:
-            self.listeners[name] = []
-            self.listeners[name].append(coroutine)
+            self.listeners[event_name] = []
+            self.listeners[event_name].append(coroutine)
 
-        _logger.debug(f"Registered listener for event '{name}'")
+        _logger.debug(f"Registered listener for event '{event_name}'")
         return coroutine
 
     def event(self, coroutine: Coro) -> Coro:

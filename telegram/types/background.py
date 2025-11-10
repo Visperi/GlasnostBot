@@ -1,7 +1,7 @@
 """
 MIT License
 
-Copyright (c) 2022 Niko Mätäsaho
+Copyright (c) 2025 Niko Mätäsaho
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -24,20 +24,53 @@ SOFTWARE.
 
 
 from typing import List
+
 from typing_extensions import TypedDict, NotRequired
-from .document import PhotoSize, Animation
-from .message import MessageEntity
+
+from .media import Document
 
 
-class Dice(TypedDict):
-    emoji: str
-    value: int
+class BackgroundFill(TypedDict):
+    type: str
 
 
-class Game(TypedDict):
-    title: str
-    description: str
-    photo: List[PhotoSize]
-    text: NotRequired[str]
-    text_entities: NotRequired[List[MessageEntity]]
-    animation: Animation
+class BackgroundFillSolid(BackgroundFill):
+    color: int
+
+
+class BackgroundFillGradient(BackgroundFill):
+    top_color: int
+    bottom_color: int
+    rotation_angle: int
+
+
+class BackgroundFillFreeformGradient(BackgroundFill):
+    colors: List[int]
+
+
+class BackgroundType(TypedDict):
+    type: str
+
+
+class BackgroundTypeFill(BackgroundType):
+    fill: BackgroundFill
+    dark_theme_dimming: int
+
+
+class BackgroundTypeWallpaper(BackgroundType):
+    document: Document
+    dark_theme_dimming: int
+    is_blurred: NotRequired[bool]
+    is_moving: NotRequired[bool]
+
+
+class BackgroundTypePattern(BackgroundType):
+    document: Document
+    fill: BackgroundFill
+    intensity: int
+    is_inverted: NotRequired[bool]
+    is_moving: NotRequired[bool]
+
+
+class BackgroundTypeChatTheme(BackgroundType):
+    theme_name: str

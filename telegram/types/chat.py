@@ -1,7 +1,7 @@
 """
 MIT License
 
-Copyright (c) 2022 Niko Mätäsaho
+Copyright (c) 2025 Niko Mätäsaho
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -24,13 +24,11 @@ SOFTWARE.
 
 
 from __future__ import annotations
-from typing_extensions import TypedDict, NotRequired, TYPE_CHECKING
-from .location import Location
+from typing import List
+
+from typing_extensions import TypedDict, NotRequired
 from .user import User
-
-
-if TYPE_CHECKING:
-    from .message import Message
+from .background import BackgroundType
 
 
 class ChatPhoto(TypedDict):
@@ -51,11 +49,6 @@ class ChatPermissions(TypedDict):
     can_pin_messages: NotRequired[bool]
 
 
-class ChatLocation(TypedDict):
-    location: Location
-    address: str
-
-
 class Chat(TypedDict):
     id: int
     type: str
@@ -63,23 +56,8 @@ class Chat(TypedDict):
     username: NotRequired[str]
     first_name: NotRequired[str]
     last_name: NotRequired[str]
-    photo: NotRequired[ChatPhoto]
-    bio: NotRequired[str]
-    has_private_forwards: NotRequired[bool]
-    has_restricted_voice_and_video_messages: NotRequired[bool]
-    join_to_send_messages: NotRequired[bool]
-    join_by_request: NotRequired[bool]
-    description: NotRequired[str]
-    invite_link: NotRequired[str]
-    pinned_message: NotRequired[Message]
-    permissions: NotRequired[ChatPermissions]
-    slow_mode_delay: NotRequired[int]
-    message_auto_delete_time: NotRequired[int]
-    has_protected_content: NotRequired[bool]
-    sticker_set_name: NotRequired[str]
-    can_set_sticker_set: NotRequired[bool]
-    linked_chat_id: NotRequired[int]
-    location: NotRequired[ChatLocation]
+    is_forum: NotRequired[bool]
+    is_direct_messages: NotRequired[bool]
 
 
 class ChatInviteLink(TypedDict):
@@ -92,19 +70,80 @@ class ChatInviteLink(TypedDict):
     expire_date: NotRequired[int]
     member_limit: NotRequired[int]
     pending_join_request_count: NotRequired[int]
+    subscription_period: NotRequired[int]
+    subscription_price: NotRequired[int]
 
 
 class ChatJoinRequest(TypedDict):
     chat: Chat
     from_: User
+    user_chat_id: int
     date: int
     bio: NotRequired[str]
-    invite_link: ChatInviteLink
+    invite_link: NotRequired[ChatInviteLink]
 
 
 class ChatMember(TypedDict):
     status: str
     user: User
+
+
+# TODO: Combine below Member classes if possible
+class ChatMemberOwner(ChatMember):
+    is_anonymous: bool
+    custom_title: NotRequired[str]
+
+
+class ChatMemberAdministrator(ChatMember):
+    can_be_edited: bool
+    is_anonymous: bool
+    can_manage_chat: bool
+    can_delete_messages: bool
+    can_manage_video_chats: bool
+    can_restrict_members: bool
+    can_promote_members: bool
+    can_change_info: bool
+    can_invite_users: bool
+    can_post_stories: bool
+    can_edit_stories: bool
+    can_delete_stories: bool
+    can_post_messages: NotRequired[bool]
+    can_edit_messages: NotRequired[bool]
+    can_pin_messages: NotRequired[bool]
+    can_manage_topics: NotRequired[bool]
+    can_manage_direct_messages: NotRequired[bool]
+    custom_title: NotRequired[str]
+
+
+class ChatMemberMember(ChatMember):
+    until_date: NotRequired[int]
+
+
+class ChatMemberRestricted(ChatMember):
+    is_member: bool
+    can_send_messages: bool
+    can_send_audios: bool
+    can_send_documents: bool
+    can_send_photos: bool
+    can_send_videos: bool
+    can_send_video_notes: bool
+    can_send_voice_notes: bool
+    can_send_polls: bool
+    can_send_other_messages: bool
+    can_add_web_page_reviews: bool
+    can_change_info: bool
+    can_invite_users: bool
+    can_pin_messages: bool
+    can_manage_topics: bool
+    until_date: int  # 0 if restricted forever
+
+
+class ChatMemberLeft(ChatMember):
+    pass  # Stores no data
+
+
+class ChatMemerBanned(ChatMember):
+    until_date: int  # 0 if permaban
 
 
 class ChatMemberUpdated(TypedDict):
@@ -114,3 +153,29 @@ class ChatMemberUpdated(TypedDict):
     old_chat_member: ChatMember
     new_chat_member: ChatMember
     invite_link: NotRequired[ChatInviteLink]
+
+
+class ChatBackground(TypedDict):
+    type: BackgroundType
+
+
+class VideoChatScheduled(TypedDict):
+    start_date: int
+
+
+class VideoChatStarted(TypedDict):
+    # Stores no data
+    pass
+
+
+class VideoChatEnded(TypedDict):
+    duration: int
+
+
+class VideoChatParticipantsInvited(TypedDict):
+    users: List[User]
+
+
+class Story(TypedDict):
+    chat: Chat
+    id: int

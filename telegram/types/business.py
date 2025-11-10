@@ -24,44 +24,40 @@ SOFTWARE.
 
 
 from typing import List
+
 from typing_extensions import TypedDict, NotRequired
-from .user import User
+
 from .chat import Chat
-from .message_properties import MessageEntity
+from .user import User
 
 
-class PollOptionBase(TypedDict):
-    text: str
-    text_entities: NotRequired[List[MessageEntity]]
+class BusinessBotRights(TypedDict):
+    can_reply: NotRequired[bool]
+    can_read_messages: NotRequired[bool]
+    can_delete_sent_messages: NotRequired[bool]
+    can_delete_all_messages: NotRequired[bool]
+    can_edit_name: NotRequired[bool]
+    can_edit_bio: NotRequired[bool]
+    can_edit_profile_photo: NotRequired[bool]
+    can_edit_username: NotRequired[bool]
+    can_change_gift_settings: NotRequired[bool]
+    can_view_gifts_and_stars: NotRequired[bool]
+    can_convert_gifts_to_stars: NotRequired[bool]
+    can_transfer_and_upgrade_gifts: NotRequired[bool]
+    can_transfer_stars: NotRequired[bool]
+    can_manage_stories: NotRequired[bool]
 
 
-class InputPollOption(PollOptionBase):
-    text_parse_mode: NotRequired[str]
-
-
-class PollOption(PollOptionBase):
-    voter_count: int
-
-
-class PollAnswer(TypedDict):
-    poll_id: str
-    voter_chat: NotRequired[Chat]
-    user: NotRequired[User]
-    option_ids: List[int]
-
-
-class Poll(TypedDict):
+class BusinessConnection(TypedDict):
     id: str
-    question: str
-    question_entities: NotRequired[List[MessageEntity]]
-    options: List[PollOption]
-    total_voter_count: int
-    is_closed: bool
-    is_anonymous: bool
-    type: str
-    allows_multiple_answers: bool
-    correct_option_id: NotRequired[int]
-    explanation: NotRequired[str]
-    explanation_entities: NotRequired[List[MessageEntity]]
-    open_period: NotRequired[int]
-    close_date: NotRequired[int]
+    user: User
+    user_chat_id: int
+    date: int
+    rights: NotRequired[BusinessBotRights]
+    is_enabled: bool
+
+
+class BusinessMessagesDeleted(TypedDict):
+    business_connection_id: str
+    chat: Chat
+    message_ids: List[int]

@@ -1,7 +1,7 @@
 """
 MIT License
 
-Copyright (c) 2022 Niko Mätäsaho
+Copyright (c) 2025 Niko Mätäsaho
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -24,7 +24,6 @@ SOFTWARE.
 
 
 from typing_extensions import TypedDict, NotRequired
-from .user import User
 
 
 class ShippingAddress(TypedDict):
@@ -43,11 +42,29 @@ class OrderInfo(TypedDict):
     shipping_address: NotRequired[ShippingAddress]
 
 
-class PreCheckoutQuery(TypedDict):
-    id: str
-    from_: User
+class Invoice(TypedDict):
+    title: str
+    description: str
+    start_parameter: str
+    currency: str
+    total_amount: int
+
+
+class Payment(TypedDict):
     currency: str
     total_amount: int
     invoice_payload: str
+    telegram_payment_charge_id: str
+
+
+# TODO: How to differentiate successful payment and refunded payment?
+class SuccessfulPayment(Payment):
+    provider_payment_charge_id: str
+    subscription_expiration_date: NotRequired[int]
+    is_recurring: NotRequired[bool]
+    is_first_recurring: NotRequired[bool]
     shipping_option_id: NotRequired[str]
     order_info: NotRequired[OrderInfo]
+
+class RefundedPayment(Payment):
+    provider_payment_charge_id: NotRequired[str]

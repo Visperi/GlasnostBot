@@ -1,7 +1,7 @@
 """
 MIT License
 
-Copyright (c) 2022 Niko Mätäsaho
+Copyright (c) 2025 Niko Mätäsaho
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -23,18 +23,20 @@ SOFTWARE.
 """
 
 
-from .types.inline_query import (
+from .types.query import (
     InlineQueryBase as InlineQueryBasePayload,
     InlineQuery as InlineQueryPayload,
     CallbackQuery as CallbackQueryPayload,
+    AnswerCallbackQuery as AnswerCallbackQueryPayload,
     ShippingQuery as ShippingQueryPayload,
     PreCheckoutQuery as PreCheckoutQueryPayload,
     ChosenInlineResult as ChosenInlineResultPayload
 )
+
 from .user import User
 from .location import Location
-from .message import Message
-from .payments import OrderInfo
+from .message import MaybeInaccessibleMessage
+from .payments import OrderInfo, ShippingAddress
 
 
 class InlineQueryBase:
@@ -60,9 +62,6 @@ class InlineQuery(InlineQueryBase):
 
     def __init__(self, payload: InlineQueryPayload):
         super().__init__(payload)
-        self._update(payload)
-
-    def _update(self, payload: InlineQueryPayload):
         self.query = payload["query"]
         self.offset = payload["offset"]
         self.chat_type = payload.get("chat_type")
@@ -85,18 +84,33 @@ class CallbackQuery(InlineQueryBase):
 
     def __init__(self, payload: CallbackQueryPayload):
         super().__init__(payload)
-        self._update(payload)
-
-    def _update(self, payload: CallbackQueryPayload):
         self.inline_message_id = payload.get("inline_message_id")
         self.chat_instance = payload["chat_instance"]
         self.data = payload.get("data")
         self.game_short_name = payload.get("game_short_name")
 
         try:
-            self.message = Message(payload["message"])
+            self.message = (MaybeInaccessibleMessage(payload["message"]))
         except KeyError:
             self.message = None
+
+
+class AnswerCallbackQuery:
+
+    __slots__ = (
+        "callback_query_id",
+        "text",
+        "show_alert",
+        "url",
+        "cache_time"
+    )
+
+    def __init__(self, payload: AnswerCallbackQueryPayload):
+        self.callback_query_id = payload["callback_query_id"]
+        self.text = payload.get("text")
+        self.show_alert = payload.get("show_alert")
+        self.url = payload.get("url")
+        self.cache_time = payload.get("cache_time", -1)
 
 
 class ShippingQuery(InlineQueryBase):
@@ -108,11 +122,8 @@ class ShippingQuery(InlineQueryBase):
 
     def __init__(self, payload: ShippingQueryPayload):
         super().__init__(payload)
-        self._update(payload)
-
-    def _update(self, payload: ShippingQueryPayload):
         self.invoice_payload = payload["invoice_payload"]
-        self.shipping_address = payload["shipping_address"]
+        self.shipping_address = ShippingAddress(payload["shipping_address"])
 
 
 class PreCheckoutQuery(InlineQueryBase):
@@ -127,10 +138,6 @@ class PreCheckoutQuery(InlineQueryBase):
 
     def __init__(self, payload: PreCheckoutQueryPayload):
         super().__init__(payload)
-        self._update(payload)
-
-    # noinspection Duplicates
-    def _update(self, payload: PreCheckoutQueryPayload):
         self.currency = payload["currency"]
         self.total_amount = payload["total_amount"]
         self.invoice_payload = payload["invoice_payload"]
@@ -153,11 +160,8 @@ class ChosenInlineResult:
     )
 
     def __init__(self, payload: ChosenInlineResultPayload):
-        self._update(payload)
-
-    def _update(self, payload: ChosenInlineResultPayload):
         self.result_id = payload["result_id"]
-        self.from_ = payload["from_"]
+        self.from_ = User(payload["from_"])
         self.inline_message_id = payload.get("inline_message_id")
         self.query = payload.get("query")
 

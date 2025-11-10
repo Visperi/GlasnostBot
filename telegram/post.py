@@ -1,7 +1,7 @@
 """
 MIT License
 
-Copyright (c) 2022 Niko Mätäsaho
+Copyright (c) 2025 Niko Mätäsaho
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -23,55 +23,47 @@ SOFTWARE.
 """
 
 
-from typing_extensions import TYPE_CHECKING
-from .document import PhotoSize
-from .types.game import (
-    Game as GamePayload,
-    Dice as DicePayload
+from .types.post import (
+    SuggestedPostPrice as SuggestedPostPricePayload,
+    SuggestedPostParameters as SuggestedPostParametersPayload,
+    SuggestedPostInfo as SuggestedPostInfoPayload
 )
 
 
-if TYPE_CHECKING:
-    from message import MessageEntity
-
-
-class Game:
+class SuggestedPostPrice:
 
     __slots__ = (
-        "title",
-        "description",
-        "photo",
-        "text",
-        "text_entities",
-        "animation"
+        "currency",
+        "amount"
     )
 
-    def __init__(self, payload: GamePayload):
-        self._update(payload)
+    def __init__(self, payload: SuggestedPostPricePayload):
+        self.currency = payload["currency"]
+        self.amount = payload["amount"]
 
-    def _update(self, payload: GamePayload):
-        self.title = payload["title"]
-        self.description = payload["title"]
-        self.photo = [PhotoSize(p) for p in payload["photo"]]
-        self.text = payload.get("text")
-        self.animation = payload["animation"]
+
+class SuggestedPostParameters:
+
+    __slots__ = (
+        "price",
+        "send_date"
+    )
+
+    def __init__(self, payload: SuggestedPostParametersPayload):
+        self.send_date = payload.get("send_date", -1)
 
         try:
-            self.text_entities = [MessageEntity(t) for t in payload["text_entities"]]
+            self.price = SuggestedPostPrice(payload["price"])
         except KeyError:
-            self.text_entities = []
+            self.price = None
 
 
-class Dice:
+class SuggestedPostInfo(SuggestedPostParameters):
 
     __slots__ = (
-        "emoji",
-        "value"
+        "state"
     )
 
-    def __init__(self, payload: DicePayload):
-        self._update(payload)
-
-    def _update(self, payload: DicePayload):
-        self.emoji = payload["emoji"]
-        self.value = payload["value"]
+    def __init__(self, payload: SuggestedPostInfoPayload):
+        super().__init__(payload)
+        self.state = payload["state"]

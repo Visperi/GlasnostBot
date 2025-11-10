@@ -1,7 +1,7 @@
 """
 MIT License
 
-Copyright (c) 2022 Niko Mätäsaho
+Copyright (c) 2025 Niko Mätäsaho
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -23,7 +23,11 @@ SOFTWARE.
 """
 
 
+from typing import List
+
 from typing_extensions import TypedDict, NotRequired
+
+from .media import PhotoSize
 
 
 class User(TypedDict):
@@ -38,3 +42,24 @@ class User(TypedDict):
     can_join_groups: NotRequired[bool]
     can_read_all_group_messages: NotRequired[bool]
     supports_inline_queries: NotRequired[bool]
+
+
+class SharedUser(TypedDict):
+    user_id: int
+    first_name: NotRequired[str]
+    last_name: NotRequired[str]
+    username: NotRequired[str]
+    photo: NotRequired[List[PhotoSize]]
+
+
+class UsersShared(TypedDict):
+    request_id: int
+    users: List[SharedUser]
+
+
+class ChatShared(TypedDict):
+    request_id: int
+    chat_id: int
+    title: NotRequired[str]
+    username: NotRequired[str]
+    photo: NotRequired[List[PhotoSize]]

@@ -1,7 +1,7 @@
 """
 MIT License
 
-Copyright (c) 2022 Niko Mätäsaho
+Copyright (c) 2025 Niko Mätäsaho
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -25,9 +25,12 @@ SOFTWARE.
 
 from typing_extensions import TypedDict, NotRequired
 from .message import Message
+from .reaction import MessageReactionUpdated, MessageReactionCountUpdated
 from .poll import Poll, PollAnswer
 from .chat import ChatJoinRequest, ChatMemberUpdated
-from .inline_query import (
+from .chat_boost import ChatBoostUpdated, ChatBoostRemoved
+from .business import BusinessConnection, BusinessMessagesDeleted
+from .query import (
     InlineQuery,
     ChosenInlineResult,
     CallbackQuery,
@@ -42,6 +45,12 @@ class Update(TypedDict):
     edited_message: NotRequired[Message]
     channel_post: NotRequired[Message]
     edited_channel_post: NotRequired[Message]
+    business_connection: NotRequired[BusinessConnection]
+    business_message: NotRequired[Message]
+    edited_business_message: NotRequired[Message]
+    deleted_business_messages: NotRequired[BusinessMessagesDeleted]
+    message_reaction: NotRequired[MessageReactionUpdated]
+    message_reaction_count: NotRequired[MessageReactionCountUpdated]
     inline_query: NotRequired[InlineQuery]
     chosen_inline_result: NotRequired[ChosenInlineResult]
     callback_query: NotRequired[CallbackQuery]
@@ -52,3 +61,5 @@ class Update(TypedDict):
     my_chat_member: NotRequired[ChatMemberUpdated]
     chat_member: NotRequired[ChatMemberUpdated]
     chat_join_request: NotRequired[ChatJoinRequest]
+    chat_boost: NotRequired[ChatBoostUpdated]
+    removed_chat_boost: NotRequired[ChatBoostRemoved]

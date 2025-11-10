@@ -24,44 +24,46 @@ SOFTWARE.
 
 
 from typing import List
+
 from typing_extensions import TypedDict, NotRequired
-from .user import User
+
 from .chat import Chat
-from .message_properties import MessageEntity
+from .user import User
 
 
-class PollOptionBase(TypedDict):
-    text: str
-    text_entities: NotRequired[List[MessageEntity]]
-
-
-class InputPollOption(PollOptionBase):
-    text_parse_mode: NotRequired[str]
-
-
-class PollOption(PollOptionBase):
-    voter_count: int
-
-
-class PollAnswer(TypedDict):
-    poll_id: str
-    voter_chat: NotRequired[Chat]
-    user: NotRequired[User]
-    option_ids: List[int]
-
-
-class Poll(TypedDict):
-    id: str
-    question: str
-    question_entities: NotRequired[List[MessageEntity]]
-    options: List[PollOption]
-    total_voter_count: int
-    is_closed: bool
-    is_anonymous: bool
+class ReactionType(TypedDict):
     type: str
-    allows_multiple_answers: bool
-    correct_option_id: NotRequired[int]
-    explanation: NotRequired[str]
-    explanation_entities: NotRequired[List[MessageEntity]]
-    open_period: NotRequired[int]
-    close_date: NotRequired[int]
+
+
+class ReactionTypeEmoji(ReactionType):
+    emoji: str
+
+
+class ReactionTypeCustomEmoji(ReactionType):
+    custom_emoji_id: str
+
+
+class ReactionTypePaid(ReactionType):
+    pass
+
+
+class ReactionCount(TypedDict):
+    type: ReactionType
+    total_count: int
+
+
+class MessageReactionUpdated(TypedDict):
+    chat: Chat
+    message_id: int
+    user: NotRequired[User]
+    actor_chat: NotRequired[Chat]
+    date: int
+    old_reaction: List[ReactionType]
+    new_reaction: List[ReactionType]
+
+
+class MessageReactionCountUpdated(TypedDict):
+    chat: Chat
+    message_id: int
+    date: int
+    reactions: List[ReactionCount]

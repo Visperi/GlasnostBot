@@ -23,45 +23,50 @@ SOFTWARE.
 """
 
 
-from typing import List
 from typing_extensions import TypedDict, NotRequired
-from .user import User
+
 from .chat import Chat
-from .message_properties import MessageEntity
+from .user import User
 
 
-class PollOptionBase(TypedDict):
-    text: str
-    text_entities: NotRequired[List[MessageEntity]]
+# TODO: Combine/refactor the boost classes
+class ChatBoostSource(TypedDict):
+    source: str
 
 
-class InputPollOption(PollOptionBase):
-    text_parse_mode: NotRequired[str]
+class ChatBoostSourcePremium(ChatBoostSource):
+    user: User
 
 
-class PollOption(PollOptionBase):
-    voter_count: int
+class ChatBoostSourceGiftCode(ChatBoostSource):
+    user: User
 
 
-class PollAnswer(TypedDict):
-    poll_id: str
-    voter_chat: NotRequired[Chat]
+class ChatBoostSourceGiveaway(ChatBoostSource):
+    giveaway_message_id: int
     user: NotRequired[User]
-    option_ids: List[int]
+    prize_star_count: NotRequired[int]
+    is_unclaimed: NotRequired[bool]
 
 
-class Poll(TypedDict):
-    id: str
-    question: str
-    question_entities: NotRequired[List[MessageEntity]]
-    options: List[PollOption]
-    total_voter_count: int
-    is_closed: bool
-    is_anonymous: bool
-    type: str
-    allows_multiple_answers: bool
-    correct_option_id: NotRequired[int]
-    explanation: NotRequired[str]
-    explanation_entities: NotRequired[List[MessageEntity]]
-    open_period: NotRequired[int]
-    close_date: NotRequired[int]
+class ChatBoost(TypedDict):
+    boost_id: str
+    add_date: int
+    expiration_date: int
+    source: ChatBoostSource
+
+
+class ChatBoostRemoved(TypedDict):
+    chat: Chat
+    boost_id: str
+    remove_date: int
+    source: ChatBoostSource
+
+
+class ChatBoostUpdated(TypedDict):
+    chat: Chat
+    boost: ChatBoost
+
+
+class ChatBoostAdded(TypedDict):
+    boost_count: int

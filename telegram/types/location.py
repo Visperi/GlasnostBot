@@ -1,7 +1,7 @@
 """
 MIT License
 
-Copyright (c) 2022 Niko Mätäsaho
+Copyright (c) 2025 Niko Mätäsaho
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -24,6 +24,7 @@ SOFTWARE.
 
 
 from typing_extensions import TypedDict, NotRequired
+from .user import User
 
 
 class Location(TypedDict):
@@ -35,6 +36,11 @@ class Location(TypedDict):
     proximity_alert_radius: NotRequired[int]
 
 
+class ChatLocation(TypedDict):
+    location: Location
+    address: str
+
+
 class Venue(TypedDict):
     location: Location
     title: str
@@ -43,3 +49,9 @@ class Venue(TypedDict):
     foursquare_type: NotRequired[str]
     google_place_id: NotRequired[str]
     google_place_type: NotRequired[str]
+
+
+class ProximityAlertTriggered(TypedDict):
+    traveler: User
+    watcher: User
+    distance: int

@@ -23,45 +23,32 @@ SOFTWARE.
 """
 
 
-from typing import List
 from typing_extensions import TypedDict, NotRequired
-from .user import User
-from .chat import Chat
-from .message_properties import MessageEntity
 
 
-class PollOptionBase(TypedDict):
-    text: str
-    text_entities: NotRequired[List[MessageEntity]]
+class ForumTopicCreated(TypedDict):
+    name: str
+    icon_color: int
+    icon_custom_emoji_id: NotRequired[str]
 
 
-class InputPollOption(PollOptionBase):
-    text_parse_mode: NotRequired[str]
+class ForumTopicEdited(TypedDict):
+    name: NotRequired[str]
+    icon_custom_emoji_id: NotRequired[str]
 
 
-class PollOption(PollOptionBase):
-    voter_count: int
+# TODO: How to represent the 4 below empty classes properly?
+class ForumTopicClosed(TypedDict):
+    pass
 
 
-class PollAnswer(TypedDict):
-    poll_id: str
-    voter_chat: NotRequired[Chat]
-    user: NotRequired[User]
-    option_ids: List[int]
+class ForumTopicReopened(TypedDict):
+    pass
 
 
-class Poll(TypedDict):
-    id: str
-    question: str
-    question_entities: NotRequired[List[MessageEntity]]
-    options: List[PollOption]
-    total_voter_count: int
-    is_closed: bool
-    is_anonymous: bool
-    type: str
-    allows_multiple_answers: bool
-    correct_option_id: NotRequired[int]
-    explanation: NotRequired[str]
-    explanation_entities: NotRequired[List[MessageEntity]]
-    open_period: NotRequired[int]
-    close_date: NotRequired[int]
+class GeneralForumTopicHidden(TypedDict):
+    pass
+
+
+class GeneralForumTopicUnhidden(TypedDict):
+    pass

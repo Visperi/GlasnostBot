@@ -1,7 +1,7 @@
 """
 MIT License
 
-Copyright (c) 2022 Niko Mätäsaho
+Copyright (c) 2025 Niko Mätäsaho
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -24,10 +24,11 @@ SOFTWARE.
 
 
 from typing_extensions import TypedDict, NotRequired
+
 from .user import User
 from .location import Location
-from .message import Message
-from .payments import ShippingAddress, OrderInfo
+from .message import MaybeInaccessibleMessage
+from .payments import OrderInfo, ShippingAddress
 
 
 class InlineQueryBase(TypedDict):
@@ -43,11 +44,19 @@ class InlineQuery(InlineQueryBase):
 
 
 class CallbackQuery(InlineQueryBase):
-    message: NotRequired[Message]
+    message: NotRequired[MaybeInaccessibleMessage]
     inline_message_id: NotRequired[str]
     chat_instance: str
     data: NotRequired[str]
     game_short_name: NotRequired[str]
+
+
+class AnswerCallbackQuery(TypedDict):
+    callback_query_id: str
+    text: NotRequired[str]
+    show_alert: NotRequired[bool]
+    url: NotRequired[str]
+    cache_time: NotRequired[int]
 
 
 class ShippingQuery(InlineQueryBase):

@@ -1,7 +1,7 @@
 """
 MIT License
 
-Copyright (c) 2022 Niko Mätäsaho
+Copyright (c) 2025 Niko Mätäsaho
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -23,7 +23,13 @@ SOFTWARE.
 """
 
 
-from .types.user import User as UserPayload
+from .types.user import (
+    User as UserPayload,
+    SharedUser as SharedUserPayload,
+    UsersShared as UsersSharedPayload,
+    ChatShared as ChatSharedPayload
+)
+from .media import PhotoSize
 
 
 class User:
@@ -43,9 +49,6 @@ class User:
     )
 
     def __init__(self, payload: UserPayload) -> None:
-        self._update(payload)
-
-    def _update(self, payload: UserPayload) -> None:
         self.id = payload["id"]
         self.is_bot = payload["is_bot"]
         self.first_name = payload["first_name"]
@@ -57,3 +60,67 @@ class User:
         self.can_join_groups = payload.get("can_join_groups", False)
         self.can_read_all_group_messages = payload.get("can_read_all_group_messages", False)
         self.supports_inline_queries = payload.get("supports_inline_queries", False)
+
+    @property
+    def full_name(self) -> str:
+        """
+        :return: Full name of the user. If the user has no last name set, this is equal to the users first name.
+        """
+        if self.last_name:
+            return f"{self.first_name} {self.last_name}"
+        else:
+            return self.first_name
+
+
+class SharedUser:
+
+    __slots__ = (
+        "user_id",
+        "first_name",
+        "last_name",
+        "username",
+        "photo"
+    )
+
+    def __init__(self, payload: SharedUserPayload):
+        self.user_id = payload["user_id"]
+        self.first_name = payload.get("first_name")
+        self.last_name = payload.get("last_name")
+        self.username = payload.get("username")
+        self.photo = payload.get("photo", [])
+
+        self.photo = [PhotoSize(p) for p in payload["photo"]]
+
+
+class UsersShared:
+
+    __slots__ = (
+        "request_id",
+        "users"
+    )
+
+    def __init__(self, payload: UsersSharedPayload):
+        self.request_id = payload["request_id"]
+        self.users = payload.get("users", [])
+
+        self.users = [SharedUser(s) for s in self.users]
+
+
+class ChatShared:
+
+    __slots__ = (
+        "request_id",
+        "chat_id",
+        "title",
+        "username",
+        "photo"
+    )
+
+    def __init__(self, payload: ChatSharedPayload):
+        self.request_id = payload["request_id"]
+        self.chat_id = payload["chat_id"]
+        self.title = payload.get("title")
+        self.username = payload.get("username")
+        self.photo = payload.get("photo", [])
+
+        self.photo = [PhotoSize(p) for p in self.photo]
