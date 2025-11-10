@@ -23,8 +23,8 @@ SOFTWARE.
 """
 
 
-from typing import List
-from typing_extensions import TypedDict, NotRequired
+from typing import TypedDict, NotRequired, List
+
 from .user import User
 from .chat import Chat
 from .message_properties import MessageEntity

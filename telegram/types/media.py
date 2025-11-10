@@ -23,9 +23,7 @@ SOFTWARE.
 """
 
 
-from typing import List
-
-from typing_extensions import TypedDict, NotRequired
+from typing import TypedDict, NotRequired, List
 
 
 class MediaBase(TypedDict):

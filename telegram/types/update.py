@@ -23,7 +23,8 @@ SOFTWARE.
 """
 
 
-from typing_extensions import TypedDict, NotRequired
+from typing import TypedDict, NotRequired
+
 from .message import Message
 from .reaction import MessageReactionUpdated, MessageReactionCountUpdated
 from .poll import Poll, PollAnswer

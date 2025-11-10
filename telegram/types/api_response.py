@@ -23,8 +23,7 @@ SOFTWARE.
 """
 
 
-from typing_extensions import TypedDict, NotRequired
-from typing import List
+from typing import TypedDict, NotRequired, List
 from .update import Update
 
 
