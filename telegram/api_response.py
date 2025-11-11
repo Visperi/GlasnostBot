@@ -50,7 +50,7 @@ class ApiResponseBase:
     def __init__(self, payload: ApiResponseBasePayload):
         self._ok = payload["ok"]
         self._result = payload.get("result")
-        self._error_code = payload.get("error_code", -1)
+        self._error_code = payload.get("error_code")
         self._description = payload.get("description")
 
         self.finalize()
@@ -70,7 +70,7 @@ class ApiResponseBase:
         return self._result
 
     @property
-    def error_code(self) -> int:
+    def error_code(self) -> Optional[int]:
         return self._error_code
 
     @property
