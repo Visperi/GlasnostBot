@@ -23,16 +23,12 @@ SOFTWARE.
 """
 
 
-from typing_extensions import TYPE_CHECKING
 from .media import PhotoSize
+from .message_properties import MessageEntity
 from .types.games import (
     Game as GamePayload,
     Dice as DicePayload
 )
-
-
-if TYPE_CHECKING:
-    from message import MessageEntity
 
 
 class Game:

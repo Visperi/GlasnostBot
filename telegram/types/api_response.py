@@ -1,7 +1,7 @@
 """
 MIT License
 
-Copyright (c) 2022 Niko Mätäsaho
+Copyright (c) 2025 Niko Mätäsaho
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -23,8 +23,7 @@ SOFTWARE.
 """
 
 
-from typing_extensions import TypedDict, NotRequired
-from typing import List
+from typing import TypedDict, NotRequired, List
 from .update import Update
 
 

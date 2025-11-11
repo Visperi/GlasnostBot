@@ -23,9 +23,8 @@ SOFTWARE.
 """
 
 
-from typing import List
+from typing import TypedDict, NotRequired, List
 
-from typing_extensions import TypedDict, NotRequired
 from .user import User
 from .background import BackgroundType
 

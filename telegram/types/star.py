@@ -23,7 +23,7 @@ SOFTWARE.
 """
 
 
-from typing_extensions import TypedDict, NotRequired
+from typing import TypedDict, NotRequired
 
 
 class StarAmount(TypedDict):

@@ -22,10 +22,10 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 """
 
+from __future__ import annotations
 
-from typing import List
 
-from typing_extensions import TypedDict, NotRequired
+from typing import TypedDict, NotRequired, List
 
 from .poll import Poll
 from .contact import Contact

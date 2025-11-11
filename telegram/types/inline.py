@@ -22,9 +22,7 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 """
 
-from typing import List
-
-from typing_extensions import TypedDict, NotRequired
+from typing import TypedDict, NotRequired, List
 
 
 class LoginUrl(TypedDict):
