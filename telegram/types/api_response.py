@@ -23,13 +23,22 @@ SOFTWARE.
 """
 
 
-from typing import TypedDict, NotRequired, List
+from typing import TypedDict, NotRequired, List, Any, Union
 from .update import Update
+from .media import File
 
 
-class ApiResponse(TypedDict):
-
+class ApiResponseBase(TypedDict):
     ok: bool
-    result: NotRequired[List[Update]]
+    result: NotRequired[Any]
     error_code: NotRequired[int]
     description: NotRequired[str]
+    asd: NotRequired[Union[Update, File]]
+
+
+class ApiResponse(ApiResponseBase):
+    result: NotRequired[List[Update]]
+
+
+class FileQueryResult(ApiResponseBase):
+    result: NotRequired[File]
