@@ -25,18 +25,22 @@ SOFTWARE.
 
 import logging
 import asyncio
+import io
 from enum import Enum
 
 import aiohttp
-from .api_response import ApiResponse
+from .api_response import ApiResponse, FileQueryResult
 from .update import Update
+from .media import MediaBase, File
 from typing import (
     Coroutine,
     Any,
     Callable,
     Dict,
     List,
-    TypeVar
+    TypeVar,
+    Optional,
+    Union
 )
 
 _logger = logging.getLogger(__name__)
@@ -51,6 +55,7 @@ class _TgMethod(Enum):
 
     get_updates = "/bot{bot_token}/getUpdates"
     get_file = "/file/bot{bot_token}/getFile"
+
 
 
 class Client:
@@ -209,6 +214,43 @@ class Client:
                 except Exception as e:
                     _logger.error("Ignoring unexpected exception: ", exc_info=e)
                     break
+
+    async def get_file(self, file_id: str) -> Optional[File]:
+        """
+        Request a file in Telegram servers to be downloaded or reused. The received ``File`` object is guaranteed to
+        be available for at least 1 hour. After that, this method can be used again to request new one.
+
+        :param file_id: ID of the file.
+        :return: ``File`` object that can be used to download the actual file.
+        """
+        params = {"file_id": file_id}
+        resp = FileQueryResult(await self._request("GET", _TgMethod.get_file, params=params))
+        if not resp.ok:
+            raise ValueError(f"Request getFile to Telegram API failed: {resp.error_code} - {resp.description}")
+        return resp.result
+
+    async def download_file(self, media: Union[MediaBase, str]) -> io.BytesIO:
+        """
+        Download a file from Telegram servers. This method automatically requests the file for download from the API.
+
+        :param media: Media file object or file ID for the downloaded object.
+        :return: The downloaded file as a byte stream.
+        """
+        # TODO: Implement an internal cache for files so they are not always requested again
+        if isinstance(media, MediaBase):
+            tg_file = await self.get_file(media.file_id)
+        else:
+            tg_file = await self.get_file(media)
+
+        if tg_file.file_size > 20_000_000:
+            # TODO: Add better errors for the library, as currently most of them are ValueErrors.
+            raise ValueError("The file size is larger than 20 MB and cannot be downloaded through Telegram API.")
+
+        url = f"{API_BASE_URL}/bot{self._secret}/{tg_file.file_path}"
+        async with self._client_session as session:
+            async with session.get(url) as resp:
+                resp.raise_for_status()
+                return io.BytesIO(await resp.read())
 
     def add_listener(self, coroutine: Coro, event_name: str = None) -> Coro:
         """
