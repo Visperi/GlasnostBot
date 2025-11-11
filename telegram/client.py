@@ -23,9 +23,11 @@ SOFTWARE.
 """
 
 
-import aiohttp
-import asyncio
 import logging
+import asyncio
+from enum import Enum
+
+import aiohttp
 from .api_response import ApiResponse
 from .update import Update
 from typing import (
@@ -40,19 +42,21 @@ from typing import (
 _logger = logging.getLogger(__name__)
 Coro = TypeVar("Coro", bound=Callable[..., Coroutine[Any, Any, Any]])
 
+API_BASE_URL = "https://api.telegram.org"
 
-class _TgMethod:
-    """ Methods supported by Telegram API """
+class _TgMethod(Enum):
+    """
+    Methods supported by both the telegram library and Telegram API.
+    """
 
-    getUpdates = "/getUpdates"
+    get_updates = "/bot{bot_token}/getUpdates"
+    get_file = "/file/bot{bot_token}/getFile"
 
 
 class Client:
     """
     A class responsible for handling asynchronous connection to Telegram API.
     """
-
-    API_BASE_URL = "https://api.telegram.org/"
 
     # noinspection PyTypeChecker
     def __init__(
@@ -95,26 +99,26 @@ class Client:
     async def _request(
             self,
             http_method: str,
-            method_path: str,
+            api_method: _TgMethod,
             request_timeout: float = 10,
             params: dict = None,
-            headers: dict = None
-    ) -> ApiResponse:
+            headers: dict = None):
         """
         Make an HTTP request to the Telegram API.
 
         :param http_method: HTTP method to send to the API.
-        :param method_path: Path of the method in Telegram API.
+        :param api_method: A Telegram API method.
         :param request_timeout: Timeout in seconds for the request itself.
         :param params: Params for the request.
         :param headers: Headers for the request.
-        :return: The response object containing OK status and possible results, error codes etc.
+        :return: The response object containing OK status and possible results, error codes etc. The returned value
+                 is in generic decoded JSON and must be manually converted to Telegram objetcs.
         :exception ValueError: The HTTP method is not GET or POST and thus not supported by Telegram API.
         """
         if http_method != "GET" and http_method != "POST":
             raise ValueError("The Telegram API supports only GET and POST methods for HTTP requests.")
 
-        url = self.API_BASE_URL + f"bot{self._secret}" + method_path
+        url = API_BASE_URL + api_method.value.format(bot_token=self._secret)
         async with self._client_session.request(
                 http_method,
                 url,
@@ -132,11 +136,11 @@ class Client:
                 description = content["description"]
                 _logger.exception(f"Error {error_code}: {description}")
 
-            return ApiResponse(content)
+            return content
 
     async def _get(
             self,
-            method_path: str,
+            api_method: _TgMethod,
             request_timeout: float = 10,
             params: dict = None,
             headers: dict = None
@@ -144,17 +148,17 @@ class Client:
         """
         Shorthand method to make a GET request on Telegram API.
 
-        :param method_path: Path of the API method.
+        :param api_method: Path of the API method.
         :param request_timeout: Timeout in seconds for the request itself.
         :param params: Params for the GET request.
         :param headers: Headers for the GET request.
-        :return: The response object containing OK status and possible results, error codes etc.
+        :return: An ``ApiResponse`` response object containing OK status and possible results, error codes etc.
         """
-        return await self._request("GET", method_path, request_timeout, params, headers)
+        return ApiResponse(await self._request("GET", api_method, request_timeout, params, headers))
 
     async def _post(
             self,
-            method_path: str,
+            api_method: _TgMethod,
             request_timeout: float = 10,
             params: dict = None,
             headers: dict = None
@@ -162,13 +166,13 @@ class Client:
         """
         Shorthand method to make a POST request on Telegram API.
 
-        :param method_path: Path of the API method.
+        :param api_method: Path of the API method.
         :param request_timeout: Timeout in seconds for the request itself.
         :param params: Params for the POST request.
         :param headers: Headers for the POST request.
-        :return: The response object containing OK status and possible results, error codes etc.
+        :return: An ``ApiResponse`` object containing OK status and possible results, error codes etc.
         """
-        return await self._request("POST", method_path, request_timeout, params, headers)
+        return ApiResponse(await self._request("POST", api_method, request_timeout, params, headers))
 
     async def _get_updates_loop(self) -> None:
         """
@@ -179,7 +183,7 @@ class Client:
 
         while True:
             params = {"timeout": 200, "offset": self.updates_offset}
-            resp = await self._get(_TgMethod.getUpdates, request_timeout=200, params=params)
+            resp = await self._get(_TgMethod.get_updates, request_timeout=200, params=params)
             updates = resp.result
 
             if updates:
