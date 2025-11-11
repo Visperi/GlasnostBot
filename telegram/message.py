@@ -23,7 +23,7 @@ SOFTWARE.
 """
 
 
-from typing import List, Dict, Optional
+from typing import List, Dict, Optional, Union
 
 from .utils import flatten_handlers
 from .poll import Poll
@@ -918,7 +918,7 @@ class Message(MaybeInaccessibleMessage):
         return markdownified
 
     @property
-    def original_sender(self):
+    def original_sender(self) -> Optional[Union[User, str, Chat]]:
         """
         :return: Original sender for a forwarded message. None if the message is not forwarded or contains no
                  forward origin.
