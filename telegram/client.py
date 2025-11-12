@@ -40,7 +40,8 @@ from typing import (
     List,
     TypeVar,
     Optional,
-    Union
+    Union,
+    Tuple
 )
 
 _logger = logging.getLogger(__name__)
@@ -54,7 +55,8 @@ class _TgMethod(Enum):
     """
 
     get_updates = "/bot{bot_token}/getUpdates"
-    get_file = "/file/bot{bot_token}/getFile"
+    get_file = "/bot{bot_token}/getFile"
+    download_file = "/file/bot{bot_token}/"
 
 
 
@@ -99,6 +101,7 @@ class Client:
         Initialize a new aiohttp.ClientSession used in connection for the API for the client.
         Automatically called if no session is given to the initializer.
         """
+        # TODO: Add base url
         self._client_session = aiohttp.ClientSession()
 
     async def _request(
@@ -196,6 +199,7 @@ class Client:
                 latest = updates[-1]
                 # Trigger all received messages read next time updates are received
                 self.updates_offset = latest.update_id + 1
+                _logger.debug(f"Updates offset set to {self.updates_offset}")
 
             await asyncio.sleep(1)
 
@@ -229,28 +233,30 @@ class Client:
             raise ValueError(f"Request getFile to Telegram API failed: {resp.error_code} - {resp.description}")
         return resp.result
 
-    async def download_file(self, media: Union[MediaBase, str]) -> io.BytesIO:
+    async def download_file(self, media: Union[MediaBase, str]) -> Tuple[io.BytesIO, str]:
         """
         Download a file from Telegram servers. This method automatically requests the file for download from the API.
 
         :param media: Media file object or file ID for the downloaded object.
-        :return: The downloaded file as a byte stream.
+        :return: The downloaded file as a byte stream and its filename as tuple of (stream, filename).
         """
-        # TODO: Implement an internal cache for files so they are not always requested again
         if isinstance(media, MediaBase):
-            tg_file = await self.get_file(media.file_id)
+            file_id = media.file_id
         else:
-            tg_file = await self.get_file(media)
+            file_id = media
+
+        # TODO: Implement an internal cache for files so they are not always requested again
+        tg_file = await self.get_file(file_id)
 
         if tg_file.file_size > 20_000_000:
             # TODO: Add better errors for the library, as currently most of them are ValueErrors.
             raise ValueError("The file size is larger than 20 MB and cannot be downloaded through Telegram API.")
 
-        url = f"{API_BASE_URL}/bot{self._secret}/{tg_file.file_path}"
-        async with self._client_session as session:
-            async with session.get(url) as resp:
-                resp.raise_for_status()
-                return io.BytesIO(await resp.read())
+        url = f"{API_BASE_URL}/file/bot{self._secret}/{tg_file.file_path}"
+        filename = tg_file.file_path.split("/")[-1]
+        async with self._client_session.get(url) as resp:
+            resp.raise_for_status()
+            return io.BytesIO(await resp.content.read()), filename
 
     def add_listener(self, coroutine: Coro, event_name: str = None) -> Coro:
         """
