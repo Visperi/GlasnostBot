@@ -133,13 +133,17 @@ class TelegramCog(commands.Cog):
         message = update.effective_message
         return message and get_current_timestamp() - message.date < self.update_age_threshold
 
-    def create_discord_embed(self, message: telegram.Message) -> discord.Embed:
+    def create_discord_embed(self, message: telegram.Message) -> Optional[discord.Embed]:
         """
-        Create a Discord embed from a Telegram message. The embed can then be forwarded to Discord as is.
+        Create a ``discord.Embed`` object from a Telegram message. If the Telegram does not have text content, and it
+        is not a forwarded message, an embed cannot be made.
 
         :param message: A Telegram message object.
-        :return: A Discord Embed object.
+        :return: A Discord Embed object, or None if not relevant.
         """
+        if not message.text_content and not message.forward_origin:
+            return None
+
         embed = discord.Embed(description=message.markdownify(make_urls_to_hyperlink=False))
         forwarded_from = message.original_sender
 
@@ -195,11 +199,7 @@ class TelegramCog(commands.Cog):
         :param message: A ``telegram.Message`` object.
         """
         await self.discord_bot.wait_until_ready()
-
-        if message.text_content or message.forward_origin:
-            embed = self.create_discord_embed(message)
-        else:
-            embed = None
+        embed = self.create_discord_embed(message)
         files = await self.fetch_message_files(message)
 
         if message.reply_to_message:
@@ -210,12 +210,7 @@ class TelegramCog(commands.Cog):
 
     async def on_message_edit(self, message: telegram.Message):
         await self.discord_bot.wait_until_ready()
-
-        if message.text_content or message.forward_origin:
-            embed = self.create_discord_embed(message)
-        else:
-            embed = None
-
+        embed = self.create_discord_embed(message)
         files = await self.fetch_message_files(message)
         await self.edit_discord_messages(message.message_id, embed, files=files)
 
