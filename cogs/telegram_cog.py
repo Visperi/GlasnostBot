@@ -209,10 +209,29 @@ class TelegramCog(commands.Cog):
             await self.send_discord_messages(message.message_id, embed, files=files)
 
     async def on_message_edit(self, message: telegram.Message):
+        """
+        A listener method responsible for handling edited Telegram messages and applying changes to Discord.
+
+        :param message: The edited Telegram message.
+        """
         await self.discord_bot.wait_until_ready()
+
         embed = self.create_discord_embed(message)
         files = await self.fetch_message_files(message)
-        await self.edit_discord_messages(message.message_id, embed, files=files)
+        message_id = message.message_id
+
+        discord_messages = await self.get_discord_messages(message_id)
+        if not discord_messages:
+            _logger.warning(f"Cannot edit Discord message with Telegram message ID {message_id}. "
+                            f"No messages exist in cache with such ID. Handling as orphans.")
+            await self._handle_orphan_messages(message_id, embed, files=files)
+            return
+
+        for discord_message in discord_messages:
+            if not files:
+                files = discord_message.attachments
+            await discord_message.edit(embed=embed, attachments=files)
+            self.database_handler.update_ts(message_id, get_current_timestamp())
 
     def serialize_discord_message(self, tg_message_id: int, discord_message: discord.Message) -> None:
         """
@@ -301,36 +320,6 @@ class TelegramCog(commands.Cog):
             self.serialize_discord_message(tg_message_id, new_discord_message)
             self.database_handler.update_ts(replied_tg_message_id, get_current_timestamp())
 
-    async def edit_discord_messages(
-            self,
-            tg_message_id: int,
-            new_embed: discord.Embed = None,
-            text: str = None,
-            files: List[discord.File] = None
-    ) -> None:
-        """
-        Edit a Discord message in all configured Discord channels. If no Discord message references are found from the
-        database, sends a new message or does nothing, based on the configuration.
-
-        :param tg_message_id: The Telegram message ID, which is used for finding the Discord message reference.
-        :param new_embed: A ``discord.Embed`` object to set for the edited message.
-        :param text: Text content for the edited message.
-        :param files: List of ``discord.File`` objects to add to the message. None or empty list keeps the old
-                      files (if any).
-        """
-        discord_messages = await self.get_discord_messages(tg_message_id)
-        if not discord_messages:
-            _logger.warning(f"Cannot edit Discord message with Telegram message ID {tg_message_id}. "
-                            f"No messages exist in cache with such ID. Handling as orphans.")
-            await self._handle_orphan_messages(tg_message_id, new_embed, text)
-            return
-
-        for discord_message in discord_messages:
-            if not files:
-                files = discord_message.attachments
-            await discord_message.edit(content=text, embed=new_embed, attachments=files)
-            self.database_handler.update_ts(tg_message_id, get_current_timestamp())
-
     async def get_discord_messages(self, tg_message_id: int) -> List[discord.Message]:
         """
         Get all Discord message references from database based on Telegram message ID.
@@ -349,7 +338,6 @@ class TelegramCog(commands.Cog):
                 continue
 
             try:
-                # TODO: Handle properly if no permissions to read old messages
                 messages.append(await channel.fetch_message(message_id))
             except discord.NotFound:
                 _logger.error(f"Discord message with ID {message_id} not found. Cannot fetch message reference. "
