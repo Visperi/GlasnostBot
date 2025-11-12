@@ -27,8 +27,8 @@ from datetime import datetime, UTC, timedelta
 import logging
 
 import toml
-import aiohttp
 import discord
+import filetype
 from discord.ext import commands, tasks
 from discord_bot import DiscordBot
 
@@ -67,7 +67,7 @@ class TelegramCog(commands.Cog):
         self.message_cleanup_threshold: int = Missing
         self.load_configuration()
 
-        self.tg_bot = telegram.Client(aiohttp.ClientSession(), loop=bot.loop)
+        self.tg_bot = telegram.Client(loop=bot.loop)
         self.discord_bot = bot
         self.database_handler = DatabaseHandler(self.database_name)
 
@@ -127,6 +127,7 @@ class TelegramCog(commands.Cog):
 
         if forwarded_from is not None:
             if isinstance(forwarded_from, telegram.User):
+                # TODO: Move this to own method so message origin can be added to message without embed
                 if self.prefer_telegram_usernames and forwarded_from.username:
                     sender_name = forwarded_from.username
                 else:
@@ -134,7 +135,7 @@ class TelegramCog(commands.Cog):
             elif isinstance(forwarded_from, telegram.Chat):
                 sender_name = forwarded_from.title
             else:
-                sender_name = forwarded_from.sender_user_name
+                sender_name = forwarded_from.sender_user_name  # type: ignore
 
             forward_notification = f"Forwarded from {sender_name}"
             if len(forward_notification) < 256:
@@ -148,7 +149,34 @@ class TelegramCog(commands.Cog):
 
         return embed
 
+    async def fetch_message_files(self, message: telegram.Message) -> List[discord.File]:
+        """
+        Fetch all files present on a Telegram message.
+
+        :param message: The telegram message.
+        :return: A list of files in the message as ``discord.File`` object.
+        """
+        discord_files = []
+        telegram_files = message.get_all_media()
+
+        for file in telegram_files:
+            file_bytes, filename = await self.tg_bot.download_file(file)
+            if isinstance(file, telegram.Document) and file.mime_type:
+                extension_guess = filetype.guess_extension(file_bytes)
+                if extension_guess:
+                    filename = f"{filename}.{extension_guess}"
+
+            discord_file = discord.File(file_bytes, filename=filename, spoiler=message.has_media_spoiler)
+            discord_files.append(discord_file)
+
+        return discord_files
+
     async def on_update(self, update: telegram.Update) -> None:
+        """
+        A listener method responsible for handling updates from the Telegram client and forwarding messages to Discord.
+
+        :param update: A ``telegram.Update`` object.
+        """
         await self.discord_bot.wait_until_ready()
         message = update.effective_message
         if not message or message.chat.id != self.tg_channel_id:
@@ -161,16 +189,26 @@ class TelegramCog(commands.Cog):
                             f"seconds. Discarding the update.")
             return
 
-        embed = self.create_discord_embed(message)
+        if message.text_content:
+            embed = self.create_discord_embed(message)
+        else:
+            embed = None
+
+        files = None
+        file = None
+        if message.contains_media:
+            files = await self.fetch_message_files(message)
+            if len(files) == 1:
+                file = files[0]
+                files = None
+
         if update.is_edited_message:
-            await self.edit_discord_messages(embed, message.message_id)
+            await self.edit_discord_messages(message.message_id, embed)
         elif message.reply_to_message:
             # TODO: Properly handle messages that do not come from the same chat and are ExternalReplyInfo
-            await self.reply_discord_messages(embed,
-                                              message.message_id,
-                                              message.reply_to_message.message_id)
+            await self.reply_discord_messages(message.message_id, message.reply_to_message.message_id, embed, file=file, files=files)
         else:
-            await self.send_discord_messages(embed, message.message_id)
+            await self.send_discord_messages(message.message_id, embed, file=file, files=files)
 
     def serialize_discord_message(self, tg_message_id: int, discord_message: discord.Message) -> None:
         """
@@ -184,92 +222,113 @@ class TelegramCog(commands.Cog):
 
     async def send_discord_messages(
             self,
-            embed: discord.Embed,
             tg_message_id: int,
-            content: str = None
+            embed: discord.Embed = None,
+            text: str = None,
+            file: discord.File = None,
+            files: List[discord.File] = None
     ) -> None:
         """
-        Send Discord message to all channels defined in the configuration file.
+        Send Discord message to all configured Discord channels.
 
-        :param embed: A discord.Embed object to send to the Discord channels.
-        :param tg_message_id: Telegram message ID from which the content is retrieved from. Needed for database
-        serialization.
-        :param content: Text content to send in addition to the Discord embed.
+        :param tg_message_id: Telegram message ID from which the content is retrieved from. Needed for Discord message
+                              serialization to the database.
+        :param embed: A ``discord.Embed`` object to send to the Discord channels.
+        :param text: Text content to send in addition to the Discord embed.
+        :param file: A ``discord.File`` object to send with the message. Cannot be used with parameter ``files``.
+        :param files: A list of ``discord.File`` objects to send with the message. Cannot be used with
+                      parameter ``file``.
         """
+
         for channel_id in self.discord_channel_ids:
             channel = self.discord_bot.get_channel(channel_id)
             if not channel:
                 _logger.error(f"Attempted to forward Telegram message to unknown channel with ID {channel_id}.")
                 continue
 
-            discord_message = await channel.send(content=content, embed=embed)
+            discord_message = await channel.send(content=text, embed=embed, file=file, files=files)  # noqa
             self.serialize_discord_message(tg_message_id, discord_message)
 
-    async def _handle_orphan_messages(self, embed: discord.Embed, tg_message_id: int, content: str = None) -> None:
+    async def _handle_orphan_messages(
+            self,
+            tg_message_id: int,
+            embed: discord.Embed = None,
+            text: str = None,
+            file: discord.File = None,
+            files: discord.File = None
+    ) -> None:
         """
-        Handle orphan messages not having matching references in the database.
-        Does nothing if send_orphans_as_new_message is set to False, otherwise sends new messages.
+        Handle orphan messages not having matching references in the database. Sends a new message if
+        ``send_orphans_as_new_messages`` is True, otherwise does nothing.
 
-        :param embed: Content of the orphan message.
-        :param tg_message_id: Telegram ID of the orphan message. Needed for adding a new reference to the database.
-        :param content: Text content to send in addition to the Discord embed.
+        :param tg_message_id: Telegram ID of the orphan message. Needed for handling references in the database.
+        :param embed: A ``discord.Embed`` object to send to the Discord channels.
+        :param text: Text content to send in addition to the Discord embed.
+        :param file: A ``discord.File`` object to send with the message. Cannot be used with parameter ``files``.
+        :param files: A list of ``discord.File`` objects to send with the message. Cannot be used with
+                      parameter ``file``.
         """
         if self.send_orphans_as_new_message:
-            await self.send_discord_messages(embed, tg_message_id, content=content)
+            # TODO: Handle messages separately if they all are not missing references
+            await self.send_discord_messages(tg_message_id, embed, text, file, files)
 
     async def reply_discord_messages(
             self,
-            reply_embed: discord.Embed,
             tg_message_id: int,
             replied_tg_message_id: int,
-            content: str = None
+            embed: discord.Embed = None,
+            text: str = None,
+            file: discord.File = None,
+            files: List[discord.file] = None
     ) -> None:
         """
-        Fetch old Discord message references from the database and reply to them with given text.
-        If no messages are found in database, send new messages or do nothing based on the configuration.
+        Reply to a Discord message with a new message in all configured Discord channels. If no Discord message
+        references are found from the database, sends a new message or does nothing, based on the configuration.
 
-        :param reply_embed: Embed to reply with to the old Discord message.
-        :param tg_message_id: The new Telegram message ID. Needed for adding a new Discord message reference to
-        the database.
-        :param replied_tg_message_id: ID of the replied Telegram message. Needed for finding message reference from the
-        database.
-        :param content: Text content to send in addition to the Discord embed.
+        :param tg_message_id: The new Telegram message ID. Needed for handling messages in the database.
+        :param replied_tg_message_id: ID of the replied Telegram message. Needed for finding message references from the
+                                      database.
+        :param embed: ``discord.Embed`` object to send with the reply.
+        :param text: Text content to send in addition to the Discord embed.
+        :param file: A ``discord.File`` object to send with the reply. Cannot be used with parameter ``files``.
+        :param files: A list of ``discord.File`` objects to send with the reply. Cannot be used with parameter ``file``.
         """
         discord_messages = await self.get_discord_messages(replied_tg_message_id)
         if not discord_messages:
             _logger.warning(f"Cannot reply to Discord message with Telegram message ID {replied_tg_message_id}. "
-                            f"No messages exist in cache with such ID. Sending new messages instead.")
-            await self._handle_orphan_messages(reply_embed, tg_message_id, content)
+                            f"No messages exist in database with such ID. Handling as orphans.")
+            await self._handle_orphan_messages(tg_message_id, embed, text, file)
             return
 
         for discord_message in discord_messages:
-            new_discord_message = await discord_message.reply(content=content, embed=reply_embed, mention_author=False)
+            new_discord_message = await discord_message.reply(content=text, embed=embed, mention_author=False, file=file, files=files)  # noqa
             self.serialize_discord_message(tg_message_id, new_discord_message)
             self.database_handler.update_ts(replied_tg_message_id, get_current_timestamp())
 
     async def edit_discord_messages(
             self,
-            new_embed: discord.Embed,
             tg_message_id: int,
-            content: str = None
+            new_embed: discord.Embed = None,
+            text: str = None
     ) -> None:
         """
-        Edit a Discord messages based on a Telegram ID to match the content.
-        If no messages are found in database, send new messages or do nothing based on the configuration.
+        Edit a Discord message in all configured Discord channels. If no Discord message references are found from the
+        database, sends a new message or does nothing, based on the configuration.
 
-        :param new_embed: New embed for the edited Discord message.
         :param tg_message_id: The Telegram message ID, which is used for finding the Discord message reference.
-        :param content: Text content to send in addition to the Discord embed.
+        :param new_embed: A ``discord.Embed`` object to set for the edited message.
+        :param text: Text content for the edited message.
         """
         discord_messages = await self.get_discord_messages(tg_message_id)
         if not discord_messages:
             _logger.warning(f"Cannot edit Discord message with Telegram message ID {tg_message_id}. "
-                            f"No messages exist in cache with such ID.")
-            await self._handle_orphan_messages(new_embed, tg_message_id, content)
+                            f"No messages exist in cache with such ID. Handling as orphans.")
+            await self._handle_orphan_messages(tg_message_id, new_embed, text)
             return
 
         for discord_message in discord_messages:
-            await discord_message.edit(content=content, embed=new_embed, attachments=discord_message.attachments)
+            # Telegram does not support deleting files from messages -> Keep old attachments
+            await discord_message.edit(content=text, embed=new_embed, attachments=discord_message.attachments)
             self.database_handler.update_ts(tg_message_id, get_current_timestamp())
 
     async def get_discord_messages(self, tg_message_id: int) -> List[discord.Message]:
@@ -290,6 +349,7 @@ class TelegramCog(commands.Cog):
                 continue
 
             try:
+                # TODO: Handle properly if no permissions to read old messages
                 messages.append(await channel.fetch_message(message_id))
             except discord.NotFound:
                 _logger.error(f"Discord message with ID {message_id} not found. Cannot fetch message reference. "

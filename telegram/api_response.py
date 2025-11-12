@@ -23,13 +23,22 @@ SOFTWARE.
 """
 
 
-from .types.api_response import ApiResponse as ApiResponsePayload
+from typing import Optional, Any
+
+from .types.api_response import (
+    ApiResponseBase as ApiResponseBasePayload
+)
 from .update import Update
+from .media import File
 from .utils import replace_dictionary_keys
-from typing import Optional, List
 
 
-class ApiResponse:
+class ApiResponseBase:
+    """
+    A generic base class for Telegram API responses. Contains an OK status for requests, and on error also the error
+    code and error description. All child classes must implement method ``finalize`` to convert the result attribute
+    to objects.
+    """
 
     __slots__ = (
         "_ok",
@@ -38,27 +47,52 @@ class ApiResponse:
         "_description"
     )
 
-    def __init__(self, payload: ApiResponsePayload):
+    def __init__(self, payload: ApiResponseBasePayload):
         self._ok = payload["ok"]
         self._result = payload.get("result")
-        self._error_code = payload.get("error_code", -1)
+        self._error_code = payload.get("error_code")
         self._description = payload.get("description")
 
-        if self._result:
-            self._result = [Update(replace_dictionary_keys(u)) for u in self._result]
+        self.finalize()
+
+    def finalize(self) -> None:
+        """
+        Finalize the result field into valid Telegram object(s).
+        """
+        raise NotImplementedError(f"Finalize method not implemented in API response class {self.__class__.__name__}")
 
     @property
     def ok(self) -> bool:
         return self._ok
 
     @property
-    def result(self) -> Optional[List[Update]]:
+    def result(self) -> Any:
         return self._result
 
     @property
-    def error_code(self) -> int:
+    def error_code(self) -> Optional[int]:
         return self._error_code
 
     @property
     def description(self) -> Optional[str]:
         return self._description
+
+
+class ApiResponse(ApiResponseBase):
+    """
+    An API response for Telegram updates.
+    """
+
+    def finalize(self):
+        if self._result is not None:
+            self._result = [Update(replace_dictionary_keys(u)) for u in self._result]
+
+
+class FileQueryResult(ApiResponseBase):
+    """
+    An API response for file queries.
+    """
+
+    def finalize(self):
+        if self._result is not None:
+            self._result = File(self._result)

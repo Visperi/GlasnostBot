@@ -23,101 +23,93 @@ SOFTWARE.
 """
 
 
-import aiohttp
-import asyncio
 import logging
-from .api_response import ApiResponse
+import asyncio
+import io
+from enum import Enum
+
+import aiohttp
+
+from .api_response import ApiResponse, FileQueryResult
 from .update import Update
+from .media import MediaBase, File
 from typing import (
     Coroutine,
     Any,
     Callable,
     Dict,
     List,
-    TypeVar
+    TypeVar,
+    Optional,
+    Union,
+    Tuple
 )
 
 _logger = logging.getLogger(__name__)
 Coro = TypeVar("Coro", bound=Callable[..., Coroutine[Any, Any, Any]])
 
+API_BASE_URL = "https://api.telegram.org"
 
-class _TgMethod:
-    """ Methods supported by Telegram API """
+class _TgMethod(Enum):
+    """
+    Methods supported by both the telegram library and Telegram API.
+    """
 
-    getUpdates = "/getUpdates"
+    get_updates = "/bot{bot_token}/getUpdates"
+    get_file = "/bot{bot_token}/getFile"
+    download_file = "/file/bot{bot_token}/{filepath}"
+
 
 
 class Client:
-    """
-    A class responsible for handling asynchronous connection to Telegram API.
-    """
-
-    API_BASE_URL = "https://api.telegram.org/"
 
     # noinspection PyTypeChecker
-    def __init__(
-            self,
-            client_session: aiohttp.ClientSession = None,
-            loop: asyncio.AbstractEventLoop = None
-    ) -> None:
+    def __init__(self, loop: asyncio.AbstractEventLoop = None) -> None:
         """
-        Initialize a new client for connection to the Telegram API. This client is then responsible for polling updates
-        and invoking events based on the received data. Can either be attached to an existing client session and/or
-        event loop, or initialized as is with new connections.
+        A class responsible for asynchronous connection to Telegram API. This client is then responsible for receiving
+        updates and invoking events based on the received data.
 
-        :param client_session: An existing client session. If omitted, new one is automatically initialized.
-        :param loop: An existing event loop where to attach to. If omitted, new one is automatically initialized.
+        :param loop: An existing asyncio event loop where to attach to. If omitted, new one is automatically
+                     created.
         """
         self._secret: str = None
-        self._client_session: aiohttp.ClientSession = client_session
         self.loop: asyncio.AbstractEventLoop = loop
+        self._client_session = aiohttp.ClientSession(base_url=API_BASE_URL)
         self.updates_offset: int = -1
         self.listeners: Dict[str, List[Coro]] = {}
         self.polling_task: asyncio.Task = None
 
         self._existing_loop = self.loop is not None
         if loop is None:
-            _logger.debug("Creating new event loop")
             self.loop = asyncio.new_event_loop()
             asyncio.set_event_loop(self.loop)
-
-        if client_session is None:
-            _logger.debug("Initializing new aiohttp.ClientSession")
-            self.loop.run_until_complete(self._init_http_session())
-
-    async def _init_http_session(self) -> None:
-        """
-        Initialize a new aiohttp.ClientSession used in connection for the API for the client.
-        Automatically called if no session is given to the initializer.
-        """
-        self._client_session = aiohttp.ClientSession()
+            _logger.debug("Created new asyncio event loop.")
 
     async def _request(
             self,
             http_method: str,
-            method_path: str,
+            api_method: _TgMethod,
             request_timeout: float = 10,
             params: dict = None,
-            headers: dict = None
-    ) -> ApiResponse:
+            headers: dict = None):
         """
         Make an HTTP request to the Telegram API.
 
         :param http_method: HTTP method to send to the API.
-        :param method_path: Path of the method in Telegram API.
+        :param api_method: A Telegram API method.
         :param request_timeout: Timeout in seconds for the request itself.
         :param params: Params for the request.
         :param headers: Headers for the request.
-        :return: The response object containing OK status and possible results, error codes etc.
+        :return: The response object containing OK status and possible results, error codes etc. The returned value
+                 is in generic decoded JSON and must be manually converted to Telegram objetcs.
         :exception ValueError: The HTTP method is not GET or POST and thus not supported by Telegram API.
         """
         if http_method != "GET" and http_method != "POST":
             raise ValueError("The Telegram API supports only GET and POST methods for HTTP requests.")
 
-        url = self.API_BASE_URL + f"bot{self._secret}" + method_path
         async with self._client_session.request(
                 http_method,
-                url,
+                api_method.value.format(bot_token=self._secret),
                 timeout=request_timeout,
                 params=params,
                 headers=headers
@@ -132,11 +124,11 @@ class Client:
                 description = content["description"]
                 _logger.exception(f"Error {error_code}: {description}")
 
-            return ApiResponse(content)
+            return content
 
     async def _get(
             self,
-            method_path: str,
+            api_method: _TgMethod,
             request_timeout: float = 10,
             params: dict = None,
             headers: dict = None
@@ -144,17 +136,17 @@ class Client:
         """
         Shorthand method to make a GET request on Telegram API.
 
-        :param method_path: Path of the API method.
+        :param api_method: Path of the API method.
         :param request_timeout: Timeout in seconds for the request itself.
         :param params: Params for the GET request.
         :param headers: Headers for the GET request.
-        :return: The response object containing OK status and possible results, error codes etc.
+        :return: An ``ApiResponse`` response object containing OK status and possible results, error codes etc.
         """
-        return await self._request("GET", method_path, request_timeout, params, headers)
+        return ApiResponse(await self._request("GET", api_method, request_timeout, params, headers))
 
     async def _post(
             self,
-            method_path: str,
+            api_method: _TgMethod,
             request_timeout: float = 10,
             params: dict = None,
             headers: dict = None
@@ -162,13 +154,13 @@ class Client:
         """
         Shorthand method to make a POST request on Telegram API.
 
-        :param method_path: Path of the API method.
+        :param api_method: Path of the API method.
         :param request_timeout: Timeout in seconds for the request itself.
         :param params: Params for the POST request.
         :param headers: Headers for the POST request.
-        :return: The response object containing OK status and possible results, error codes etc.
+        :return: An ``ApiResponse`` object containing OK status and possible results, error codes etc.
         """
-        return await self._request("POST", method_path, request_timeout, params, headers)
+        return ApiResponse(await self._request("POST", api_method, request_timeout, params, headers))
 
     async def _get_updates_loop(self) -> None:
         """
@@ -179,7 +171,7 @@ class Client:
 
         while True:
             params = {"timeout": 200, "offset": self.updates_offset}
-            resp = await self._get(_TgMethod.getUpdates, request_timeout=200, params=params)
+            resp = await self._get(_TgMethod.get_updates, request_timeout=200, params=params)
             updates = resp.result
 
             if updates:
@@ -187,6 +179,7 @@ class Client:
                 latest = updates[-1]
                 # Trigger all received messages read next time updates are received
                 self.updates_offset = latest.update_id + 1
+                _logger.debug(f"Updates offset set to {self.updates_offset}")
 
             await asyncio.sleep(1)
 
@@ -205,6 +198,45 @@ class Client:
                 except Exception as e:
                     _logger.error("Ignoring unexpected exception: ", exc_info=e)
                     break
+
+    async def get_file(self, file_id: str) -> Optional[File]:
+        """
+        Request a file in Telegram servers to be downloaded or reused. The received ``File`` object is guaranteed to
+        be available for at least 1 hour. After that, this method can be used again to request new one.
+
+        :param file_id: ID of the file.
+        :return: ``File`` object that can be used to download the actual file.
+        """
+        params = {"file_id": file_id}
+        resp = FileQueryResult(await self._request("GET", _TgMethod.get_file, params=params))
+        if not resp.ok:
+            raise ValueError(f"Request getFile to Telegram API failed: {resp.error_code} - {resp.description}")
+        return resp.result
+
+    async def download_file(self, media: Union[MediaBase, str]) -> Tuple[io.BytesIO, str]:
+        """
+        Download a file from Telegram servers. This method automatically requests the file for download from the API.
+
+        :param media: Media file object or file ID for the downloaded object.
+        :return: The downloaded file as a byte stream and its filename as tuple of (stream, filename).
+        """
+        if isinstance(media, MediaBase):
+            file_id = media.file_id
+        else:
+            file_id = media
+
+        # TODO: Implement an internal cache for files so they are not always requested again
+        tg_file = await self.get_file(file_id)
+
+        if tg_file.file_size > 20_000_000:
+            # TODO: Add better errors for the library, as currently most of them are ValueErrors.
+            raise ValueError("The file size is larger than 20 MB and cannot be downloaded through Telegram API.")
+
+        path = _TgMethod.download_file.value.format(bot_token=self._secret, filepath=tg_file.file_path)
+        filename = tg_file.file_path.split("/")[-1]
+        async with self._client_session.get(path) as resp:
+            resp.raise_for_status()
+            return io.BytesIO(await resp.content.read()), filename
 
     def add_listener(self, coroutine: Coro, event_name: str = None) -> Coro:
         """

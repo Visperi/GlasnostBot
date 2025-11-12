@@ -23,7 +23,7 @@ SOFTWARE.
 """
 
 
-from typing import List, Dict, Optional
+from typing import List, Dict, Optional, Union
 
 from .utils import flatten_handlers
 from .poll import Poll
@@ -51,6 +51,7 @@ from .message_properties import (
     TextQuote
 )
 from .media import (
+    MediaBase,
     Animation,
     Audio,
     Document,
@@ -573,9 +574,9 @@ class Message(MaybeInaccessibleMessage):
         self.video_note = payload.get("video_note")
         self.voice = payload.get("voice")
         self.caption = payload.get("caption")
-        self.caption_entities = payload.get("caption_entities")
+        self.caption_entities = payload.get("caption_entities", [])
         self.show_caption_above_media = payload.get("show_caption_above_media", False)
-        self.has_media_spoiler = payload.get("has_media_spoiler")
+        self.has_media_spoiler = payload.get("has_media_spoiler", False)
         self.checklist = payload.get("checklist")
         self.contact = payload.get("contact")
         self.dice = payload.get("dice")
@@ -881,7 +882,7 @@ class Message(MaybeInaccessibleMessage):
         :return: Dictionary containing offsets as keys and list of entities with the offset.
         """
         grouped_entities = {}
-        for entity in self.entities:
+        for entity in self.message_entities:
             try:
                 grouped_entities[entity.offset].append(entity)
             except KeyError:
@@ -895,13 +896,13 @@ class Message(MaybeInaccessibleMessage):
 
         :return: Message content with entities added in Markdown syntax.
         """
-        markdownified = self.text
+        markdownified = self.text_content
         grouped_entities = self._group_entities()
         total_offset = 0
 
         # TODO: Use this to fix the codepoint issues
         # https://stackoverflow.com/questions/39280183/utf-16-codepoint-counting-in-python
-        text_utf16 = self.text.encode("utf-16-le")
+        # text_utf16 = self.text.encode("utf-16-le")
 
         for offset_entities in grouped_entities.values():
             one_way_offset = total_offset  # Offset needed in nested entities
@@ -918,7 +919,7 @@ class Message(MaybeInaccessibleMessage):
         return markdownified
 
     @property
-    def original_sender(self):
+    def original_sender(self) -> Optional[Union[User, str, Chat]]:
         """
         :return: Original sender for a forwarded message. None if the message is not forwarded or contains no
                  forward origin.
@@ -926,3 +927,59 @@ class Message(MaybeInaccessibleMessage):
         if not self.forward_origin:
             return None
         return self.forward_origin.sender
+
+    @property
+    def text_content(self) -> Optional[str]:
+        """
+        :return: Text content of the message, i.e. text with no media or caption with media. A message cannot have both
+                 attributes.
+        """
+        return self.text or self.caption
+
+    @property
+    def message_entities(self) -> Optional[List[MessageEntity]]:
+        """
+        :return: List of the message entities, i.e. text entities with no media or caption entities with media. A
+                 message cannot have both attributes.
+        """
+        return self.entities or self.caption_entities
+
+    @property
+    def contains_media(self) -> bool:
+        """
+        :return: True if the message contains any type of media, False otherwise.
+        """
+
+        for media_attr in (self.photo,
+                            self.document,
+                            self.video,
+                            self.audio,
+                            self.animation,
+                            self.video_note,
+                            self.voice):
+            if media_attr is not None:
+                return True
+
+        return False
+
+    def get_all_media(self) -> List[MediaBase]:
+        """
+        Get all media on the message.
+
+        :return: List of media on the message, or an empty list if it contains no media.
+        """
+        media_attrs = (self.document,
+                       self.video,
+                       self.audio,
+                       self.animation,
+                       self.video_note,
+                       self.voice)
+
+        media = []
+        if self.photo is not None:
+            media.append(self.photo[-1])  # The best quality image available
+        for media_attr in media_attrs:
+            if media_attr is not None:
+                media.append(media_attr)
+
+        return media
