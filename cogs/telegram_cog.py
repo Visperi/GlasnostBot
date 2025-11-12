@@ -126,7 +126,6 @@ class TelegramCog(commands.Cog):
         return message and message.chat.id == self.tg_channel_id
 
     async def is_new_enough(self, update: telegram.Update):
-        #TODO: Handle edits differently?
         if update.is_edited_message:
             # Allow edits to always go through
             return True
