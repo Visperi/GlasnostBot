@@ -32,7 +32,6 @@ import aiohttp
 
 from .api_response import ApiResponse, FileQueryResult
 from .update import Update
-from .message import Message
 from .media import MediaBase, File
 from typing import (
     Coroutine,
@@ -78,6 +77,7 @@ class Client:
         self._client_session = aiohttp.ClientSession(base_url=API_BASE_URL)
         self.updates_offset: int = -1
         self.listeners: Dict[str, List[Coro]] = {}
+        self.checks: List[Coro] = []
         self.polling_task: asyncio.Task = None
 
         self._existing_loop = self.loop is not None
@@ -280,12 +280,44 @@ class Client:
         """
         return self.add_listener(coroutine)
 
+    def add_check(self, coroutine: Coro):
+        """
+        Add a check to the client. The check takes a single argument of ``telegram.Update`` object, and returns a
+        boolean value. Checks are evaluated before sending an update to listeners. If a check returns False, the
+        update is not sent to listeners.
+
+        :param coroutine: Coroutine to add to the checks.
+        :return:
+        """
+        if not asyncio.iscoroutinefunction(coroutine):
+            raise ValueError("A check must be a coroutine function.")
+
+        self.checks.append(coroutine)
+        _logger.debug("Registered a check.")
+        return coroutine
+
+    def check(self, coroutine: Coro):
+        """
+        Shorthand, decorator method for adding a check. Checks are evaluated before sending updates to listeners. If a
+        check returns False value, an update is not sent to listeners.
+
+        :param coroutine: Coroutine to add to the checks.
+        :return:
+        """
+        return self.add_check(coroutine)
+
     async def on_update(self, update: Update) -> None:
         """
         Method called when an Update is received from Telegram API. Invokes other listeners than update listeners.
+        Does not invoke listeners if any of checks added to the client return False.
 
         :param update: Update object received from the Telegram API.
         """
+        for check in self.checks:
+            if await check(update) is False:
+                _logger.debug("A check returned False. Discarding the update.")
+                return
+
         on_message_listeners = self.listeners.get("on_message", [])
         on_message_edit_listeners = self.listeners.get("on_message_edit", [])
 
