@@ -328,7 +328,7 @@ class TelegramCog(commands.Cog):
 
         for discord_message in discord_messages:
             for attachment in discord_message.attachments:
-                
+
             # Telegram does not support deleting files from messages -> Keep old attachments
             await discord_message.edit(content=text, embed=new_embed, attachments=discord_message.attachments)
             self.database_handler.update_ts(tg_message_id, get_current_timestamp())
