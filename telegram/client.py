@@ -29,6 +29,7 @@ import io
 from enum import Enum
 
 import aiohttp
+
 from .api_response import ApiResponse, FileQueryResult
 from .update import Update
 from .media import MediaBase, File
@@ -56,53 +57,33 @@ class _TgMethod(Enum):
 
     get_updates = "/bot{bot_token}/getUpdates"
     get_file = "/bot{bot_token}/getFile"
-    download_file = "/file/bot{bot_token}/"
+    download_file = "/file/bot{bot_token}/{filepath}"
 
 
 
 class Client:
-    """
-    A class responsible for handling asynchronous connection to Telegram API.
-    """
 
     # noinspection PyTypeChecker
-    def __init__(
-            self,
-            client_session: aiohttp.ClientSession = None,
-            loop: asyncio.AbstractEventLoop = None
-    ) -> None:
+    def __init__(self, loop: asyncio.AbstractEventLoop = None) -> None:
         """
-        Initialize a new client for connection to the Telegram API. This client is then responsible for polling updates
-        and invoking events based on the received data. Can either be attached to an existing client session and/or
-        event loop, or initialized as is with new connections.
+        A class responsible for asynchronous connection to Telegram API. This client is then responsible for receiving
+        updates and invoking events based on the received data.
 
-        :param client_session: An existing client session. If omitted, new one is automatically initialized.
-        :param loop: An existing event loop where to attach to. If omitted, new one is automatically initialized.
+        :param loop: An existing asyncio event loop where to attach to. If omitted, new one is automatically
+                     created.
         """
         self._secret: str = None
-        self._client_session: aiohttp.ClientSession = client_session
         self.loop: asyncio.AbstractEventLoop = loop
+        self._client_session = aiohttp.ClientSession(base_url=API_BASE_URL)
         self.updates_offset: int = -1
         self.listeners: Dict[str, List[Coro]] = {}
         self.polling_task: asyncio.Task = None
 
         self._existing_loop = self.loop is not None
         if loop is None:
-            _logger.debug("Creating new event loop")
             self.loop = asyncio.new_event_loop()
             asyncio.set_event_loop(self.loop)
-
-        if client_session is None:
-            _logger.debug("Initializing new aiohttp.ClientSession")
-            self.loop.run_until_complete(self._init_http_session())
-
-    async def _init_http_session(self) -> None:
-        """
-        Initialize a new aiohttp.ClientSession used in connection for the API for the client.
-        Automatically called if no session is given to the initializer.
-        """
-        # TODO: Add base url
-        self._client_session = aiohttp.ClientSession()
+            _logger.debug("Created new asyncio event loop.")
 
     async def _request(
             self,
@@ -126,10 +107,9 @@ class Client:
         if http_method != "GET" and http_method != "POST":
             raise ValueError("The Telegram API supports only GET and POST methods for HTTP requests.")
 
-        url = API_BASE_URL + api_method.value.format(bot_token=self._secret)
         async with self._client_session.request(
                 http_method,
-                url,
+                api_method.value.format(bot_token=self._secret),
                 timeout=request_timeout,
                 params=params,
                 headers=headers
@@ -253,8 +233,9 @@ class Client:
             raise ValueError("The file size is larger than 20 MB and cannot be downloaded through Telegram API.")
 
         url = f"{API_BASE_URL}/file/bot{self._secret}/{tg_file.file_path}"
+        path = _TgMethod.download_file.value.format(bot_token=self._secret, filepath=tg_file.file_path)
         filename = tg_file.file_path.split("/")[-1]
-        async with self._client_session.get(url) as resp:
+        async with self._client_session.get(path) as resp:
             resp.raise_for_status()
             return io.BytesIO(await resp.content.read()), filename
 
