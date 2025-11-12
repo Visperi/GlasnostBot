@@ -83,6 +83,12 @@ class TelegramCog(commands.Cog):
         self.message_cleanup_threshold = self.config.preferences.message_cleanup_threshold
         self.database_name = self.config.preferences.database_path
 
+    def add_hooks(self):
+        self.tg_bot.add_listener(self.on_message)
+        self.tg_bot.add_listener(self.on_message_edit)
+        self.tg_bot.add_check(self.has_correct_chat)
+        self.tg_bot.add_check(self.is_new_enough)
+
     async def cog_load(self) -> None:
         _logger.debug(f"Starting Telegram polling before loading {__name__}")
 
@@ -91,9 +97,9 @@ class TelegramCog(commands.Cog):
         except ValueError:
             _logger.error("Cannot start Telegram polling. Already polling.")
 
-        self.tg_bot.add_listener(self.on_update, event_name="on_update")
+        self.add_hooks()
         if not self.database_handler.connection:
-            _logger.debug(f"Connecting to dabatase '{self.database_name}'")
+            _logger.debug(f"Connecting to database '{self.database_name}'")
             self.database_handler.connect(self.database_name)
 
         self.database_cleanup_loop.start()
@@ -114,6 +120,19 @@ class TelegramCog(commands.Cog):
         _logger.debug(f"Running database auto cleanup task with timestamp threshold of {threshold} days.")
         upper_threshold_limit = datetime.now(UTC) - timedelta(days=threshold)
         self.database_handler.delete_by_age(upper_threshold_limit)
+
+    async def has_correct_chat(self, update: telegram.Update):
+        message = update.effective_message
+        return message and message.chat.id == self.tg_channel_id
+
+    async def is_new_enough(self, update: telegram.Update):
+        #TODO: Handle edits differently?
+        if update.is_edited_message:
+            # Allow edits to always go through
+            return True
+
+        message = update.effective_message
+        return message and get_current_timestamp() - message.date < self.update_age_threshold
 
     def create_discord_embed(self, message: telegram.Message) -> discord.Embed:
         """
@@ -170,23 +189,13 @@ class TelegramCog(commands.Cog):
 
         return discord_files
 
-    async def on_update(self, update: telegram.Update) -> None:
+    async def on_message(self, message: telegram.Message) -> None:
         """
-        A listener method responsible for handling updates from the Telegram client and forwarding messages to Discord.
+        A listener method responsible for handling new messages from the Telegram client and forwarding them to Discord.
 
-        :param update: A ``telegram.Update`` object.
+        :param message: A ``telegram.Message`` object.
         """
         await self.discord_bot.wait_until_ready()
-        message = update.effective_message
-        if not message or message.chat.id != self.tg_channel_id:
-            _logger.debug("Discarding update with no message or message not from configured Telegram channel.")
-            return
-
-        update_age = get_current_timestamp() - message.date
-        if update_age > self.update_age_threshold:
-            _logger.warning(f"Got a Telegram update older than configured threshold age of {self.update_age_threshold} "
-                            f"seconds. Discarding the update.")
-            return
 
         if message.text_content or message.forward_origin:
             embed = self.create_discord_embed(message)
@@ -201,13 +210,21 @@ class TelegramCog(commands.Cog):
                 file = files[0]
                 files = None
 
-        if update.is_edited_message:
-            await self.edit_discord_messages(message.message_id, embed)
-        elif message.reply_to_message:
+        if message.reply_to_message:
             # TODO: Properly handle messages that do not come from the same chat and are ExternalReplyInfo
             await self.reply_discord_messages(message.message_id, message.reply_to_message.message_id, embed, file=file, files=files)
         else:
             await self.send_discord_messages(message.message_id, embed, file=file, files=files)
+
+    async def on_message_edit(self, message: telegram.Message):
+        await self.discord_bot.wait_until_ready()
+
+        if message.text_content or message.forward_origin:
+            embed = self.create_discord_embed(message)
+        else:
+            embed = None
+
+        await self.edit_discord_messages(message.message_id, embed)
 
     def serialize_discord_message(self, tg_message_id: int, discord_message: discord.Message) -> None:
         """
