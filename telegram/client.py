@@ -232,7 +232,6 @@ class Client:
             # TODO: Add better errors for the library, as currently most of them are ValueErrors.
             raise ValueError("The file size is larger than 20 MB and cannot be downloaded through Telegram API.")
 
-        url = f"{API_BASE_URL}/file/bot{self._secret}/{tg_file.file_path}"
         path = _TgMethod.download_file.value.format(bot_token=self._secret, filepath=tg_file.file_path)
         filename = tg_file.file_path.split("/")[-1]
         async with self._client_session.get(path) as resp:
