@@ -127,7 +127,6 @@ class TelegramCog(commands.Cog):
 
         if forwarded_from is not None:
             if isinstance(forwarded_from, telegram.User):
-                # TODO: Move this to own method so message origin can be added to message without embed
                 if self.prefer_telegram_usernames and forwarded_from.username:
                     sender_name = forwarded_from.username
                 else:
@@ -143,7 +142,7 @@ class TelegramCog(commands.Cog):
             else:
                 embed.description = f"**{forward_notification}\n\n{embed.description}**"
 
-        if len(embed.description) > 4096:
+        if embed.description and len(embed.description) > 4096:
             raise ValueError(f"Too long message for Discord embed. "
                              f"Got message of length {len(embed.description)} characters.")
 
@@ -189,7 +188,7 @@ class TelegramCog(commands.Cog):
                             f"seconds. Discarding the update.")
             return
 
-        if message.text_content:
+        if message.text_content or message.forward_origin:
             embed = self.create_discord_embed(message)
         else:
             embed = None
