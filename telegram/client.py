@@ -32,6 +32,7 @@ import aiohttp
 
 from .api_response import ApiResponse, FileQueryResult
 from .update import Update
+from .message import Message
 from .media import MediaBase, File
 from typing import (
     Coroutine,
@@ -183,21 +184,30 @@ class Client:
 
             await asyncio.sleep(1)
 
+    @staticmethod
+    async def invoke_listener(coroutine: Coro, *args):
+        """
+        Invoke a listener function.
+
+        :param coroutine: Coroutine function to invoke.
+        :param args: Arguments for the invoked function.
+        """
+        try:
+            await coroutine(*args)
+        except Exception as e:
+            _logger.error("Ignoring unexpected exception: ", exc_info=e)
+
     async def invoke_update_listeners(self, updates: List[Update]) -> None:
         """
         Send updates to all registered event listeners.
         """
-        listeners = self.listeners.get("on_update", [])
-        _logger.debug(f"Invoking all {len(listeners)}+1 listeners for {len(updates)} updates.")
+        update_listeners = self.listeners.get("on_update", [])
+        _logger.debug(f"Received {len(updates)} new updates. Invoking listeners.")
+
         for update in updates:
             await self.on_update(update)
-
-            for listener in listeners:
-                try:
-                    await listener(update)
-                except Exception as e:
-                    _logger.error("Ignoring unexpected exception: ", exc_info=e)
-                    break
+            for listener in update_listeners:
+                await self.invoke_listener(listener, update)
 
     async def get_file(self, file_id: str) -> Optional[File]:
         """
@@ -272,13 +282,23 @@ class Client:
 
     async def on_update(self, update: Update) -> None:
         """
-        Method called when an Update is received from Telegram API. When overridden, nothing is done to this data
-        before or after this method is called.
+        Method called when an Update is received from Telegram API. Invokes other listeners than update listeners.
 
-        :param update: Update object received from the Telegram API
+        :param update: Update object received from the Telegram API.
         """
-        # TODO: Handle commands, messages, more granular objects etc. here by default
-        pass
+        on_message_listeners = self.listeners.get("on_message", [])
+        on_message_edit_listeners = self.listeners.get("on_message_edit", [])
+
+        effective_message = update.effective_message
+        if update.is_edited_message:
+            _logger.debug(f"Invoking {len(on_message_edit_listeners)} on_message_edit listeners.")
+            for listener in on_message_edit_listeners:
+                await self.invoke_listener(listener, effective_message)
+
+        elif effective_message:
+            _logger.debug(f"Invoking {len(on_message_listeners)} on_message listeners.")
+            for listener in on_message_listeners:
+                await self.invoke_listener(listener, effective_message)
 
     def start(self, secret: str) -> None:
         """
