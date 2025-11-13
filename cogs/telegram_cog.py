@@ -68,7 +68,7 @@ class TelegramCog(commands.Cog):
         self.message_cleanup_threshold: int = Missing
         self.load_configuration()
 
-        self.tg_bot = telegram.Client(loop=bot.loop)
+        self.telegram_bot = telegram.Client(loop=bot.loop)
         self.discord_bot = bot
         self.database_handler = DatabaseHandler(self.database_name)
 
@@ -85,16 +85,16 @@ class TelegramCog(commands.Cog):
         self.database_name = self.config.preferences.database_path
 
     def add_hooks(self):
-        self.tg_bot.add_listener(self.on_message)
-        self.tg_bot.add_listener(self.on_message_edit)
-        self.tg_bot.add_check(self.has_correct_chat)
-        self.tg_bot.add_check(self.is_new_enough)
+        self.telegram_bot.add_listener(self.on_message)
+        self.telegram_bot.add_listener(self.on_message_edit)
+        self.telegram_bot.add_check(self.has_correct_chat)
+        self.telegram_bot.add_check(self.is_new_enough)
 
     async def cog_load(self) -> None:
         _logger.debug(f"Starting Telegram polling before loading {__name__}")
 
         try:
-            self.tg_bot.start(self.config.credentials.telegram)
+            self.telegram_bot.start(self.config.credentials.telegram)
         except ValueError:
             _logger.error("Cannot start Telegram polling. Already polling.")
 
@@ -107,7 +107,7 @@ class TelegramCog(commands.Cog):
 
     async def cog_unload(self) -> None:
         _logger.debug(f"Stopping Telegram polling before unloading {__name__}.")
-        self.tg_bot.stop()
+        self.telegram_bot.stop()
         self.database_cleanup_loop.cancel()
         self.database_handler.disconnect()
 
@@ -182,7 +182,7 @@ class TelegramCog(commands.Cog):
         telegram_files = message.get_all_media()
 
         for file in telegram_files:
-            file_bytes, filename = await self.tg_bot.download_file(file)
+            file_bytes, filename = await self.telegram_bot.download_file(file)
             with file_bytes:
                 if not Path(filename).suffix:
                     # Guess the file extensions if missing to render file properly in Discord
