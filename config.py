@@ -1,7 +1,7 @@
 """
 MIT License
 
-Copyright (c) 2022 Niko Mätäsaho
+Copyright (c) 2025 Niko Mätäsaho
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -22,6 +22,7 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 """
 
+from typing import Optional
 
 import toml
 
@@ -139,30 +140,45 @@ class _General(__ConfigSection):
 
 class Config:
 
-    def __init__(self, config_path: str):
+    def __init__(self, config_path: Optional[str] = None):
         self.config_path = config_path
-        self.general: str = Missing
+        self.general: _General = Missing
         self.credentials: _Credentials = Missing
         self.channel_ids: _ChannelIds = Missing
         self.bot_settings: _BotSettings = Missing
         self.preferences: _Preferences = Missing
 
+        if config_path:
+            self.load(self.config_path)
 
-        self.load()
+    def load(self, config_file: Optional[str] = None):
+        if config_file:
+            config = toml.load(config_file)
+        else:
+            config = toml.load(self.config_path)
 
-    def load(self):
-        config = toml.load(self.config_path)
         self.general = _General(config["general"])
         self.credentials = _Credentials(config["credentials"])
         self.channel_ids = _ChannelIds(config["channel_ids"])
         self.bot_settings = _BotSettings(config["bot_settings"])
         self.preferences = _Preferences(config["preferences"])
 
+    def save(self, output_file: str):
+        with open(output_file, "w", encoding="utf-8") as out_file:
+            toml.dump(self.as_dict(), out_file)
+
     def as_dict(self) -> dict:
-        return dict(logging_level=self.general,
-                    channel_ids=self.channel_ids.as_dict(),
-                    bot_settings=self.bot_settings.as_dict(),
-                    preferences=self.preferences.as_dict())
+        d = {}
+
+        sections = self.__dict__.copy()
+        sections.pop("config_path")
+        for section_name, section_value in sections.items():
+            try:
+                d[section_name] = section_value.as_dict()
+            except AttributeError:
+                d[section_name] = section_value
+
+        return d
 
     def __repr__(self):
         return str(self.as_dict())
@@ -170,14 +186,19 @@ class Config:
     def __str__(self):
         return toml.dumps(self.as_dict())
 
-    @staticmethod
-    def generate_default(output_file: str):
+    @classmethod
+    def with_default_values(cls):
+        obj = cls()
+        obj.general = _General.generate_default()
+        obj.credentials = _Credentials.generate_default()
+        obj.channel_ids = _ChannelIds.generate_default()
+        obj.bot_settings = _BotSettings.generate_default()
+        obj.preferences = _Preferences.generate_default()
 
-        config = dict(general=_General.generate_default().as_dict(),
-                      credentials=_Credentials.generate_default().as_dict(),
-                      channel_ids=_ChannelIds.generate_default().as_dict(),
-                      bot_settings=_BotSettings.generate_default().as_dict(),
-                      preferences=_Preferences.generate_default().as_dict())
+        return obj
 
-        with open(output_file, "w", encoding="utf-8") as output_file:
-            toml.dump(config, output_file)
+
+if __name__ == "__main__":
+    default_filename = "config_default.toml"
+    Config.with_default_values().save(default_filename)
+    print(f"Generated default configuration to file {default_filename}")
