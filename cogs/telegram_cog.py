@@ -24,6 +24,7 @@ SOFTWARE.
 
 from typing import List, Optional
 from datetime import datetime, UTC, timedelta
+from pathlib import Path
 import logging
 
 import toml
@@ -183,7 +184,8 @@ class TelegramCog(commands.Cog):
         for file in telegram_files:
             file_bytes, filename = await self.tg_bot.download_file(file)
             with file_bytes:
-                if isinstance(file, telegram.Document) and file.mime_type:
+                if not Path(filename).suffix:
+                    # Guess the file extensions if missing to render file properly in Discord
                     extension_guess = filetype.guess_extension(file_bytes)
                     if extension_guess:
                         filename = f"{filename}.{extension_guess}"
