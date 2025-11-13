@@ -24,7 +24,17 @@ as soon as they are received, but discord.py internal ratelimiting may affect th
 ## Configuration 
 
 Most of the bot behaviour can be controlled through configuration in `config.toml`. Discord command `reload` can be 
-used to reload the configuration at runtime. Bot restart is required only when changing API tokens.
+used to reload the configuration at runtime. Bot restart is required when changing API tokens or general configuration.
+
+Below is a list of config sections and their variables and values.
+
+#### General
+
+Changing general settings require a complete restart for the bot.
+
+|   variable    | value type | function                                                        |
+|:-------------:|:----------:|-----------------------------------------------------------------|
+| logging_level |   String   | Sets the minimum level of messages logged. Must be capitalized. |
 
 #### Credentials
 

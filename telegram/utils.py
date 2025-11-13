@@ -72,7 +72,7 @@ class _CustomFormatter(logging.Formatter):
 
 
 def configure_logging(
-        level: int = logging.INFO,
+        level: Union[int, str] = logging.INFO,
         formatter: logging.Formatter = None,
         handler: logging.Handler = None,
         use_colours: bool = True) -> None:

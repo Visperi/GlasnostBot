@@ -123,27 +123,46 @@ class _Credentials(__ConfigSection):
                         discord="TOKEN"))
 
 
+class _General(__ConfigSection):
+
+    __slots__ = (
+        "logging_level",
+    )
+
+    def __init__(self, general_dict: dict):
+        super().__init__(general_dict)
+
+    @classmethod
+    def generate_default(cls):
+        return cls(dict(logging_level="INFO"))
+
+
 class Config:
 
     def __init__(self, config_path: str):
         self.config_path = config_path
+        self.general: str = Missing
         self.credentials: _Credentials = Missing
         self.channel_ids: _ChannelIds = Missing
         self.bot_settings: _BotSettings = Missing
         self.preferences: _Preferences = Missing
+
+
         self.load()
 
     def load(self):
         config = toml.load(self.config_path)
+        self.general = _General(config["general"])
         self.credentials = _Credentials(config["credentials"])
         self.channel_ids = _ChannelIds(config["channel_ids"])
         self.bot_settings = _BotSettings(config["bot_settings"])
         self.preferences = _Preferences(config["preferences"])
 
     def as_dict(self) -> dict:
-        return dict(channel_ids=self.channel_ids.as_dict(),
-                 bot_settings=self.bot_settings.as_dict(),
-                 preferences=self.preferences.as_dict())
+        return dict(logging_level=self.general,
+                    channel_ids=self.channel_ids.as_dict(),
+                    bot_settings=self.bot_settings.as_dict(),
+                    preferences=self.preferences.as_dict())
 
     def __repr__(self):
         return str(self.as_dict())
@@ -154,7 +173,8 @@ class Config:
     @staticmethod
     def generate_default(output_file: str):
 
-        config = dict(credentials=_Credentials.generate_default().as_dict(),
+        config = dict(general=_General.generate_default().as_dict(),
+                      credentials=_Credentials.generate_default().as_dict(),
                       channel_ids=_ChannelIds.generate_default().as_dict(),
                       bot_settings=_BotSettings.generate_default().as_dict(),
                       preferences=_Preferences.generate_default().as_dict())

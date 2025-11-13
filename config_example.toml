@@ -1,23 +1,16 @@
-# Modifying bot credentials or bot settings needs a bot restart to take effect!
-# Channel IDs and Preferences can be reloaded in runtime by the bot owner with reload command
+[general]
+logging_level = "INFO"
 
 [credentials]
 telegram = "TOKEN"
 discord = "TOKEN"
 
 [channel_ids]
-telegram = -100123456
-discord = [
-    1234,
-    5678,
-    9012
-]
+telegram = -10012345
+discord = [ 1234, 5678, 9012,]
 
 [bot_settings]
-# The command prefix accepts both strings and iterable of strings
-# See discord.py documentation about command prefix for further details
 command_prefix = "!"
-# Empty string can be given here for no activity status
 activity_status = "Missä mennään ja minne"
 dm_only_commands = true
 
