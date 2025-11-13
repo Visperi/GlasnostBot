@@ -182,12 +182,13 @@ class TelegramCog(commands.Cog):
 
         for file in telegram_files:
             file_bytes, filename = await self.tg_bot.download_file(file)
-            if isinstance(file, telegram.Document) and file.mime_type:
-                extension_guess = filetype.guess_extension(file_bytes)
-                if extension_guess:
-                    filename = f"{filename}.{extension_guess}"
+            with file_bytes:
+                if isinstance(file, telegram.Document) and file.mime_type:
+                    extension_guess = filetype.guess_extension(file_bytes)
+                    if extension_guess:
+                        filename = f"{filename}.{extension_guess}"
 
-            discord_file = discord.File(file_bytes, filename=filename, spoiler=message.has_media_spoiler)
+                discord_file = discord.File(file_bytes, filename=filename, spoiler=message.has_media_spoiler)
             discord_files.append(discord_file)
 
         return discord_files or None
