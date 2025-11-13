@@ -1,6 +1,6 @@
 # GlasnostBot
 
-**This project requires Python 3.11 or higher**
+**This project requires Python 3.9 or higher**
 
 A bot forwarding broadcast Telegram messages to Discord channels.
 
