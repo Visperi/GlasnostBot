@@ -11,4 +11,4 @@ from .poll import *
 from .update import *
 from .user import *
 
-from . import utils
+from .utils import configure_logging
