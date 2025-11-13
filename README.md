@@ -5,11 +5,7 @@
 A bot forwarding broadcast Telegram messages to Discord channels.
 
 Simply put the bot listens to a Telegram channel and forwards messages from there to Discord channels in Discord 
-compatible format. Message edits, replies and forwarded messages are fully supported. Only attachments and other 
-non-text media are yet to be supported.
-
-The telegram library used in this bot is also made by me and has its own repository 
-[telegram.py](https://github.com/Visperi/telegram.py).
+compatible format. Files, message edits, replies and forwarded messages are also supported.
 
 ## Running the bot
 
