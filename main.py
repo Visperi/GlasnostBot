@@ -1,7 +1,7 @@
 """
 MIT License
 
-Copyright (c) 2022 Niko Mätäsaho
+Copyright (c) 2025 Niko Mätäsaho
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -29,8 +29,8 @@ from discord_bot import DiscordBot
 
 
 if __name__ == "__main__":
-    telegram.utils.configure_logging()
     config = Config("config.toml")
+    telegram.configure_logging(config.general.logging_level)
     discord_token = config.credentials.discord
     command_prefix = config.bot_settings.command_prefix
     activity_status = config.bot_settings.activity_status
