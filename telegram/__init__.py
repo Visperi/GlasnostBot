@@ -1,3 +1,7 @@
+"""
+A package for connecting to Telegram API.
+"""
+
 from .chat import *
 from .client import *
 from .contact import *
