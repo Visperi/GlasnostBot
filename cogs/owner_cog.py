@@ -1,7 +1,7 @@
 """
 MIT License
 
-Copyright (c) 2022 Niko Mätäsaho
+Copyright (c) 2025 Niko Mätäsaho
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -23,8 +23,13 @@ SOFTWARE.
 """
 
 
+import logging
+
 from discord.ext import commands
 from discord_bot import DiscordBot
+
+
+_logger = logging.getLogger(__name__)
 
 
 class OwnerCog(commands.Cog, name="OwnerOnly",
@@ -39,41 +44,53 @@ class OwnerCog(commands.Cog, name="OwnerOnly",
     @commands.group(name="extension")
     async def manage_extensions(self, ctx: commands.Context) -> None:
         """
-        Load, reload or unload an extension.
-        :param ctx:
+        Load, reload or unload an extension. Give extension names as their import names, e.g. cogs.my_cog.
         """
         if ctx.invoked_subcommand is None:
-            await ctx.send(f"Invalid extension management command: `{ctx.message.content.split()[1]}`")
+            subcommand = ctx.subcommand_passed
+            if subcommand is None:
+                await ctx.send("This command required extension management command `load`, `unload` or `reload` to "
+                               "manage cogs.")
+            else:
+                await ctx.send(f"Invalid extension management command: `{ctx.subcommand_passed}`. "
+                               f"See `help extension` command for available options.")
+
 
     @manage_extensions.command(name="load")
     async def load_cog(self, ctx: commands.Context, extension_name: str) -> None:
         """
         Load an extension atomically.
+
         :param ctx:
         :param extension_name: Extension name to load.
         """
         await self.bot.load_extension(extension_name)
         await ctx.send(f"Successfully loaded extension `{extension_name}`.")
+        _logger.info(f"Loaded a discord.py cog {extension_name}.")
 
     @manage_extensions.command(name="unload")
     async def unload_cog(self, ctx: commands.Context, extension_name: str) -> None:
         """
         Unload an extension atomically.
+
         :param ctx:
         :param extension_name: Extension name to unload.
         """
         await self.bot.unload_extension(extension_name)
         await ctx.send(f"Successfully unloaded extension `{extension_name}`.")
+        _logger.info(f"Unloaded a discord.py cog {extension_name}.")
 
     @manage_extensions.command(name="reload")
     async def reload_cog(self, ctx: commands.Context, extension_name: str) -> None:
         """
         Reload an extension atomically.
+
         :param ctx:
         :param extension_name: Extension name to reload.
         """
         await self.bot.reload_extension(extension_name)
         await ctx.send(f"Successfully reloaded extension `{extension_name}`")
+        _logger.info(f"Reloaded a discord.py cog {extension_name}.")
 
     @commands.command(name="sync")
     async def sync_commands(self, ctx: commands.Context, guild_id: int = None) -> None:

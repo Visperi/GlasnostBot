@@ -1,7 +1,7 @@
 """
 MIT License
 
-Copyright (c) 2022 Niko Mätäsaho
+Copyright (c) 2025 Niko Mätäsaho
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -23,8 +23,13 @@ SOFTWARE.
 """
 
 
+import logging
+
 from discord.ext import commands
 from discord_bot import DiscordBot
+
+
+_logger = logging.getLogger(__name__)
 
 
 class ErrorHandlerCog(commands.Cog):
@@ -43,6 +48,11 @@ class ErrorHandlerCog(commands.Cog):
                 await ctx.send("Only the bot owner can execute this command.")
             else:
                 await self._send_dm_help(ctx)
+        elif isinstance(error, commands.CommandInvokeError):
+            target_cog = ctx.message.content.split()[2]
+            await ctx.send(f"Invalid cog: `{target_cog}`. Cogs must be managed with their import names.")
+        else:
+            _logger.error("Ignoring unexpected exception:", exc_info=error)
 
 
 async def setup(bot: DiscordBot):
