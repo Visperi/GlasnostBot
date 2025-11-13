@@ -265,6 +265,23 @@ class Config:
 
 
 if __name__ == "__main__":
-    default_filename = "config_default.toml"
-    Config.with_default_values().save(default_filename)
-    print(f"Generated default configuration to file {default_filename}")
+    from pathlib import Path
+
+    valid_inputs = {"yes": True, "y": True, "": True, "no": False, "n": False}
+    default_file_path = "config.toml"
+    if Path(default_file_path).is_file():
+        print(f"Creating default configuration file to: {default_file_path}")
+        print(f"File already exists.")
+        while True:
+            answer = input("Overwrite the existing file [Y/n]? ")
+            try:
+                overwrite = valid_inputs[answer]
+                break
+            except KeyError:
+                print("Please answer yes or no.")
+        if not overwrite:
+            print("Will not overwrite the file. Exiting.")
+            exit()
+
+    Config.with_default_values().save(default_file_path)
+    print(f"Generated default configuration to file {default_file_path}")
