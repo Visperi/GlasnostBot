@@ -151,6 +151,17 @@ class Config:
         if config_path:
             self.load(self.config_path)
 
+    @classmethod
+    def with_default_values(cls):
+        obj = cls()
+        obj.general = _General.generate_default()
+        obj.credentials = _Credentials.generate_default()
+        obj.channel_ids = _ChannelIds.generate_default()
+        obj.bot_settings = _BotSettings.generate_default()
+        obj.preferences = _Preferences.generate_default()
+
+        return obj
+
     def load(self, config_file: Optional[str] = None):
         if config_file:
             config = toml.load(config_file)
@@ -185,17 +196,6 @@ class Config:
 
     def __str__(self):
         return toml.dumps(self.as_dict())
-
-    @classmethod
-    def with_default_values(cls):
-        obj = cls()
-        obj.general = _General.generate_default()
-        obj.credentials = _Credentials.generate_default()
-        obj.channel_ids = _ChannelIds.generate_default()
-        obj.bot_settings = _BotSettings.generate_default()
-        obj.preferences = _Preferences.generate_default()
-
-        return obj
 
 
 if __name__ == "__main__":
