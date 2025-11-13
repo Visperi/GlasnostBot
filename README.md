@@ -63,9 +63,14 @@ Changing bot credentials require a complete restart for the bot.
 
 ### Channel IDs
 
+> **Note** 
+> 
+>When adding the bot to groups (not channels), you need to turn bot privacy off from bot settings with BotFather. 
+If the bot is already in a group when changing these settings, you need to kick the bot out and invite it again for them to take effect.
+
 |  variable  |    value type    | function                                                                                                                                                          |
 |:----------:|:----------------:|-------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| `telegram` |     Integer      | ID of a Telegram channel to listen to. Always starts with `-100`. Only one channel is currently supported.                                                        |
+| `telegram` |     Integer      | ID of a Telegram channel to listen to. Only one listening channel is currently supported.                                                                         |
 | `discord`  | List of integers | List of Discord channel IDs to forward the Telegram messages to. The Discord bot must have a permission to send messages and read old messages in these channels. |
 
 ### Bot settings
