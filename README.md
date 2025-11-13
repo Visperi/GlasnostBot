@@ -28,7 +28,7 @@ used to reload the configuration at runtime. Bot restart is required when changi
 
 Below is a list of config sections and their variables and values.
 
-#### General
+### General
 
 Changing general settings require a complete restart for the bot.
 
@@ -36,7 +36,7 @@ Changing general settings require a complete restart for the bot.
 |:-------------:|:----------:|-----------------------------------------------------------------|
 | logging_level |   String   | Sets the minimum level of messages logged. Must be capitalized. |
 
-#### Credentials
+### Credentials
 
 Remember to keep the tokens safe and never make them public. Anyone with the tokens has access to your bots.
 
@@ -50,13 +50,13 @@ Changing bot credentials require a complete restart for the bot.
 <details>
 <summary>Click to open obtainment of API tokens</summary>
 
-### Obtaining Discord API token
+#### Obtaining Discord API token
 
 1. Go to your application settings in Discord developer portal
 2. The application token is found from menu Bot -> Token. Client secret in OAuth2 section is incorrect one.
 3. Reset the token and copy it into `config.toml`
 
-### Obtaining Telegram API token
+#### Obtaining Telegram API token
 
 1. Open chat with the BotFather
 2. Open the chat menu next to the text field
@@ -64,14 +64,14 @@ Changing bot credentials require a complete restart for the bot.
 
 </details>
 
-#### Channel IDs
+### Channel IDs
 
 |  variable  |    value type    | function                                                                                                                                                          |
 |:----------:|:----------------:|-------------------------------------------------------------------------------------------------------------------------------------------------------------------|
 | `telegram` |     Integer      | ID of a Telegram channel to listen to. Always starts with `-100`. Only one channel is currently supported.                                                        |
 | `discord`  | List of integers | List of Discord channel IDs to forward the Telegram messages to. The Discord bot must have a permission to send messages and read old messages in these channels. |
 
-#### Bot settings
+### Bot settings
 
 Bot settings are used to control the bot presence and behaviour in Discord.
 
@@ -81,7 +81,7 @@ Bot settings are used to control the bot presence and behaviour in Discord.
 | `activity_status`  |            String             | Used to set the bot status message in Discord. Leave as an empty string for no Discord status.                                                                                                                                                   |
 | `dm_only_commands` |            Boolean            | Accept bot commands in Discord only through direct messages. Otherwise the commands can be executed in any Discord channel the bot can read.                                                                                                     |
 
-#### Preferences
+### Preferences
 
 Preferences are used to control the Discord message forwarding behaviour.
 
