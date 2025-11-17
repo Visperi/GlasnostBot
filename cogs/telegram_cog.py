@@ -31,12 +31,12 @@ import copy
 import toml
 import discord
 import filetype
+from telegram_bot import TelegramBot
 from discord.ext import commands, tasks
 from discord_bot import DiscordBot
 
 import telegram
 from config import Config
-from utils import Missing
 from database_handler import DatabaseHandler
 
 
@@ -59,50 +59,25 @@ class TelegramCog(commands.Cog):
 
     def __init__(self, bot: DiscordBot):
         self.config = Config("config.toml")
-
-        self.database_name: str = Missing
-        self.tg_channel_id: int = Missing
-        self.discord_channel_ids: List[int] = Missing
-        self.ignored_tg_users: List[int] = Missing
-        self.listened_tg_users: List[int] = Missing
-        self.prefer_telegram_usernames: bool = Missing
-        self.send_orphans_as_new_message: bool = Missing
-        self.update_age_threshold: int = Missing
-        self.message_cleanup_threshold: int = Missing
-        self.load_configuration()
-
-        self.telegram_bot = telegram.Client(loop=bot.loop)
+        self.telegram_bot = TelegramBot(bot.loop, self.config)
         self.discord_bot = bot
-        self.database_handler = DatabaseHandler(self.database_name)
+        self.database_handler = DatabaseHandler(self.config.preferences.database_path)
 
     def load_configuration(self):
         self.config.load()
-
-        self.tg_channel_id = self.config.channel_ids.telegram
-        self.discord_channel_ids = self.config.channel_ids.discord
-
-        self.ignored_tg_users = self.config.users.ignored_users
-        self.listened_tg_users = self.config.users.listened_users
-
-        self.prefer_telegram_usernames = self.config.preferences.prefer_telegram_usernames
-        self.send_orphans_as_new_message = self.config.preferences.send_orphans_as_new_message
-        self.update_age_threshold = self.config.preferences.update_age_threshold
-        self.message_cleanup_threshold = self.config.preferences.message_cleanup_threshold
-        self.database_name = self.config.preferences.database_path
+        self.telegram_bot.load_config(self.config)
 
     def add_hooks(self):
         self.telegram_bot.add_listener(self.on_message)
         self.telegram_bot.add_listener(self.on_message_edit)
-        self.telegram_bot.add_check(self.has_correct_chat)
-        self.telegram_bot.add_check(self.is_new_enough)
 
     async def cog_load(self) -> None:
         _logger.debug(f"Starting Telegram polling before loading {__name__}")
         self.add_hooks()
 
         if not self.database_handler.connection:
-            _logger.debug(f"Connecting to database '{self.database_name}'")
-            self.database_handler.connect(self.database_name)
+            _logger.debug(f"Connecting to database '{self.config.preferences.database_path}'")
+            self.database_handler.connect(self.config.preferences.database_path)
 
         self.database_cleanup_loop.start()
 
@@ -123,37 +98,10 @@ class TelegramCog(commands.Cog):
         A background task deleting Discord message references from the database at least X days old defined in the
         configuration file.
         """
-        threshold = self.message_cleanup_threshold
+        threshold = self.config.preferences.message_cleanup_threshold
         _logger.debug(f"Running database auto cleanup task with timestamp threshold of {threshold} days.")
         upper_threshold_limit = datetime.now(UTC) - timedelta(days=threshold)
         self.database_handler.delete_by_age(upper_threshold_limit)
-
-    async def has_correct_chat(self, update: telegram.Update) -> bool:
-        message = update.effective_message
-        if not message or message.chat.id != self.tg_channel_id:
-            return False
-
-        message_sender = message.from_
-        if not message_sender:
-            # The message is a channel post and has no user as sender
-            return True
-
-        user_id = message_sender.id
-        # Discard ignored user messages. If listened users list exists, allow only their messages.
-        if user_id in self.ignored_tg_users:
-            return False
-        if self.listened_tg_users and user_id not in self.listened_tg_users:
-            return False
-
-        return True
-
-    async def is_new_enough(self, update: telegram.Update) -> bool:
-        if update.is_edited_message:
-            # Allow edits to always go through
-            return True
-
-        message = update.effective_message
-        return message and get_current_timestamp() - message.date < self.update_age_threshold
 
     def create_discord_embed(self, message: telegram.Message) -> Optional[discord.Embed]:
         """
@@ -171,7 +119,7 @@ class TelegramCog(commands.Cog):
 
         if forwarded_from is not None:
             if isinstance(forwarded_from, telegram.User):
-                if self.prefer_telegram_usernames and forwarded_from.username:
+                if self.config.preferences.prefer_telegram_usernames and forwarded_from.username:
                     sender_name = forwarded_from.username
                 else:
                     sender_name = forwarded_from.full_name
@@ -284,7 +232,7 @@ class TelegramCog(commands.Cog):
         :param files: A list of ``discord.File`` objects to send with the message.
         """
 
-        for channel_id in self.discord_channel_ids:
+        for channel_id in self.config.channel_ids.discord:
             channel = self.discord_bot.get_channel(channel_id)
             if not channel:
                 _logger.error(f"Attempted to forward Telegram message to unknown channel with ID {channel_id}.")
@@ -309,7 +257,7 @@ class TelegramCog(commands.Cog):
         :param text: Text content to send in addition to the Discord embed.
         :param files: A list of ``discord.File`` objects to send with the message.
         """
-        if self.send_orphans_as_new_message:
+        if self.config.preferences.send_orphans_as_new_message:
             # TODO: Handle messages separately if they all are not missing references
             await self.send_discord_messages(tg_message_id, embed, text, files)
 
