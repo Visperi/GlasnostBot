@@ -33,9 +33,10 @@ Below is a list of config sections and their variables and values.
 
 ### General
 
-|   variable    | value type | function                                                        |
-|:-------------:|:----------:|-----------------------------------------------------------------|
-| logging_level |   String   | Sets the minimum level of messages logged. Must be capitalized. |
+|    variable     | value type | function                                                                                                                     |
+|:---------------:|:----------:|------------------------------------------------------------------------------------------------------------------------------|
+| `logging_level` |   String   | Sets the minimum level of messages logged. Must be capitalized.                                                              |
+| `database_path` |   String   | Path to a sqlite3 database file used for storing the message references. If not found, a new file is created at bot startup. |
 
 ### Credentials
 
@@ -106,7 +107,6 @@ Preferences are used to control the Discord message forwarding behaviour.
 | `send_orphans_as_new_message` |  Boolean   | Send edits and replies not found in the bot database as completely new messages. Do note that e.g. short replies to old messages can look out of place if enabled, and some context should perhaps be given.   |
 |  `message_cleanup_threshold`  |  Integer   | Inclusive age in days for for Discord messages to be deleted from the database in 6 hour intervals. References at least this old will be deleted, and cannot be directly replied or edited in Discord anymore. |
 |    `update_age_threshold`     |  Integer   | Inclusive maximum age in seconds for hanging Telegram messages to forward to Discord. Messages can be left hanging e.g. due to lag spikes or bot downtimes.                                                    |
-|        `database_path`        |   String   | Path to a sqlite3 database file used for storing the message references. If not found, a new file is created at bot startup.                                                                                   |
 
 ## Examples
 

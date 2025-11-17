@@ -1,5 +1,6 @@
 [general]
 logging_level = "INFO"
+database_path = "glasnost.db"
 
 [credentials]
 telegram = "TOKEN"
@@ -23,4 +24,3 @@ prefer_telegram_usernames = true
 send_orphans_as_new_message = true
 message_cleanup_threshold = 30
 update_age_threshold = 600
-database_path = "glasnost.db"

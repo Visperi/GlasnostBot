@@ -52,7 +52,7 @@ class TelegramCog(commands.Cog):
         self.config = Config("config.toml")
         self.telegram_bot = TelegramBot(bot.loop, self.config)
         self.discord_bot = bot
-        self.database_handler = DatabaseHandler(self.config.preferences.database_path)
+        self.database_handler = DatabaseHandler(self.config.general.database_path)
 
     def load_configuration(self):
         self.config.load()
@@ -67,8 +67,8 @@ class TelegramCog(commands.Cog):
         self.add_hooks()
 
         if not self.database_handler.connection:
-            _logger.debug(f"Connecting to database '{self.config.preferences.database_path}'")
-            self.database_handler.connect(self.config.preferences.database_path)
+            _logger.debug(f"Connecting to database '{self.config.general.database_path}'")
+            self.database_handler.connect(self.config.general.database_path)
 
         self.database_cleanup_loop.start()
 

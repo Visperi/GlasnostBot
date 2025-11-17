@@ -73,8 +73,7 @@ class _Preferences(__ConfigSection):
         "prefer_telegram_usernames",
         "send_orphans_as_new_message",
         "message_cleanup_threshold",
-        "update_age_threshold",
-        "database_path"
+        "update_age_threshold"
     )
 
     def __init__(self, preferences_dict: dict):
@@ -90,8 +89,7 @@ class _Preferences(__ConfigSection):
         return cls(dict(prefer_telegram_usernames=True,
                         send_orphans_as_new_message=True,
                         message_cleanup_threshold=30,
-                        update_age_threshold=600,
-                        database_path="glasnost.db"))
+                        update_age_threshold=600))
 
 
 class _BotSettings(__ConfigSection):
@@ -179,6 +177,7 @@ class _General(__ConfigSection):
 
     __slots__ = (
         "logging_level",
+        "database_path"
     )
 
     def __init__(self, general_dict: dict):
@@ -191,7 +190,8 @@ class _General(__ConfigSection):
 
     @classmethod
     def generate_default(cls):
-        return cls(dict(logging_level="INFO"))
+        return cls(dict(logging_level="INFO",
+                        database_path="glasnost.db"))
 
 
 class Config:
