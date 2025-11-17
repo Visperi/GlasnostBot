@@ -1,7 +1,7 @@
 """
 MIT License
 
-Copyright (c) 2022 Niko Mätäsaho
+Copyright (c) 2025 Niko Mätäsaho
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -40,6 +40,7 @@ if TYPE_CHECKING:
 
 
 T = TypeVar("T")
+_logger = logging.getLogger(__name__)
 
 
 class MediaCacheItem:
@@ -103,6 +104,7 @@ class MediaCache:
 
         if cache_item.has_expired:
             del self[file_unique_id]
+            _logger.debug(f"Deleted expired reference to file {file_unique_id}")
             return default
         else:
             return cache_item.file
