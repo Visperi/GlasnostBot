@@ -26,6 +26,7 @@ from typing import List, Optional
 from datetime import datetime, UTC, timedelta
 from pathlib import Path
 import logging
+import copy
 
 import toml
 import discord
@@ -398,9 +399,14 @@ class TelegramCog(commands.Cog):
         if not updated_sections:
             await ctx.send("Configuration reloaded with no updates.")
         else:
-            current_config = f"```toml\n{self.config}```"
+            config_copy = copy.deepcopy(self.config)
+            # Hide the actual tokens from Discord message
+            config_copy.credentials.telegram = "TOKEN"
+            config_copy.credentials.discord = "TOKEN"
+
+            config_codeblock = f"```toml\n{config_copy}```"
             updated = f"Following variables were updated:\n```toml\n{toml.dumps(updated_sections)}```"
-            await ctx.send(f"Configuration reloaded. Configuration is now as follows:\n{current_config}\n{updated}")
+            await ctx.send(f"Configuration reloaded. Configuration is now as follows:\n{config_codeblock}\n{updated}")
 
 
 async def setup(bot: DiscordBot):
