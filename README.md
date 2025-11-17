@@ -79,6 +79,15 @@ If the bot is already in a group when changing these settings, you need to kick 
 | `telegram` |     Integer      | ID of a Telegram channel to listen to. Only one listening channel is currently supported.                                                                         |
 | `discord`  | List of integers | List of Discord channel IDs to forward the Telegram messages to. The Discord bot must have a permission to send messages and read old messages in these channels. |
 
+### Users
+
+User settings can be used to control whose messages are forwarded from Telegram to Discord.
+
+|    variable    |    value type    | function                                                                                                                                                                           |
+|:--------------:|:----------------:|------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| ignored_users  | List of integers | List of Telegram user IDs. Messages from these users will never be forwarded to Discord.                                                                                           |
+| listened_users | List of integers | List of Telegram user IDs. Messages from these users will be forwarded to Discord. Leave as an empty list to forward messages from all users (except the ignored ones) to Discord. |
+
 ### Bot settings
 
 Bot settings are used to control the bot presence and behaviour in Discord.

@@ -138,6 +138,22 @@ class _ChannelIds(__ConfigSection):
                         discord=[1234, 5678, 9012]))
 
 
+class _Users(__ConfigSection):
+
+    __slots__ = (
+        "ignored_users",
+        "listened_users"
+    )
+
+    def __init__(self, users_dict: dict):
+        super().__init__(users_dict)
+
+    @classmethod
+    def generate_default(cls):
+        return cls(dict(ignored_users=[],
+                        listened_users=[]))
+
+
 class _Credentials(__ConfigSection):
 
     __slots__ = (
@@ -204,6 +220,10 @@ class Config:
         """
         Channel IDs section of the current configuration file.
         """
+        self.users: _Users = Missing
+        """
+        Users section of the current configuration file.
+        """
         self.bot_settings: _BotSettings = Missing
         """
         Bot settings section of the current configuration file.
@@ -227,6 +247,7 @@ class Config:
         obj.general = _General.generate_default()
         obj.credentials = _Credentials.generate_default()
         obj.channel_ids = _ChannelIds.generate_default()
+        obj.users = _Users.generate_default()
         obj.bot_settings = _BotSettings.generate_default()
         obj.preferences = _Preferences.generate_default()
 
@@ -253,6 +274,7 @@ class Config:
         self.general = _General(config["general"])
         self.credentials = _Credentials(config["credentials"])
         self.channel_ids = _ChannelIds(config["channel_ids"])
+        self.users = _Users(config["users"])
         self.bot_settings = _BotSettings(config["bot_settings"])
         self.preferences = _Preferences(config["preferences"])
 

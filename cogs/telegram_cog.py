@@ -62,6 +62,8 @@ class TelegramCog(commands.Cog):
         self.database_name: str = Missing
         self.tg_channel_id: int = Missing
         self.discord_channel_ids: List[int] = Missing
+        self.ignored_tg_users: List[int] = Missing
+        self.listened_tg_users: List[int] = Missing
         self.prefer_telegram_usernames: bool = Missing
         self.send_orphans_as_new_message: bool = Missing
         self.update_age_threshold: int = Missing
@@ -78,6 +80,9 @@ class TelegramCog(commands.Cog):
         self.tg_channel_id = self.config.channel_ids.telegram
         self.discord_channel_ids = self.config.channel_ids.discord
 
+        self.ignored_tg_users = self.config.users.ignored_users
+        self.listened_tg_users = self.config.users.listened_users
+
         self.prefer_telegram_usernames = self.config.preferences.prefer_telegram_usernames
         self.send_orphans_as_new_message = self.config.preferences.send_orphans_as_new_message
         self.update_age_threshold = self.config.preferences.update_age_threshold
@@ -92,18 +97,18 @@ class TelegramCog(commands.Cog):
 
     async def cog_load(self) -> None:
         _logger.debug(f"Starting Telegram polling before loading {__name__}")
-
-        try:
-            self.telegram_bot.start(self.config.credentials.telegram)
-        except ValueError:
-            _logger.error("Cannot start Telegram polling. Already polling.")
-
         self.add_hooks()
+
         if not self.database_handler.connection:
             _logger.debug(f"Connecting to database '{self.database_name}'")
             self.database_handler.connect(self.database_name)
 
         self.database_cleanup_loop.start()
+
+        try:
+            self.telegram_bot.start(self.config.credentials.telegram)
+        except ValueError:
+            _logger.error("Cannot start Telegram polling. Already polling.")
 
     async def cog_unload(self) -> None:
         _logger.debug(f"Stopping Telegram polling before unloading {__name__}.")
@@ -122,11 +127,26 @@ class TelegramCog(commands.Cog):
         upper_threshold_limit = datetime.now(UTC) - timedelta(days=threshold)
         self.database_handler.delete_by_age(upper_threshold_limit)
 
-    async def has_correct_chat(self, update: telegram.Update):
+    async def has_correct_chat(self, update: telegram.Update) -> bool:
         message = update.effective_message
-        return message and message.chat.id == self.tg_channel_id
+        if not message or message.chat.id != self.tg_channel_id:
+            return False
 
-    async def is_new_enough(self, update: telegram.Update):
+        message_sender = message.from_
+        if not message_sender:
+            # The message is a channel post and has no user as sender
+            return True
+
+        user_id = message_sender.id
+        # Discard ignored user messages. If listened users list exists, allow only their messages.
+        if user_id in self.ignored_tg_users:
+            return False
+        if self.listened_tg_users and user_id not in self.listened_tg_users:
+            return False
+
+        return True
+
+    async def is_new_enough(self, update: telegram.Update) -> bool:
         if update.is_edited_message:
             # Allow edits to always go through
             return True

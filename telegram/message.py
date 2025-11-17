@@ -537,7 +537,7 @@ class Message(MaybeInaccessibleMessage):
 
         self.message_thread_id = payload.get("message_thread_id", -1)
         self.direct_messages_topic = payload.get("direct_messages_topic")
-        self.from_ = payload.get("from_")
+        self.from_: Optional[User] = payload.get("from_")
         self.sender_chat = payload.get("sender_chat")
         self.sender_boost_count = payload.get("sender_boost_count", 0)
         self.sender_business_bot = payload.get("sender_business_bot")
