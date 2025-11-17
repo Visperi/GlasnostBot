@@ -184,18 +184,37 @@ class Config:
         """
         An object representing a TOML configuration file.
 
-        :param config_path: Path to an existing TOML configuration file. If omitted, a configuration load a file later
+        :param config_path: Path to an existing TOML configuration file. If given, the configuration is automatically
+                            loaded from the file during initialization. Otherwise, load a configuration file later
                             with method ``load`` or assign the sections.
         """
         self.config_path = config_path
+        """
+        Path to the current configuration file.
+        """
         self.general: _General = Missing
+        """
+        General section of the current configuration file.
+        """
         self.credentials: _Credentials = Missing
+        """
+        Credentials section of the current configuration file.
+        """
         self.channel_ids: _ChannelIds = Missing
+        """
+        Channel IDs section of the current configuration file.
+        """
         self.bot_settings: _BotSettings = Missing
+        """
+        Bot settings section of the current configuration file.
+        """
         self.preferences: _Preferences = Missing
+        """
+        Preferences section of the current configuration file.
+        """
 
         if config_path:
-            self.load(self.config_path)
+            self.load()
 
     @classmethod
     def with_default_values(cls):
@@ -223,7 +242,7 @@ class Config:
         """
         Load configuration from an existing TOML file.
 
-        :param config_file: Path to the TOML file.
+        :param config_file: Path to the TOML file. If omitted, the current configuration file is used.
         """
         if config_file:
             config = toml.load(config_file)
