@@ -226,10 +226,12 @@ class Client:
 
     async def download_file(self, file: MediaBase) -> Tuple[io.BytesIO, str]:
         """
-        Download a file from Telegram servers. This method automatically requests the file for download from the API.
+        Download a file from Telegram servers. This method automatically requests the file for download from the API if
+        necessary.
 
-        :param file: Media file object or file ID for the downloaded object.
-        :return: The downloaded file as a byte stream and its filename as tuple of (stream, filename).
+        :param file: Media file object to download.
+        :return: The downloaded file as a byte stream and its filename as tuple of (stream, filename). Do note that the
+                 filename may be changed by the Telegram API.
         """
 
         tg_file = self.media_cache.get(file.file_unique_id)

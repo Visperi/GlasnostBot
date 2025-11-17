@@ -142,10 +142,10 @@ class TelegramCog(commands.Cog):
 
     async def fetch_message_files(self, message: telegram.Message) -> Optional[List[discord.File]]:
         """
-        Fetch all files present on a Telegram message.
+        Fetch all files present on a Telegram message and convert them to ``discord.File`` objects.
 
         :param message: The telegram message.
-        :return: A list of files in the message as ``discord.File`` object.
+        :return: A list of files in the message as ``discord.File`` objects.
         """
         discord_files = []
         telegram_files = message.get_all_media()
