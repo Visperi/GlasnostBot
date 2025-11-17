@@ -395,6 +395,8 @@ class TelegramCog(commands.Cog):
             self.discord_bot.set_dm_only_check(self.config.bot_settings.dm_only_commands)
         if "command_prefix" in updated_sections:
             self.discord_bot.set_command_prefix(self.config.bot_settings.command_prefix)
+        if "logging_level" in updated_sections:
+            logging.getLogger().setLevel(self.config.general.logging_level)
 
         if not updated_sections:
             await ctx.send("Configuration reloaded with no updates.")

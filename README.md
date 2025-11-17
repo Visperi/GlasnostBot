@@ -33,8 +33,6 @@ Below is a list of config sections and their variables and values.
 
 ### General
 
-Changing general settings require a complete restart for the bot.
-
 |   variable    | value type | function                                                        |
 |:-------------:|:----------:|-----------------------------------------------------------------|
 | logging_level |   String   | Sets the minimum level of messages logged. Must be capitalized. |
