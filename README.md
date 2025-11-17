@@ -79,12 +79,12 @@ If the bot is already in a group when changing these settings, you need to kick 
 
 ### Users
 
-User settings can be used to control whose messages are forwarded from Telegram to Discord.
+User settings can be used to control whose messages are forwarded from Telegram to Discord. This section has no effect on channels posts, as they do not have a user as a sender.
 
-|    variable    |    value type    | function                                                                                                                                                                           |
-|:--------------:|:----------------:|------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| ignored_users  | List of integers | List of Telegram user IDs. Messages from these users will never be forwarded to Discord.                                                                                           |
-| listened_users | List of integers | List of Telegram user IDs. Messages from these users will be forwarded to Discord. Leave as an empty list to forward messages from all users (except the ignored ones) to Discord. |
+|     variable     |    value type    | function                                                                                                                                                                           |
+|:----------------:|:----------------:|------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| `ignored_users`  | List of integers | List of Telegram user IDs. Messages from these users will never be forwarded to Discord.                                                                                           |
+| `listened_users` | List of integers | List of Telegram user IDs. Messages from these users will be forwarded to Discord. Leave as an empty list to forward messages from all users (except the ignored ones) to Discord. |
 
 ### Bot settings
 
