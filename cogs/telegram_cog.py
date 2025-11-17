@@ -43,15 +43,6 @@ from database_handler import DatabaseHandler
 _logger = logging.getLogger(__name__)
 
 
-def get_current_timestamp() -> int:
-    """
-    Get the current UTC time as POSIX timestamp.
-
-    :return: POSIX timestamp.
-    """
-    return int(datetime.now(UTC).timestamp())
-
-
 class TelegramCog(commands.Cog):
     """
     A cog listening defined Telegram channels and forwarding the messages to given Discord channels.
@@ -203,7 +194,7 @@ class TelegramCog(commands.Cog):
             if not files:
                 files = discord_message.attachments
             await discord_message.edit(embed=embed, attachments=files)
-            self.database_handler.update_ts(message_id, get_current_timestamp())
+            self.database_handler.update_ts(message_id, datetime.now(UTC))
 
     def serialize_discord_message(self, tg_message_id: int, discord_message: discord.Message) -> None:
         """
@@ -213,7 +204,7 @@ class TelegramCog(commands.Cog):
         :param tg_message_id: The Telegram message ID.
         :param discord_message: A Discord message corresponding the Telegram message.
         """
-        self.database_handler.add(tg_message_id, discord_message, get_current_timestamp())
+        self.database_handler.add(tg_message_id, discord_message, datetime.now(UTC))
 
     async def send_discord_messages(
             self,
@@ -290,7 +281,7 @@ class TelegramCog(commands.Cog):
         for discord_message in discord_messages:
             new_discord_message = await discord_message.reply(content=text, embed=embed, mention_author=False, files=files)  # noqa
             self.serialize_discord_message(tg_message_id, new_discord_message)
-            self.database_handler.update_ts(replied_tg_message_id, get_current_timestamp())
+            self.database_handler.update_ts(replied_tg_message_id, datetime.now(UTC))
 
     async def get_discord_messages(self, tg_message_id: int) -> List[discord.Message]:
         """

@@ -1,7 +1,7 @@
 """
 MIT License
 
-Copyright (c) 2022 Niko Mätäsaho
+Copyright (c) 2025 Niko Mätäsaho
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -25,9 +25,10 @@ SOFTWARE.
 
 import logging
 import sqlite3
-import discord
-import datetime
+from datetime import datetime
 from typing import List, Union, Tuple
+
+import discord
 
 
 _logger = logging.getLogger(__name__)
@@ -74,7 +75,7 @@ class DatabaseHandler:
         self.cursor = None
         _logger.debug("Connection closed")
 
-    def add(self, tg_message_id: int, discord_message: discord.Message, ts: Union[int, datetime.datetime]) -> None:
+    def add(self, tg_message_id: int, discord_message: discord.Message, ts: Union[int, datetime]) -> None:
         """
         Add a new Discord message reference to the database for possible later references.
 
@@ -83,7 +84,7 @@ class DatabaseHandler:
         the database.
         :param ts: Leap second aware UTC timestamp when the Discord message was sent.
         """
-        if isinstance(ts, datetime.datetime):
+        if isinstance(ts, datetime):
             ts = int(ts.timestamp())
 
         with self.connection:
@@ -98,7 +99,7 @@ class DatabaseHandler:
         _logger.debug(f"Successfully added reference to database with values {tg_message_id}, "
                       f"{discord_message.to_message_reference_dict()}, {ts}")
 
-    def update_ts(self, tg_message_id: int, new_ts: int) -> int:
+    def update_ts(self, tg_message_id: int, new_ts: Union[int, datetime]) -> int:
         """
         Update a timestamp for a message reference to preserve it longer in the database for possible new references.
 
@@ -106,6 +107,9 @@ class DatabaseHandler:
         :param new_ts: Leap second aware UTC Timestamp of the last reference time
         :return: Amount of modified rows
         """
+        if isinstance(new_ts, datetime):
+            new_ts = int(new_ts.timestamp())
+
         _logger.debug(
             f"Updating timestamp to {new_ts} for Discord message references with Telegram message ID {tg_message_id}.")
 
@@ -137,7 +141,7 @@ class DatabaseHandler:
         _logger.debug(f"Successfully deleted {deleted} references.")
         return deleted
 
-    def delete_by_age(self, upper_age_limit: Union[int, datetime.datetime]) -> int:
+    def delete_by_age(self, upper_age_limit: Union[int, datetime]) -> int:
         """
         Delete message references from the database based on their timestamps. All messages failing to be inside given
         time restrictions are deleted.
@@ -146,7 +150,7 @@ class DatabaseHandler:
         the most recent reference to delete. Messages with this or smaller timestamps will be deleted!
         :return: Amount of deleted messages
         """
-        if isinstance(upper_age_limit, datetime.datetime):
+        if isinstance(upper_age_limit, datetime):
             upper_age_limit = int(upper_age_limit.timestamp())
 
         _logger.debug(f"Deleting Discord message references with upper limit of {upper_age_limit} from the database.")
