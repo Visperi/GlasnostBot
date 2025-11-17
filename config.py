@@ -227,6 +227,7 @@ class Config:
         """
         if config_file:
             config = toml.load(config_file)
+            self.config_path = config_file
         else:
             config = toml.load(self.config_path)
 
