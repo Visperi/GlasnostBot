@@ -24,15 +24,88 @@ SOFTWARE.
 
 
 import logging
+from datetime import datetime, UTC
 from typing import (
     Union,
     List,
     Type,
-    TypeVar
+    TypeVar,
+    Any,
+    Dict,
+    TYPE_CHECKING
 )
+
+if TYPE_CHECKING:
+    from .media import File
 
 
 T = TypeVar("T")
+
+
+class MediaCacheItem:
+
+    def __init__(self, created: datetime, file: 'File'):
+        """
+        A cache item for ``MediaCache``. Encapsulates ``telegram.File`` objects with their creation time to make their
+        handling easier.
+
+        :param created: Datetime when the item was created.
+        :param file: A ``telegram.File`` stored in the cache.
+        """
+        self.created = created
+        self.file = file
+
+    @property
+    def has_expired(self) -> bool:
+        """
+        :return: True if the file was created at least an hour ago and is expired. False otherwise.
+        """
+        diff = datetime.now(UTC) - self.created
+        return diff.total_seconds() >= 3600
+
+
+class MediaCache:
+
+    def __init__(self):
+        """
+        A minimalistic cache for storing Telegram files requested from their API so a new ``getfile`` request is not
+        needed every time.
+        """
+        self._cache: Dict[str, MediaCacheItem] = {}
+
+    def __getitem__(self, file_unique_id: str):
+        return self._cache[file_unique_id]
+
+    def __delitem__(self, file_unique_id: str):
+        del self._cache[file_unique_id]
+
+    def add(self, file: 'File'):
+        """
+        Add a ``telegram.File`` object to the cache.
+
+        :param file: The file to add to cache.
+        """
+        self._cache[file.file_unique_id] = MediaCacheItem(datetime.now(UTC), file)
+
+    def get(self, file_unique_id: str, default: Any = None) -> Union['File', Any]:
+        """
+        Get a ``telegram.File`` object from the cache if found. If not found or the file has expired, return the default value
+        instead. Files will expire after an hour.
+
+        :param file_unique_id: The file unique ID.
+        :param default: Value to return if the file is not found from cache.
+        :return: The ``telegram.File`` object or the default value.
+        """
+        try:
+            cache_item = self[file_unique_id]
+        except KeyError:
+            return default
+
+        if cache_item.has_expired:
+            del self[file_unique_id]
+            return default
+        else:
+            return cache_item.file
 
 
 class _CustomFormatter(logging.Formatter):

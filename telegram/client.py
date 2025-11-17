@@ -31,6 +31,7 @@ from enum import Enum
 import aiohttp
 
 from .api_response import ApiResponse, FileQueryResult
+from .utils import MediaCache
 from .update import Update
 from .media import MediaBase, File
 from typing import (
@@ -41,7 +42,6 @@ from typing import (
     List,
     TypeVar,
     Optional,
-    Union,
     Tuple
 )
 
@@ -79,6 +79,7 @@ class Client:
         self.listeners: Dict[str, List[Coro]] = {}
         self.checks: List[Coro] = []
         self.polling_task: asyncio.Task = None
+        self.media_cache = MediaCache()
 
         self._existing_loop = self.loop is not None
         if loop is None:
@@ -223,20 +224,20 @@ class Client:
             raise ValueError(f"Request getFile to Telegram API failed: {resp.error_code} - {resp.description}")
         return resp.result
 
-    async def download_file(self, media: Union[MediaBase, str]) -> Tuple[io.BytesIO, str]:
+    async def download_file(self, file: MediaBase) -> Tuple[io.BytesIO, str]:
         """
         Download a file from Telegram servers. This method automatically requests the file for download from the API.
 
-        :param media: Media file object or file ID for the downloaded object.
+        :param file: Media file object or file ID for the downloaded object.
         :return: The downloaded file as a byte stream and its filename as tuple of (stream, filename).
         """
-        if isinstance(media, MediaBase):
-            file_id = media.file_id
-        else:
-            file_id = media
 
-        # TODO: Implement an internal cache for files so they are not always requested again
-        tg_file = await self.get_file(file_id)
+        tg_file = self.media_cache.get(file.file_unique_id)
+        if tg_file is None:
+            _logger.debug(f"The file {file.file_unique_id} is expired or is not found from cache. Requesting new one "
+                          f"from Telegram API.")
+            tg_file = await self.get_file(file.file_id)
+            self.media_cache.add(tg_file)
 
         if tg_file.file_size > 20_000_000:
             # TODO: Add better errors for the library, as currently most of them are ValueErrors.
@@ -354,7 +355,7 @@ class Client:
 
     def stop(self):
         if self.polling_task is None:
-            raise ValueError("There is no connection to Telegram api.")
+            raise ValueError("There is no connection to Telegram API.")
 
         self.polling_task.cancel()
         self.polling_task = None
