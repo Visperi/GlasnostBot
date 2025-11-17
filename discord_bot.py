@@ -81,6 +81,7 @@ class DiscordBot(commands.Bot):
         await self.change_presence(activity=discord.Game(new_status))
 
     def set_dm_only_check(self, enabled: bool):
+        self.dm_only_commands = enabled
         if enabled:
             self.add_check(self.is_dm)
         else:
