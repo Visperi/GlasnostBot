@@ -25,6 +25,7 @@ SOFTWARE.
 
 from urllib.parse import urlparse, urlunparse
 from typing import Optional, Union
+from enum import Enum
 
 from .user import User
 from .chat import Chat
@@ -156,7 +157,7 @@ class LinkPreviewOptions:
         self.show_above_text = payload.get("show_above_text", False)
 
 
-class EntityType:
+class EntityType(Enum):
 
     Bold = "bold"
     Italic = "italic"
@@ -176,17 +177,17 @@ class EntityType:
     TextMention = "text_mention"
     CustomEmoji = "custom_emoji"
 
-    @classmethod
-    def supports_markdown(cls, entity_type: str) -> bool:
-        return entity_type not in [
-            cls.Mention,
-            cls.Hashtag,
-            cls.Cashtag,
-            cls.BotCommand,
-            cls.Email,
-            cls.PhoneNumber,
-            cls.TextMention,
-            cls.CustomEmoji
+    @property
+    def supports_markdown(self) -> bool:
+        return self not in [
+            self.Mention,
+            self.Hashtag,
+            self.Cashtag,
+            self.BotCommand,
+            self.Email,
+            self.PhoneNumber,
+            self.TextMention,
+            self.CustomEmoji
         ]
 
 
@@ -203,7 +204,7 @@ class MessageEntity:
     )
 
     def __init__(self, payload: MessageEntityPayload):
-        self.type = payload["type"]
+        self.type = EntityType(payload["type"])
         self.offset = payload["offset"]
         self.length = payload["length"]
         self.url = payload.get("url")
@@ -230,17 +231,6 @@ class MessageEntity:
         filled = tmp._replace(netloc=netloc, path=path)
         return str(urlunparse(filled))
 
-    @staticmethod
-    def _make_hyperlink(text: str, url: str) -> str:
-        """
-        Convert bare text to a hyperlink.
-
-        :param text: Hyperlink text
-        :param url: Hyperlink url
-        :return: Hyperlink with given text and url
-        """
-        return f"[{text}]({url})"
-
     def markdown(self, text: str, make_url_to_hyperlink: bool) -> Optional[str]:
         """
         Convert entity to Markdown syntax with given text.
@@ -249,31 +239,28 @@ class MessageEntity:
         :param make_url_to_hyperlink: Make bare text urls to hyperlinks.
         :return: Given text converted to Entity Markdown syntax
         """
-
-        if self.type == EntityType.Bold:
-            return f"**{text}**"
-        elif self.type == EntityType.Italic:
-            return f"_{text}_"
-        elif self.type == EntityType.Underline:
-            return f"__{text}__"
-        elif self.type == EntityType.Strikethrough:
-            return f"~~{text}~~"
-        elif self.type == EntityType.Spoiler:
-            return f"||{text}||"
-        elif self.type == EntityType.Code:
-            return f"`{text}`"
-        elif self.type == EntityType.Codeblock:
-            return f"```\n{text}\n```"
-        elif self.type == EntityType.TextLink:
-            return self._make_hyperlink(text, self.url)
-        elif self.type == EntityType.Url:
-            complete_url = self._complete_url(text)
-            if make_url_to_hyperlink:
-                return self._make_hyperlink(text, complete_url)
-            else:
-                return complete_url
-        else:
+        if not self.type.supports_markdown:
             return text
+
+        markdowns = {
+            EntityType.Bold: "**{}**",
+            EntityType.Italic: "*{}*",
+            EntityType.Underline: "__{}__",
+            EntityType.Strikethrough: "~~{}~~",
+            EntityType.Spoiler: "||{}||",
+            EntityType.Code: "`{}`",
+            EntityType.Codeblock: "```\n{}\n```",
+        }
+
+        if self.type == EntityType.TextLink:
+            return f"[{text}]({self.url})"
+        elif self.type == EntityType.Url:
+            link = self._complete_url(text)
+            if make_url_to_hyperlink:
+                link = f"[{text}]({self.url})"
+            return link
+        else:
+            return markdowns[self.type].format(text)
 
     @property
     def one_way_markdown_offset(self):
