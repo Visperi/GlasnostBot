@@ -179,6 +179,8 @@ class EntityType(Enum):
     TextLink = "text_link"
     TextMention = "text_mention"
     CustomEmoji = "custom_emoji"
+    BlockQuote = "blockquote"
+    ExpandableBlockQuote = "expandable_blockquote"
 
     @property
     def supports_markdown(self) -> bool:
@@ -193,7 +195,9 @@ class EntityType(Enum):
             self.Email,
             self.PhoneNumber,
             self.TextMention,
-            self.CustomEmoji
+            self.CustomEmoji,
+            self.BlockQuote,
+            self.ExpandableBlockQuote
         ]
 
 
