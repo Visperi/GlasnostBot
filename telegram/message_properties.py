@@ -158,6 +158,9 @@ class LinkPreviewOptions:
 
 
 class EntityType(Enum):
+    """
+    Enum class that represents a type of message entity.
+    """
 
     Bold = "bold"
     Italic = "italic"
@@ -179,6 +182,9 @@ class EntityType(Enum):
 
     @property
     def supports_markdown(self) -> bool:
+        """
+        :return: True if the entity type supports Markdown formatting, False otherwise.
+        """
         return self not in [
             self.Mention,
             self.Hashtag,
@@ -204,15 +210,41 @@ class MessageEntity:
     )
 
     def __init__(self, payload: MessageEntityPayload):
+        """
+        Represents a message entity in a Telegram message.
+
+        :param payload: MessageEntity payload as a dictionary from Telegram API.
+        """
         self.type = EntityType(payload["type"])
+        """
+        Type of the message entity.
+        """
         self.offset = payload["offset"]
+        """
+        Offset in UTF-16 code units to the start of the entity.
+        """
         self.length = payload["length"]
+        """
+        Length of the entity in UTF-16 code units.
+        """
         self.url = payload.get("url")
+        """
+        URL of a link in an entity of type ``EntityType.TextLink``.
+        """
         self.language = payload.get("language")
+        """
+        Programming language for an entity of type ``EntityType.Codeblock``.
+        """
         self.custom_emoji_id = payload.get("custom_emoji_id")
+        """
+        An ID for a custom emoji for entity type of ``EntityType.CustomEmoji``.
+        """
 
         try:
             self.user = User(payload["user"])
+            """
+            A mentioned user for entity type of ``EntityType.TextMention``.
+            """
         except KeyError:
             self.user = None
 
