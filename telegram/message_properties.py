@@ -323,22 +323,19 @@ class MessageEntity:
             }
         }
 
-        if self.type == EntityType.Url and make_url_to_hyperlink:
-            markdown_syntax = markdowns[EntityType.TextLink]
-        else:
-            markdown_syntax = markdowns[self.type]
-
+        markdown_syntax = markdowns[self.type]
         before_text = markdown_syntax["before"]
         after_text = markdown_syntax["after"]
         if self.type == EntityType.Codeblock:
             before_text = before_text.format(self.language or "")
-        if self.type == EntityType.TextLink:
+        elif self.type == EntityType.TextLink:
             after_text = after_text.format(self.url)
         elif self.type == EntityType.Url and make_url_to_hyperlink:
             url = self._complete_url(text)
-            if text == url:
-                return text, 0
-            after_text = after_text.format(url)
+            if text != url:
+                markdown_syntax = markdowns[EntityType.TextLink]
+                before_text = markdown_syntax["before"]
+                after_text = markdown_syntax["after"].format(url)
 
         return f"{before_text}{text}{after_text}", len(before_text) + len(after_text)
 
