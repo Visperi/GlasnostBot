@@ -24,7 +24,7 @@ SOFTWARE.
 
 
 from urllib.parse import urlparse, urlunparse
-from typing import Optional, Union
+from typing import Tuple, Union, List
 from enum import Enum
 
 from .user import User
@@ -158,6 +158,9 @@ class LinkPreviewOptions:
 
 
 class EntityType(Enum):
+    """
+    Enum class that represents a type of message entity.
+    """
 
     Bold = "bold"
     Italic = "italic"
@@ -176,9 +179,14 @@ class EntityType(Enum):
     TextLink = "text_link"
     TextMention = "text_mention"
     CustomEmoji = "custom_emoji"
+    BlockQuote = "blockquote"
+    ExpandableBlockQuote = "expandable_blockquote"
 
     @property
     def supports_markdown(self) -> bool:
+        """
+        :return: True if the entity type supports Markdown formatting, False otherwise.
+        """
         return self not in [
             self.Mention,
             self.Hashtag,
@@ -187,7 +195,8 @@ class EntityType(Enum):
             self.Email,
             self.PhoneNumber,
             self.TextMention,
-            self.CustomEmoji
+            self.CustomEmoji,
+            self.ExpandableBlockQuote
         ]
 
 
@@ -204,15 +213,41 @@ class MessageEntity:
     )
 
     def __init__(self, payload: MessageEntityPayload):
+        """
+        Represents a message entity in a Telegram message.
+
+        :param payload: MessageEntity payload as a dictionary from Telegram API.
+        """
         self.type = EntityType(payload["type"])
+        """
+        Type of the message entity.
+        """
         self.offset = payload["offset"]
+        """
+        Offset in UTF-16 code units to the start of the entity.
+        """
         self.length = payload["length"]
+        """
+        Length of the entity in UTF-16 code units.
+        """
         self.url = payload.get("url")
+        """
+        URL of a link in an entity of type ``EntityType.TextLink``.
+        """
         self.language = payload.get("language")
+        """
+        Programming language for an entity of type ``EntityType.Codeblock``.
+        """
         self.custom_emoji_id = payload.get("custom_emoji_id")
+        """
+        An ID for a custom emoji for entity type of ``EntityType.CustomEmoji``.
+        """
 
         try:
             self.user = User(payload["user"])
+            """
+            A mentioned user for entity type of ``EntityType.TextMention``.
+            """
         except KeyError:
             self.user = None
 
@@ -231,55 +266,95 @@ class MessageEntity:
         filled = tmp._replace(netloc=netloc, path=path)
         return str(urlunparse(filled))
 
-    def markdown(self, text: str, make_url_to_hyperlink: bool) -> Optional[str]:
+    def markdown(self, text: str, make_url_to_hyperlink: bool) -> Tuple[str, int]:
         """
         Convert entity to Markdown syntax with given text.
 
         :param text: Content for the Markdown conversion.
-        :param make_url_to_hyperlink: Make bare text urls to hyperlinks.
-        :return: Given text converted to Entity Markdown syntax
+        :param make_url_to_hyperlink: Make ``EntityType.Url`` entities to hyperlinks. The original text will not be
+                                      modified. The original text is returned if the URL is already complete and a
+                                      hyperlink cannot be made.
+        :return: Given text converted to Entity Markdown syntax and the length increase compared to the original text.
         """
         if not self.type.supports_markdown:
-            return text
+            return text, 0
 
+        # TODO: Should these somehow be properties instead?
         markdowns = {
-            EntityType.Bold: "**{}**",
-            EntityType.Italic: "*{}*",
-            EntityType.Underline: "__{}__",
-            EntityType.Strikethrough: "~~{}~~",
-            EntityType.Spoiler: "||{}||",
-            EntityType.Code: "`{}`",
-            EntityType.Codeblock: "```\n{}\n```",
+            EntityType.Bold: {
+                "before": "**",
+                "after": "**"
+            },
+            EntityType.Italic: {
+                "before": "*",
+                "after": "*"
+            },
+            EntityType.Underline: {
+                "before": "__",
+                "after": "__"
+            },
+            EntityType.Strikethrough: {
+                "before": "~~",
+                "after": "~~"
+            },
+            EntityType.Spoiler: {
+                "before": "||",
+                "after": "||"
+            },
+            EntityType.Code: {
+                "before": "`",
+                "after": "`"
+            },
+            EntityType.Codeblock: {
+                "before": "```{}\n",
+                "after": "\n```"
+            },
+            EntityType.TextLink: {
+                "before": "[",
+                "after": "]({})"
+            },
+            EntityType.Url: {
+                "before": "",
+                "after": ""
+            },
+            EntityType.BlockQuote: {
+                "before": "> ",
+                "after": ""
+            }
         }
 
-        if self.type == EntityType.TextLink:
-            return f"[{text}]({self.url})"
-        elif self.type == EntityType.Url:
-            link = self._complete_url(text)
-            if make_url_to_hyperlink:
-                link = f"[{text}]({self.url})"
-            return link
-        else:
-            return markdowns[self.type].format(text)
+        markdown_syntax = markdowns[self.type]
+        before_text = markdown_syntax["before"]
+        after_text = markdown_syntax["after"]
+        if self.type == EntityType.Codeblock:
+            before_text = before_text.format(self.language or "")
+        elif self.type == EntityType.TextLink:
+            after_text = after_text.format(self.url)
+        elif self.type == EntityType.Url and make_url_to_hyperlink:
+            url = self._complete_url(text)
+            if text != url:
+                markdown_syntax = markdowns[EntityType.TextLink]
+                before_text = markdown_syntax["before"]
+                after_text = markdown_syntax["after"].format(url)
 
-    @property
-    def one_way_markdown_offset(self):
-        """
-        One-way Markdown offset of the entity, i.e. how many characters are added to the left side of given text on
-        Markdown conversion. Apart from TextLinks this is same as total added characters divided by two.
-        Internally used especially in converting nested markdown in text.
+        return f"{before_text}{text}{after_text}", len(before_text) + len(after_text)
 
-        :return: Amount of characters added to both sides of string in Markdown for this entity.
+    def nested_markdown(self, text: str, message_entities: List['MessageEntity'], make_urls_to_hyperlinks: bool):
         """
-        if self.type == EntityType.TextLink:
-            # TextLink has extra characters also in the middle, but only one character is added left side
-            # e.g. www.example.com -> [www.example.com](www.example.com)
-            return 1
-        else:
-            # For generic cases use simple calculation instead of hard coding
-            tmp = "__dummy__"
-            md = self.markdown(tmp, False)
-            return (len(md) - len(tmp)) // 2
+        Apply nested markdown to the message entity.
+
+        :param text: Text to add the markdown for.
+        :param message_entities: List of ``MessageEntity`` objects to combine with this message entity.
+        :param make_urls_to_hyperlinks: Make bare text urls to hyperlinks.
+        :return: The text with all given message entity markdowns applied and the length increase compared to
+                 the original text.
+        """
+        output, cumulative_offset = self.markdown(text, make_urls_to_hyperlinks)
+        for entity in message_entities:
+            output, added_offset = entity.markdown(output, make_urls_to_hyperlinks)
+            cumulative_offset += added_offset
+
+        return output, cumulative_offset
 
 
 class TextQuote:

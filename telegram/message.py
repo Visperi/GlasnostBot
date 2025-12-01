@@ -875,48 +875,36 @@ class Message(MaybeInaccessibleMessage):
     def _handle_reply_markup(self, value):
         self.reply_markup = InlineKeyboardMarkup(value)
 
-    def _group_entities(self) -> Dict[int, List[MessageEntity]]:
+    def markdown(self, make_urls_to_hyperlink: bool = True) -> Optional[str]:
         """
-        Group message entities with same offsets together.
+        Convert the message and its entities to Markdown.
 
-        :return: Dictionary containing offsets as keys and list of entities with the offset.
+        :param make_urls_to_hyperlink: Make URLs in text format to hyperlinks with the original text. If a hyperlink
+                                       cannot be made, keep them in the original format.
+        :return: The message text content in Markdown syntax.
         """
+        utf8_text = self.text_content
+        if not utf8_text:
+            return None
+
+        # Apply markdown to entities from left to right in groups of same offsets, meaning they belong to same text.
+        sorted_entities = sorted(self.message_entities, key=lambda e: e.offset)
         grouped_entities = {}
-        for entity in self.message_entities:
-            try:
-                grouped_entities[entity.offset].append(entity)
-            except KeyError:
-                grouped_entities[entity.offset] = [entity]
+        for message_entity in sorted_entities:
+            grouped_entities.setdefault(message_entity.offset, []).append(message_entity)
 
-        return grouped_entities
+        utf16_bytes = bytearray(utf8_text, "utf-16-le")
+        cumulative_offset = 0  # UTF-16 offset after applying markdown to entities
+        for offset_group in grouped_entities.values():
+            entity = offset_group[0]
+            entity_start = entity.offset * 2 + cumulative_offset
+            entity_end = entity_start + entity.length * 2
+            entity_text = utf16_bytes[entity_start:entity_end].decode("utf-16-le")
+            markdown, offset = entity.nested_markdown(entity_text, offset_group[1:], make_urls_to_hyperlink)
+            utf16_bytes[entity_start:entity_end] = markdown.encode("utf-16-le")
+            cumulative_offset += offset * 2
 
-    def markdownify(self, make_urls_to_hyperlink: bool = True) -> str:
-        """
-        Apply message entities in Markdown syntax to the message content.
-
-        :return: Message content with entities added in Markdown syntax.
-        """
-        markdownified = self.text_content
-        grouped_entities = self._group_entities()
-        total_offset = 0
-
-        # TODO: Use this to fix the codepoint issues
-        # https://stackoverflow.com/questions/39280183/utf-16-codepoint-counting-in-python
-        # text_utf16 = self.text.encode("utf-16-le")
-
-        for offset_entities in grouped_entities.values():
-            one_way_offset = total_offset  # Offset needed in nested entities
-            for entity in offset_entities:
-                offset = entity.offset + one_way_offset
-                entity_end = offset + entity.length
-                text_seq = markdownified[offset:entity_end]
-                entity_markdown = entity.markdown(text_seq, make_urls_to_hyperlink)
-                markdownified = markdownified[:offset] + entity_markdown + markdownified[offset+entity.length:]
-
-                one_way_offset += entity.one_way_markdown_offset
-                total_offset += len(entity_markdown) - len(text_seq)
-
-        return markdownified
+        return utf16_bytes.decode("utf-16-le")
 
     @property
     def original_sender(self) -> Optional[Union[User, str, Chat]]:
@@ -937,7 +925,7 @@ class Message(MaybeInaccessibleMessage):
         return self.text or self.caption
 
     @property
-    def message_entities(self) -> Optional[List[MessageEntity]]:
+    def message_entities(self) -> List[MessageEntity]:
         """
         :return: List of the message entities, i.e. text entities with no media or caption entities with media. A
                  message cannot have both attributes.

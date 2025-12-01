@@ -105,7 +105,7 @@ class TelegramCog(commands.Cog):
         if not message.text_content and not message.forward_origin:
             return None
 
-        embed = discord.Embed(description=message.markdownify(make_urls_to_hyperlink=False))
+        embed = discord.Embed(description=message.markdown(make_urls_to_hyperlink=True))
         forwarded_from = message.original_sender
 
         if forwarded_from is not None:
