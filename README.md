@@ -2,10 +2,16 @@
 
 **This project requires Python 3.9 or higher**
 
-A bot forwarding broadcast Telegram messages to Discord channels.
+A bot that connects a Telegram bot to Discord bot and forwards messages from Telegram to Discord channels.
 
-Simply put the bot listens to a Telegram channel, group or chat and forwards messages from there to Discord channels in 
-Discord compatible format. Files, message edits, replies and forwarded messages are also supported.
+Simply put the bot listens to a Telegram channel, group or chat and forwards messages from there to configured Discord 
+channels in Discord compatible format.
+
+Variety of features are supported, including but not limited to:
+- Sending files
+- Text formatting
+- Replies and edits to old messages
+- Ignoring or listening specific users in Telegram
 
 ## Running the bot
 
