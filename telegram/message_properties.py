@@ -196,7 +196,6 @@ class EntityType(Enum):
             self.PhoneNumber,
             self.TextMention,
             self.CustomEmoji,
-            self.BlockQuote,  # TODO: Add support for quote Markdown
             self.ExpandableBlockQuote
         ]
 
@@ -316,6 +315,10 @@ class MessageEntity:
             },
             EntityType.Url: {
                 "before": "",
+                "after": ""
+            },
+            EntityType.BlockQuote: {
+                "before": "> ",
                 "after": ""
             }
         }
