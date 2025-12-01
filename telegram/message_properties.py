@@ -306,7 +306,7 @@ class MessageEntity:
                 "after": "`"
             },
             EntityType.Codeblock: {
-                "before": "```\n",
+                "before": "```{}\n",
                 "after": "\n```"
             },
             EntityType.TextLink: {
@@ -330,6 +330,8 @@ class MessageEntity:
 
         before_text = markdown_syntax["before"]
         after_text = markdown_syntax["after"]
+        if self.type == EntityType.Codeblock:
+            before_text = before_text.format(self.language or "")
         if self.type == EntityType.TextLink:
             after_text = after_text.format(self.url)
         elif self.type == EntityType.Url and make_url_to_hyperlink:
