@@ -887,13 +887,14 @@ class Message(MaybeInaccessibleMessage):
         if not utf8_text:
             return None
 
+        # Apply markdown to entities from left to right in groups of same offsets, meaning they belong to same text.
         sorted_entities = sorted(self.message_entities, key=lambda e: e.offset)
         grouped_entities = {}
         for message_entity in sorted_entities:
             grouped_entities.setdefault(message_entity.offset, []).append(message_entity)
 
         utf16_bytes = bytearray(utf8_text, "utf-16-le")
-        cumulative_offset = 0  # Offset after applying markdown to entities
+        cumulative_offset = 0  # UTF-16 offset after applying markdown to entities
         for offset_group in grouped_entities.values():
             entity = offset_group[0]
             entity_start = entity.offset * 2 + cumulative_offset

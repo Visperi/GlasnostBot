@@ -275,7 +275,7 @@ class MessageEntity:
         :param make_url_to_hyperlink: Make ``EntityType.Url`` entities to hyperlinks. The original text will not be
                                       modified. The original text is returned if the URL is already complete and a
                                       hyperlink cannot be made.
-        :return: Given text converted to Entity Markdown syntax
+        :return: Given text converted to Entity Markdown syntax and the length increase compared to the original text.
         """
         if not self.type.supports_markdown:
             return text, 0
