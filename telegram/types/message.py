@@ -39,12 +39,12 @@ from .gift import GiftInfo, UniqueGiftInfo
 from .user import User, UsersShared, ChatShared
 from .reply import TextQuote, ExternalReplyInfo
 from .checklist import Checklist, ChecklistTask
+from .link_preview_options import LinkPreviewOptions
 from .post import SuggestedPostInfo, SuggestedPostPrice
 from .location import Location, Venue, ProximityAlertTriggered
 from .payments import SuccessfulPayment, RefundedPayment, Invoice
 from .inline import InlineKeyboardMarkup, WebAppData, WriteAccessAllowed
 from .message_properties import (
-    LinkPreviewOptions,
     DirectMessagesTopic
 )
 from .media import (

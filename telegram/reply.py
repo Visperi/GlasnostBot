@@ -3,7 +3,7 @@ from typing import List
 from .utils import flatten_handlers
 from .message_entity import MessageEntity
 from .message_origin import MessageOrigin
-from .message_properties import LinkPreviewOptions
+from .link_preview_options import LinkPreviewOptions
 from .checklist import Checklist
 from .contact import Contact
 from .games import Dice, Game

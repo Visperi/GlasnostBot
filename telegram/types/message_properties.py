@@ -31,11 +31,3 @@ from .user import User
 class DirectMessagesTopic(TypedDict):
     topic_id: int
     user: NotRequired[User]
-
-
-class LinkPreviewOptions(TypedDict):
-    is_disabled: NotRequired[bool]
-    url: NotRequired[str]
-    prefer_small_media: NotRequired[bool]
-    prefer_large_media: NotRequired[bool]
-    show_above_text: NotRequired[bool]

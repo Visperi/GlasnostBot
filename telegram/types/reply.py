@@ -2,7 +2,7 @@ from typing import TypedDict, NotRequired, List
 
 from .message_entity import MessageEntity
 from .message_origin import MessageOrigin
-from .message_properties import LinkPreviewOptions
+from .link_preview_options import LinkPreviewOptions
 from .chat import Chat, Story
 from .checklist import Checklist
 from .contact import Contact
