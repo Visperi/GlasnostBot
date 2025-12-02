@@ -34,6 +34,7 @@ from .games import Game, Dice
 from .passport import PassportData
 from .chat_boost import ChatBoostAdded
 from .message_entity import MessageEntity
+from .message_origin import MessageOrigin
 from .gift import GiftInfo, UniqueGiftInfo
 from .user import User, UsersShared, ChatShared
 from .reply import TextQuote, ExternalReplyInfo
@@ -43,7 +44,6 @@ from .location import Location, Venue, ProximityAlertTriggered
 from .payments import SuccessfulPayment, RefundedPayment, Invoice
 from .inline import InlineKeyboardMarkup, WebAppData, WriteAccessAllowed
 from .message_properties import (
-    MessageOrigin,
     LinkPreviewOptions,
     DirectMessagesTopic
 )
