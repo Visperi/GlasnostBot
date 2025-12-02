@@ -1,7 +1,165 @@
 from typing import List
 
+from .utils import flatten_handlers
 from .message_entity import MessageEntity
-from .types.reply import TextQuote as TextQuotePayload
+from .message_properties import MessageOrigin, LinkPreviewOptions
+from .checklist import Checklist
+from .contact import Contact
+from .games import Dice, Game
+from .giveaway import Giveaway, GiveawayWinners
+from .chat import Chat, Story
+from .payments import Invoice
+from .location import Location, Venue
+from .poll import Poll
+from .media import (
+    Animation,
+    Audio,
+    Document,
+    PhotoSize,
+    Sticker,
+    PaidMediaInfo,
+    Video,
+    VideoNote,
+    Voice
+)
+from .types.reply import (
+    ExternalReplyInfo as ExternalReplyInfoPayload,
+    TextQuote as TextQuotePayload
+)
+
+
+@flatten_handlers
+class ExternalReplyInfo:
+    _HANDLERS = []
+
+    __slots__ = (
+        "origin",
+        "chat",
+        "message_id",
+        "link_preview_options",
+        "animation",
+        "audio",
+        "document",
+        "paid_media",
+        "photo",
+        "sticker",
+        "story",
+        "video",
+        "video_note",
+        "voice",
+        "has_media_spoiler",
+        "checklist",
+        "contact",
+        "dice",
+        "game",
+        "giveaway",
+        "giveaway_winners",
+        "invoice",
+        "location",
+        "poll",
+        "venue"
+    )
+
+    def __init__(self, payload: ExternalReplyInfoPayload):
+        self.origin = MessageOrigin(payload["origin"])
+        self.chat = payload.get("chat")
+        self.message_id = payload.get("message_id", -1)
+        self.link_preview_options = payload.get("link_preview_options")
+        self.animation = payload.get("animation")
+        self.audio = payload.get("audio")
+        self.document = payload.get("document")
+        self.paid_media = payload.get("paid_media")
+        self.photo = payload.get("photo")
+        self.sticker = payload.get("sticker")
+        self.story = payload.get("story")
+        self.video = payload.get("video")
+        self.video_note = payload.get("video_note")
+        self.voice = payload.get("voice")
+        self.has_media_spoiler = payload.get("has_media_spoiler", False)
+        self.checklist = payload.get("checklist")
+        self.contact = payload.get("contact")
+        self.dice = payload.get("dice")
+        self.game = payload.get("game")
+        self.giveaway = payload.get("giveaway")
+        self.giveaway_winners = payload.get("giveaway_winners")
+        self.invoice = payload.get("invoice")
+        self.location = payload.get("location")
+        self.poll = payload.get("poll")
+        self.venue = payload.get("venue")
+
+        for key, func in self._HANDLERS:
+            try:
+                value = payload[key]  # type: ignore
+            except KeyError:
+                continue
+            else:
+                func(self, value)
+
+    def _handle_chat(self, value):
+        self.chat = Chat(value)
+
+    def _handle_link_preview_options(self, value):
+        self.link_preview_options = LinkPreviewOptions(value)
+
+    def _handle_animation(self, value):
+        self.animation = Animation(value)
+
+    def _handle_audio(self, value):
+        self.animation = Audio(value)
+
+    def _handle_document(self, value):
+        self.document = Document(value)
+
+    def _handle_paid_media(self, value):
+        self.paid_media = PaidMediaInfo(value)
+
+    def _handle_photo(self, value):
+        self.photo = [PhotoSize(p) for p in value]
+
+    def _handle_sticker(self, value):
+        self.sticker = Sticker(value)
+
+    def _handle_story(self, value):
+        self.story = Story(value)
+
+    def _handle_video(self, value):
+        self.video = Video(value)
+
+    def _handle_video_note(self, value):
+        self.video_note = VideoNote(value)
+
+    def _handle_voice(self, value):
+        self.video_note = Voice(value)
+
+    def _handle_checklist(self, value):
+        self.checklist = Checklist(value)
+
+    def _handle_contact(self, value):
+        self.contact = Contact(value)
+
+    def _handle_dice(self, value):
+        self.dice = Dice(value)
+
+    def _handle_game(self, value):
+        self.game = Game(value)
+
+    def _handle_giveaway(self, value):
+        self.giveaway = Giveaway(value)
+
+    def _handle_giveaway_winners(self, value):
+        self.giveaway_winners = GiveawayWinners(value)
+
+    def _handle_invoice(self, value):
+        self.invoice = Invoice(value)
+
+    def _handle_location(self, value):
+        self.location = Location(value)
+
+    def _handle_poll(self, value):
+        self.poll = Poll(value)
+
+    def _handle_venue(self, value):
+        self.venue = Venue(value)
 
 
 class TextQuote:
