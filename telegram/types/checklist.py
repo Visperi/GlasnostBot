@@ -25,11 +25,10 @@ SOFTWARE.
 
 from typing import TypedDict, NotRequired, List
 
-from .message_properties import MessageEntity
+from .message_entity import MessageEntity
 from .user import User
 
 
-# TODO: Move
 class ChecklistTask(TypedDict):
     id: int
     text: str
@@ -38,7 +37,6 @@ class ChecklistTask(TypedDict):
     completion_date: NotRequired[int]
 
 
-# TODO: Move
 class Checklist(TypedDict):
     title: str
     title_entities: NotRequired[List[MessageEntity]]

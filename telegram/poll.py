@@ -23,6 +23,9 @@ SOFTWARE.
 """
 
 
+from .message_entity import MessageEntity
+from .user import User
+from .chat import Chat
 from .types.poll import (
     PollOption as PollOptionPayload,
     PollAnswer as PollAnswerPayload,
@@ -30,9 +33,6 @@ from .types.poll import (
     PollOptionBase as PollOptionBasePayload,
     InputPollOption as InputPollOptionPayload
 )
-from .message_properties import MessageEntity
-from .user import User
-from .chat import Chat
 
 
 class PollOptionBase:

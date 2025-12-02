@@ -23,51 +23,21 @@ SOFTWARE.
 """
 
 
-from .media import PhotoSize
-from .message_entity import MessageEntity
-from .types.games import (
-    Game as GamePayload,
-    Dice as DicePayload
-)
+from .user import User
+from .types.direct_messages_topic import DirectMessagesTopic as DirectMessagesTopicPayload
 
 
-class Game:
+class DirectMessagesTopic:
 
     __slots__ = (
-        "title",
-        "description",
-        "photo",
-        "text",
-        "text_entities",
-        "animation"
+        "topic_id",
+        "user"
     )
 
-    def __init__(self, payload: GamePayload):
-        self._update(payload)
-
-    def _update(self, payload: GamePayload):
-        self.title = payload["title"]
-        self.description = payload["title"]
-        self.photo = [PhotoSize(p) for p in payload.get("photo", [])]
-        self.text = payload.get("text")
-        self.animation = payload.get("animation")
+    def __init__(self, payload: DirectMessagesTopicPayload):
+        self.topic_id = payload["topic_id"]
 
         try:
-            self.text_entities = [MessageEntity(t) for t in payload["text_entities"]]
+            self.user = User(payload["user"])
         except KeyError:
-            self.text_entities = []
-
-
-class Dice:
-
-    __slots__ = (
-        "emoji",
-        "value"
-    )
-
-    def __init__(self, payload: DicePayload):
-        self._update(payload)
-
-    def _update(self, payload: DicePayload):
-        self.emoji = payload["emoji"]
-        self.value = payload["value"]
+            self.user = None

@@ -23,45 +23,32 @@ SOFTWARE.
 """
 
 
-from typing import TypedDict, NotRequired, List
+from typing import TypedDict, NotRequired
 
 from .user import User
 from .chat import Chat
-from .message_entity import MessageEntity
 
 
-class PollOptionBase(TypedDict):
-    text: str
-    text_entities: NotRequired[List[MessageEntity]]
-
-
-class InputPollOption(PollOptionBase):
-    text_parse_mode: NotRequired[str]
-
-
-class PollOption(PollOptionBase):
-    voter_count: int
-
-
-class PollAnswer(TypedDict):
-    poll_id: str
-    voter_chat: NotRequired[Chat]
-    user: NotRequired[User]
-    option_ids: List[int]
-
-
-class Poll(TypedDict):
-    id: str
-    question: str
-    question_entities: NotRequired[List[MessageEntity]]
-    options: List[PollOption]
-    total_voter_count: int
-    is_closed: bool
-    is_anonymous: bool
+# TODO: Combine/refactor the message origin classes
+class MessageOrigin(TypedDict):
     type: str
-    allows_multiple_answers: bool
-    correct_option_id: NotRequired[int]
-    explanation: NotRequired[str]
-    explanation_entities: NotRequired[List[MessageEntity]]
-    open_period: NotRequired[int]
-    close_date: NotRequired[int]
+    date: int
+
+
+class MessageOriginUser(MessageOrigin):
+    sender_user: User
+
+
+class MessageOriginHiddenUser(MessageOrigin):
+    sender_user_name: str
+
+
+class MessageOriginChat(MessageOrigin):
+    sender_chat: Chat
+    author_signature: NotRequired[str]
+
+
+class MessageOriginChannel(MessageOrigin):
+    chat: Chat
+    message_id: int
+    author_signature: NotRequired[str]

@@ -23,51 +23,22 @@ SOFTWARE.
 """
 
 
-from .media import PhotoSize
-from .message_entity import MessageEntity
-from .types.games import (
-    Game as GamePayload,
-    Dice as DicePayload
-)
+from .types.link_preview_options import LinkPreviewOptions as LinkPreviewOptionsPayload
 
 
-class Game:
+class LinkPreviewOptions:
 
     __slots__ = (
-        "title",
-        "description",
-        "photo",
-        "text",
-        "text_entities",
-        "animation"
+        "is_disabled",
+        "url",
+        "prefer_small_media",
+        "prefer_large_media",
+        "show_above_text"
     )
 
-    def __init__(self, payload: GamePayload):
-        self._update(payload)
-
-    def _update(self, payload: GamePayload):
-        self.title = payload["title"]
-        self.description = payload["title"]
-        self.photo = [PhotoSize(p) for p in payload.get("photo", [])]
-        self.text = payload.get("text")
-        self.animation = payload.get("animation")
-
-        try:
-            self.text_entities = [MessageEntity(t) for t in payload["text_entities"]]
-        except KeyError:
-            self.text_entities = []
-
-
-class Dice:
-
-    __slots__ = (
-        "emoji",
-        "value"
-    )
-
-    def __init__(self, payload: DicePayload):
-        self._update(payload)
-
-    def _update(self, payload: DicePayload):
-        self.emoji = payload["emoji"]
-        self.value = payload["value"]
+    def __init__(self, payload: LinkPreviewOptionsPayload):
+        self.is_disabled = payload.get("is_disabled", False)
+        self.url = payload.get("url")
+        self.prefer_small_media = payload.get("prefer_small_media", False)
+        self.prefer_large_media = payload.get("prefer_large_media", False)
+        self.show_above_text = payload.get("show_above_text", False)
