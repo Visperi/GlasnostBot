@@ -27,6 +27,7 @@ from typing import TypedDict, NotRequired, List
 
 from .user import User
 from .chat import Chat
+from .message_entity import MessageEntity
 
 
 # TODO: Combine/refactor the message origin classes
@@ -65,16 +66,6 @@ class LinkPreviewOptions(TypedDict):
     prefer_small_media: NotRequired[bool]
     prefer_large_media: NotRequired[bool]
     show_above_text: NotRequired[bool]
-
-
-class MessageEntity(TypedDict):
-    type: str
-    offset: int
-    length: int
-    url: NotRequired[str]
-    user: NotRequired[User]
-    language: NotRequired[str]
-    custom_emoji_id: NotRequired[str]
 
 
 class TextQuote(TypedDict):

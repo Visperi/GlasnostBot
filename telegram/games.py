@@ -24,7 +24,7 @@ SOFTWARE.
 
 
 from .media import PhotoSize
-from .message_properties import MessageEntity
+from .message_entity import MessageEntity
 from .types.games import (
     Game as GamePayload,
     Dice as DicePayload

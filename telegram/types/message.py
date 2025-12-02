@@ -33,6 +33,7 @@ from .star import StarAmount
 from .games import Game, Dice
 from .passport import PassportData
 from .chat_boost import ChatBoostAdded
+from .message_entity import MessageEntity
 from .gift import GiftInfo, UniqueGiftInfo
 from .user import User, UsersShared, ChatShared
 from .checklist import Checklist, ChecklistTask
@@ -41,7 +42,6 @@ from .location import Location, Venue, ProximityAlertTriggered
 from .payments import SuccessfulPayment, RefundedPayment, Invoice
 from .inline import InlineKeyboardMarkup, WebAppData, WriteAccessAllowed
 from .message_properties import (
-    MessageEntity,
     MessageOrigin,
     LinkPreviewOptions,
     DirectMessagesTopic,
