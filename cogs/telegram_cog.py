@@ -105,7 +105,12 @@ class TelegramCog(commands.Cog):
         if not message.text_content and not message.forward_origin:
             return None
 
-        embed = discord.Embed(description=message.markdown(make_urls_to_hyperlink=True))
+        embed_content = message.markdown()
+        if message.quote:
+            # Quote the text that was quoted and replied with "Quote & Reply" option
+            embed_content = f"> {message.quote.markdown()}\n\n" + embed_content
+
+        embed = discord.Embed(description=embed_content)
         forwarded_from = message.original_sender
 
         if forwarded_from is not None:

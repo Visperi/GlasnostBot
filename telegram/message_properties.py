@@ -367,7 +367,26 @@ class TextQuote:
     )
 
     def __init__(self, payload: TextQuotePayload):
-        self.text = payload["text"]
-        self.entities = payload.get("entities", [])
+        self.text: str = payload["text"]
+        self.entities: List[MessageEntity] = [MessageEntity(e) for e in payload.get("entities", [])]
         self.position = payload["position"]
         self.is_manual = payload.get("is_manual", False)
+
+    def markdown(self, make_urls_to_hyperlinks: bool = True) -> str:
+        sorted_entities = sorted(self.entities, key=lambda e: e.offset)
+        grouped_entities = {}
+        for message_entity in sorted_entities:
+            grouped_entities.setdefault(message_entity.offset, []).append(message_entity)
+
+        utf16_bytes = bytearray(self.text, "utf-16-le")
+        cumulative_offset = 0
+        for offset_group in grouped_entities.values():
+            entity = offset_group[0]
+            entity_start = entity.offset * 2 + cumulative_offset
+            entity_end = entity_start + entity.length * 2
+            entity_text = utf16_bytes[entity_start:entity_end].decode("utf-16-le")
+            markdown, offset = entity.nested_markdown(entity_text, offset_group[1:], make_urls_to_hyperlinks)
+            utf16_bytes[entity_start:entity_end] = markdown.encode("utf-16-le")
+            cumulative_offset += offset * 2
+
+        return utf16_bytes.decode("utf-16-le")

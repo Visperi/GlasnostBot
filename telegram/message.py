@@ -23,7 +23,7 @@ SOFTWARE.
 """
 
 
-from typing import List, Dict, Optional, Union
+from typing import List, Optional, Union
 
 from .utils import flatten_handlers
 from .poll import Poll
@@ -547,7 +547,7 @@ class Message(MaybeInaccessibleMessage):
         self.is_automatic_forward = payload.get("is_automatic_forward", False)
         self.reply_to_message = payload.get("reply_to_message")
         self.external_reply = payload.get("external_reply")
-        self.quote = payload.get("quote")
+        self.quote: Optional[TextQuote] = payload.get("quote")
         self.reply_to_story = payload.get("reply_to_story")
         self.reply_to_checklist_task_id = payload.get("reply_to_checklist_task_id", -1)
         self.via_bot = payload.get("via_bot")
@@ -677,7 +677,7 @@ class Message(MaybeInaccessibleMessage):
     def _handle_external_reply(self, value):
         self.external_reply = ExternalReplyInfo(value)
 
-    def _handle_quote_(self, value):
+    def _handle_quote(self, value):
         self.quote = TextQuote(value)
 
     def _handle_reply_to_story(self, value):
