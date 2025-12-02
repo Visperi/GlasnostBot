@@ -36,8 +36,8 @@ from .gift import GiftInfo, UniqueGiftInfo
 from .user import User, UsersShared, ChatShared
 from .reply import TextQuote, ExternalReplyInfo
 from .checklist import Checklist, ChecklistTask
-from .message_properties import DirectMessagesTopic
 from .link_preview_options import LinkPreviewOptions
+from .direct_messages_topic import DirectMessagesTopic
 from .post import SuggestedPostInfo, SuggestedPostPrice
 from .location import Location, Venue, ProximityAlertTriggered
 from .payments import SuccessfulPayment, RefundedPayment, Invoice
