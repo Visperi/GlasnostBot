@@ -28,6 +28,7 @@ from .utils import flatten_handlers
 from .poll import Poll
 from .contact import Contact
 from .star import StarAmount
+from .reply import TextQuote
 from .games import Game, Dice
 from .passport import PassportData
 from .chat_boost import ChatBoostAdded
@@ -46,8 +47,7 @@ from .message_properties import (
     MessageOriginChat,
     MessageOriginChannel,
     LinkPreviewOptions,
-    DirectMessagesTopic,
-    TextQuote
+    DirectMessagesTopic
 )
 from .media import (
     MediaBase,

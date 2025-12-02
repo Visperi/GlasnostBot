@@ -23,11 +23,10 @@ SOFTWARE.
 """
 
 
-from typing import TypedDict, NotRequired, List
+from typing import TypedDict, NotRequired
 
 from .user import User
 from .chat import Chat
-from .message_entity import MessageEntity
 
 
 # TODO: Combine/refactor the message origin classes
@@ -66,10 +65,3 @@ class LinkPreviewOptions(TypedDict):
     prefer_small_media: NotRequired[bool]
     prefer_large_media: NotRequired[bool]
     show_above_text: NotRequired[bool]
-
-
-class TextQuote(TypedDict):
-    text: str
-    entities: NotRequired[List[MessageEntity]]
-    position: int
-    is_manual: NotRequired[bool]

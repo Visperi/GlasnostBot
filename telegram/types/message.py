@@ -30,6 +30,7 @@ from typing import TypedDict, NotRequired, List
 from .poll import Poll
 from .contact import Contact
 from .star import StarAmount
+from .reply import TextQuote
 from .games import Game, Dice
 from .passport import PassportData
 from .chat_boost import ChatBoostAdded
@@ -44,8 +45,7 @@ from .inline import InlineKeyboardMarkup, WebAppData, WriteAccessAllowed
 from .message_properties import (
     MessageOrigin,
     LinkPreviewOptions,
-    DirectMessagesTopic,
-    TextQuote
+    DirectMessagesTopic
 )
 from .media import (
     Animation,
