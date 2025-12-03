@@ -89,6 +89,10 @@ class ChatBoostSourceGiveaway(ChatBoostSource):
         except KeyError:
             self.user = None
 
+    @property
+    def message_sent(self):
+        return self.giveaway_message_id != 0
+
 
 class ChatBoost:
 
