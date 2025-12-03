@@ -48,6 +48,15 @@ from .types.media import (
 
 
 class MediaBase:
+    """
+    A base class for file objects sent to Telegram.
+
+    Attributes:
+        file_id: Identifier to the file. Can be used to download or reuse the file.
+        file_unique_id: Unique identifier for the file. Supposed to be same over time. Cant be used to download or
+                        reuse the file.
+        file_size: File size in bytes.
+    """
 
     __slots__ = (
         "file_id",
