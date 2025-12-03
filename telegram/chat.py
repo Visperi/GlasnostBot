@@ -66,24 +66,27 @@ class ChatPermissions:
 
     __slots__ = (
         "can_send_messages",
-        "can_send_media_messages",
+        "can_send_audios",
+        "can_send_documents",
+        "can_send_photos",
+        "can_send_videos",
+        "can_send_video_notes",
+        "can_send_voice_notes",
         "can_send_polls",
         "can_send_other_messages",
         "can_add_web_page_previews",
         "can_change_info",
         "can_invite_users",
-        "can_pin_messages"
+        "can_pin_messages",
+        "can_manage_topics"
     )
 
     def __init__(self, payload: ChatPermissionsPayload):
-        self.can_send_messages = payload.get("can_send_messages", False)
-        self.can_send_media_messages = payload.get("can_send_media_messages", False)
-        self.can_send_polls = payload.get("can_send_polls", False)
-        self.can_send_other_messages = payload.get("can_send_other_messages", False)
-        self.can_add_web_page_previews = payload.get("can_add_web_page_previews", False)
-        self.can_change_info = payload.get("can_change_info", False)
-        self.can_invite_users = payload.get("can_invite_users", False)
-        self.can_pin_messages = payload.get("can_pin_messages", False)
+        for attr_name in self.__slots__:
+            setattr(self, attr_name, payload.get(attr_name, False))  # type: ignore
+
+        # According to API documentation, this defaults to can_pin_messages if omitted
+        self.can_manage_topics = payload.get("can_manage_topics", self.can_pin_messages)
 
 
 class Chat:

@@ -38,13 +38,19 @@ class ChatPhoto(TypedDict):
 
 class ChatPermissions(TypedDict):
     can_send_messages: NotRequired[bool]
-    can_send_media_messages: NotRequired[bool]
+    can_send_audios: NotRequired[bool]
+    can_send_documents: NotRequired[bool]
+    can_send_photos: NotRequired[bool]
+    can_send_videos: NotRequired[bool]
+    can_send_video_notes: NotRequired[bool]
+    can_send_voice_notes: NotRequired[bool]
     can_send_polls: NotRequired[bool]
     can_send_other_messages: NotRequired[bool]
     can_add_web_page_previews: NotRequired[bool]
     can_change_info: NotRequired[bool]
     can_invite_users: NotRequired[bool]
     can_pin_messages: NotRequired[bool]
+    can_manage_topics: NotRequired[bool]
 
 
 class Chat(TypedDict):
