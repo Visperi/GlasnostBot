@@ -168,7 +168,7 @@ class ChatInviteLink:
         self.name = payload.get("name")
         self.expire_date = payload.get("expire_date", -1)
         self.member_limit = payload.get("member_limit", -1)
-        self.pending_join_request_count = payload.get("pending_join_request_count", -1)
+        self.pending_join_request_count = payload.get("pending_join_request_count", 0)
         self.subscription_period = payload.get("subscription_period", -1)
         self.subscription_price = payload.get("subscription_price", -1)
 
@@ -275,7 +275,7 @@ class ChatMemberMember(ChatMember):
 
     def __init__(self, payload: ChatMemberMemberPayload):
         super().__init__(payload)
-        self.until_date = payload["until_date"]
+        self.until_date = payload.get("until_date", -1)
 
 
 class ChatMemberRestricted(ChatMember):
