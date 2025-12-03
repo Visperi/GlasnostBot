@@ -1,5 +1,5 @@
 """
-A package for Telegram and Discord bot and their files.
+A package for Telegram bot and Discord bot and related files.
 """
 
 from .telegram_bot import TelegramBot
