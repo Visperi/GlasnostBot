@@ -20,6 +20,7 @@ activity_status = "Missä mennään ja minne"
 dm_only_commands = true
 
 [preferences]
+display_message_sender = false
 prefer_telegram_usernames = true
 send_orphans_as_new_message = true
 message_cleanup_threshold = 30
