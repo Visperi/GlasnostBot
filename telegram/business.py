@@ -29,6 +29,7 @@ from .types.business import (
     BusinessMessagesDeleted as BusinessMessagesDeletedPayload,
 )
 from .chat import Chat
+from .user import User
 
 
 class BusinessBotRights:
@@ -68,7 +69,7 @@ class BusinessConnection:
 
     def __init__(self, payload: BusinessConnectionPayload):
         self.id = payload["id"]
-        self.user = payload["user"]
+        self.user = User(payload["user"])
         self.user_chat_id = payload["user_chat_id"]
         self.date = payload["date"]
         self.is_enabled = payload["is_enabled"]
