@@ -774,8 +774,8 @@ class Message(MaybeInaccessibleMessage):
         """
         Sender of the message.
 
-        :return: ``telegram.User`` if the message was sent by a user. ``telegram.Chat`` if the message was sent on
-                 behalf of a chat or the message was sent to a channel.
+        The type is ``telegram.User`` if the message was sent by a user and ``telegram.Chat`` if the message was sent on
+        behalf of a chat or the message was sent to a channel.
         """
         # 'from' field may contain fake data for messages sent on behalf of chat, so need to check this here
         if not self.sender_chat:
@@ -786,8 +786,10 @@ class Message(MaybeInaccessibleMessage):
     @property
     def original_sender(self) -> Optional[Union[User, str, Chat]]:
         """
-        :return: Original sender for a forwarded message. None if the message is not forwarded or contains no
-                 forward origin.
+        Original sender for a forwarded message, or None if the message is not forwarded or contains no forwards origin.
+
+        For a forwarded message the type is ``telegram.User`` for a known user, ``str`` for unknown users or
+        ``telegram.Chat`` for messages sent to channels or messages sent on behalf of a chat.
         """
         if not self.forward_origin:
             return None
@@ -796,23 +798,23 @@ class Message(MaybeInaccessibleMessage):
     @property
     def text_content(self) -> Optional[str]:
         """
-        :return: Text content of the message, i.e. text with no media or caption with media. A message cannot have both
-                 attributes.
+        Text content of the message. The same as ``message.text`` if the message contains no media, and the same as
+        ``message.caption`` if it does.
         """
         return self.text or self.caption
 
     @property
     def message_entities(self) -> List[MessageEntity]:
         """
-        :return: List of the message entities, i.e. text entities with no media or caption entities with media. A
-                 message cannot have both attributes.
+        List of message entities in the message. The same as ``message.entities`` if the message contains no media, and
+        the same as ``message.caption_entities`` if it does.
         """
         return self.entities or self.caption_entities
 
     @property
     def contains_media(self) -> bool:
         """
-        :return: True if the message contains any type of media, False otherwise.
+        True if the message contains any type of media, False otherwise.
         """
 
         for media_attr in (self.photo,
