@@ -38,6 +38,9 @@ class ApiResponseBase:
     A generic base class for Telegram API responses. Contains an OK status for requests, and on error also the error
     code and error description. All child classes must implement method ``finalize`` to convert the result attribute
     to objects.
+
+    Args:
+        payload: A dictionary received from Telegram API.
     """
 
     __slots__ = (

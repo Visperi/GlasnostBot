@@ -38,6 +38,15 @@ from .media import Document
 
 
 class BackgroundFill:
+    """
+    A base class for fill type hat backgrounds.
+
+    Args:
+        payload: A dictionary received from Telegram API
+
+    Attributes:
+        type: Type of the background fill. Can be "solid", "gradient" or "freeform_gradient".
+    """
 
     __slots__ = (
         "type"
@@ -48,6 +57,13 @@ class BackgroundFill:
 
 
 class BackgroundFillSolid(BackgroundFill):
+    """
+    A background that is filled with a solid color.
+
+    Attributes:
+        type: Type of the fill. Always "solid".
+        color: The background fill color in RGB24 format.
+    """
 
     __slots__ = (
         "color"
@@ -59,6 +75,15 @@ class BackgroundFillSolid(BackgroundFill):
 
 
 class BackgroundFillGradient(BackgroundFill):
+    """
+    A background that is filled with a gradient color.
+
+    Attributes:
+        type: Type of the fill. Always "gradient".
+        top_color: The gradient top color in RGB24 format.
+        bottom_color: The gradient bottom color in RGB24 color.
+        rotation_angle: The gradient rotation in clockwise degrees. Can be in range 0-359.
+    """
 
     __slots__ = (
         "top_color",
@@ -74,6 +99,13 @@ class BackgroundFillGradient(BackgroundFill):
 
 
 class BackgroundFillFreeformGradient(BackgroundFill):
+    """
+    A background that is filled with gradient color and rotates after messages in a chat.
+
+    Attributes:
+        type: Type of the fill. Always "freeform_gradient".
+        colors: List of the 3 or 4 base colors that are used to generate the freeform gradient in the RGB24 format.
+    """
 
     __slots__ = (
         "colors"
@@ -85,6 +117,12 @@ class BackgroundFillFreeformGradient(BackgroundFill):
 
 
 class BackgroundType:
+    """
+    Base class for background types.
+
+    Attributes:
+        type: Type of the background. Can be "fill", "wallpaper", "pattern" or "chat_theme".
+    """
 
     __slots__ = (
         "type"
@@ -95,6 +133,13 @@ class BackgroundType:
 
 
 class BackgroundTypeFill(BackgroundType):
+    """
+    A background that is automatically filled based on selected colors.
+
+    Attributes:
+        type: Type of the background. Always "fill".
+        dark_theme_dimming: Dimming of the background in dark themes as a percentage in range 0-100.
+    """
 
     __slots__ = (
         "fill",
@@ -108,6 +153,16 @@ class BackgroundTypeFill(BackgroundType):
 
 
 class BackgroundTypeWallpaper(BackgroundType):
+    """
+    A background that is a wallpaper in JPEG format.
+
+    Attributes:
+        type: Type of the background. Always "wallpaper".
+        document: ``telegram.Document`` with the wallpaper.
+        dark_theme_dimming: Dimming of the background in dark themes as a percentage in range 0-100.
+        is_blurred: True, if the wallpaper is downscaled to fit in a 450x450 square and then box-blurred with radius 12.
+        is_moving: True, if the background moves slightly when the device is tilted.
+    """
 
     __slots__ = (
         "document",
@@ -124,7 +179,19 @@ class BackgroundTypeWallpaper(BackgroundType):
         self.is_moving = payload.get("is_moving", False)
 
 
-class BackgroundTypePatterns(BackgroundType):
+class BackgroundTypePattern(BackgroundType):
+    """
+    A background that is a PNG or TGV format pattern to be combined with a background fill chosen by user.
+
+    Attributes:
+        type: Type of the background. Always "pattern".
+        document: ``telegram.Document`` with the pattern.
+        fill: ``telegram.BackgroundFill`` that is combined with the pattern.
+        intensity: Intensity of the pattern in percentage 0-100 when it is shown above the filled background.
+        is_inverted: True, if the background fill must be applied only to the pattern itself. All other pixels are
+                     black in this case. For dark themes only.
+        is_moving: True if the background moves slightly when the device is tilted.
+    """
 
     __slots__ = (
         "document",
@@ -144,6 +211,13 @@ class BackgroundTypePatterns(BackgroundType):
 
 
 class BackgroundTypeChatTheme(BackgroundType):
+    """
+    A background that is taken from a built-in chat theme.
+
+    Attributes:
+        type: Type of the background. Always "chat_theme".
+        theme_name: Nme of the chat theme. Usually an emoji.
+    """
 
     __slots__ = (
         "theme_name"

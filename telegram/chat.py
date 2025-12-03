@@ -23,6 +23,8 @@ SOFTWARE.
 """
 
 
+from datetime import datetime, UTC
+
 from .user import User
 from .types.chat import (
     Chat as ChatPayload,
@@ -47,6 +49,19 @@ from .types.chat import (
 
 
 class ChatPhoto:
+    """
+    Represents a chat photo of a chat.
+
+    Attributes:
+        small_file_id: File identifier of small (160x160) chat photo. This file_id can be used only for photo download
+                       and only for as long as the photo is not changed.
+        small_file_unique_id: Unique file identifier of small (160x160) chat photo, which is supposed to be the same
+                              over time and for different bots. Can't be used to download or reuse the file.
+        big_file_id: File identifier of big (640x640) chat photo. This file_id can be used only for photo
+                            download and only for as long as the photo is not changed.
+        big_file_unique_id; Unique file identifier of big (640x640) chat photo, which is supposed to be the same over
+                            time and for different bots. Can't be used to download or reuse the file.
+    """
 
     __slots__ = (
         "small_file_id",
@@ -63,6 +78,9 @@ class ChatPhoto:
 
 
 class ChatPermissions:
+    """
+    Describes actions that a non-administrator user is allowed to take in a chat.
+    """
 
     __slots__ = (
         "can_send_messages",
@@ -90,6 +108,22 @@ class ChatPermissions:
 
 
 class Chat:
+    """
+    Represents a chat in Telegram.
+
+    Args:
+        payload: A dictionary payload from Telegram API.
+
+    Attributes:
+        id: Unique identifier for the chat.
+        type: Type of the chat. Can have value "private", "group", "supergroup" or "channel".
+        title: Title for groups, superchannels and channels.
+        username: Username for private chats, supergroups and channels if available.
+        first_name: First name of the other party in private chats.
+        last_name: Last name of the other party in private chats.
+        is_forum: True if the chat is a supergroup and has topics enabled, being a forum.
+        is_direct_messages: True if the chat is a direct messages chat of a channel.
+    """
 
     __slots__ = (
         "id",
@@ -103,47 +137,36 @@ class Chat:
     )
 
     def __init__(self, payload: ChatPayload) -> None:
-        """
-        Represents a chat in Telegram.
-
-        :param payload: A dictionary payload from Telegram API.
-        """
-
         self.id = payload["id"]
-        """
-        Unique identifier for the chat.
-        """
         self.type = payload["type"]
-        """
-        Type of the chat. Can have values private, group, supergroup or channel.
-        """
         self.title = payload.get("title")
-        """
-        Title for groups, superchannels and channels.
-        """
         self.username = payload.get("username")
-        """
-        Username for private chats, supergroups and channels if available.
-        """
         self.first_name = payload.get("first_name")
-        """
-        First name of the other party in private chats.
-        """
         self.last_name = payload.get("last_name")
-        """
-        Last name of the other party in private chats.
-        """
         self.is_forum = payload.get("is_forum", False)
-        """
-        True if the chat is a supergroup and has topics enabled, being a forum.
-        """
         self.is_direct_messages = payload.get("is_direct_messages", False)
-        """
-        True if the chat is a direct messages chat of a channel.
-        """
 
 
 class ChatInviteLink:
+    """
+    Represents an invitation link to a chat.
+
+    Attributes:
+        invite_link: The invite link. If the link was created by another chat administrator, then the second part of
+                     the link will be replaced with “…”.
+        creator: ``telegram.User`` creator of the link.
+        creates_join_request: True if users joining the chat via the link need to be approved by chat administrators.
+        is_primary: True if the link is primary.
+        is_revoked: True if the link is revoked.
+        name: Name of the invitation link.
+        expire_date: Unix time timestamp when the link will expire or has expired.
+        member_limit: The maximum number of users that can be members of the chat simultaneously after joining the chat
+                      via this invite link; 1-99999.
+        pending_join_request_count: Number of pending join requests created using this link.
+        subscription_period: The number of seconds the subscription will be active for before the next payment.
+        subscription_price: The amount of Telegram Stars a user must pay initially and after each subsequent
+                            subscription period to be a member of the chat using the link.
+    """
 
     __slots__ = (
         "invite_link",
@@ -172,7 +195,27 @@ class ChatInviteLink:
         self.subscription_period = payload.get("subscription_period", -1)
         self.subscription_price = payload.get("subscription_price", -1)
 
+    @property
+    def has_expired(self):
+        """
+        True if the invitation link has been expired, False otherwise.
+        """
+        if self.expire_date == -1:
+            return False
+        return self.expire_date < datetime.now(tz=UTC).timestamp()
+
 class ChatJoinRequest:
+    """
+    Represents a join request to a chat.
+
+    Attributes:
+        chat: ``telegram.Chat`` to which the request was sent to.
+        from_: ``telegram.User`` that sent the join request.
+        user_chat_id: Identifier of a private chat with the user who sent the join request.
+        date: Unix timestamp of the time when the join request was sent.
+        bio: Bio of the user that sent the request.
+        invite_link: ``telegram.ChatInviteLink`` that was used to send the join request.
+    """
 
     __slots__ = (
         "chat",
