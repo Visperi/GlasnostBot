@@ -25,7 +25,7 @@ SOFTWARE.
 
 import telegram
 from config import Config
-from discord_bot import DiscordBot
+from bots.discord_bot import DiscordBot
 
 
 if __name__ == "__main__":

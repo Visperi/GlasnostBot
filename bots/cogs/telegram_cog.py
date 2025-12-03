@@ -31,9 +31,9 @@ import copy
 import toml
 import discord
 import filetype
-from telegram_bot import TelegramBot
+from bots.telegram_bot import TelegramBot
 from discord.ext import commands, tasks
-from discord_bot import DiscordBot
+from bots.discord_bot import DiscordBot
 
 import telegram
 from config import Config

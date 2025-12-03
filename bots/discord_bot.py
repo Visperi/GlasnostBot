@@ -66,7 +66,7 @@ class DiscordBot(commands.Bot):
 
     async def setup_hook(self) -> None:
         cogs_path = f"{os.path.dirname(__file__)}/cogs"
-        cogs = [f"cogs.{filename.rstrip('.py')}" for filename in os.listdir(cogs_path) if filename.endswith(".py")]
+        cogs = [f"bots.cogs.{filename.rstrip('.py')}" for filename in os.listdir(cogs_path) if filename.endswith(".py")]
 
         for cog in cogs:
             try:

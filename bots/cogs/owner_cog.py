@@ -26,7 +26,7 @@ SOFTWARE.
 import logging
 
 from discord.ext import commands
-from discord_bot import DiscordBot
+from bots.discord_bot import DiscordBot
 
 
 _logger = logging.getLogger(__name__)
