@@ -22,6 +22,7 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 """
 
+from datetime import datetime, UTC
 
 from .chat import Chat
 from .media import Sticker
@@ -71,8 +72,8 @@ class Gift(GiftBase):
         self.sticker = Sticker(payload["sticker"])
         self.star_count = payload["star_count"]
         self.upgrade_star_count = payload.get("upgrade_star_count", -1)
-        self.total_count = payload.get("total_count", -1)
-        self.remaining_count = payload.get("remaining_count", -1)
+        self.total_count = payload.get("total_count", 0)
+        self.remaining_count = payload.get("remaining_count", 0)
 
 
 class UniqueGiftModelBase:
@@ -184,6 +185,13 @@ class GiftInfo(GiftInfoBase):
         self.entities = [MessageEntity(e) for e in payload.get("entities", [])]
         self.is_private = payload.get("is_private", False)
 
+    @property
+    def can_be_converted(self):
+        """
+        True if the gift ca be converted to stars.
+        """
+        return self.convert_star_count != 0
+
 
 class UniqueGiftInfo(GiftInfoBase):
 
@@ -199,7 +207,34 @@ class UniqueGiftInfo(GiftInfoBase):
         super().__init__(payload)
         self.gift = UniqueGift(payload["gift"])
         self.origin = payload["origin"]
-        self.last_resale_star_count = payload.get("last_resale_star_count")
-        self.transfer_star_count = payload.get("transfer_star_count", 0)
+        self.last_resale_star_count = payload.get("last_resale_star_count", -1)
+        self.transfer_star_count = payload.get("transfer_star_count", -1)
         self.next_transfer_date = payload.get("next_transfer_date", -1)
 
+    @property
+    def is_upgraded_gift(self) -> bool:
+        """
+        True if the unique gift if upgraded from a regular gift.
+        """
+        return self.origin == "upgrade"
+
+    @property
+    def is_transferred_gift(self) -> bool:
+        """
+        True if the unique gift is transferred from other user or channel.
+        """
+        return self.origin == "transfer"
+
+    @property
+    def is_bought_gift(self) -> bool:
+        """
+        True if the unique gift was bought from other user.
+        """
+        return self.origin == "bought"
+
+    @property
+    def can_be_transferred(self) -> bool:
+        """
+        True if the unique gift can be transferred immediately, False otherwise.
+        """
+        return self.next_transfer_date < datetime.now(tz=UTC).timestamp()
