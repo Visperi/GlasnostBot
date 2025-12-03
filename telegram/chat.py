@@ -23,7 +23,6 @@ SOFTWARE.
 """
 
 
-from .location import Location
 from .user import User
 from .types.chat import (
     Chat as ChatPayload,
@@ -45,7 +44,6 @@ from .types.chat import (
     ChatMemerBanned as ChatMemberBannedPayload,
     Story as StoryPayload,
 )
-from .types.location import ChatLocation as ChatLocationPayload
 
 
 class ChatPhoto:
@@ -62,13 +60,6 @@ class ChatPhoto:
         self.small_file_unique_id = payload["small_file_unique_id"]
         self.big_file_id = payload["big_file_id"]
         self.big_file_unique_id = payload["big_file_unique_id"]
-
-
-class ChatLocation:
-
-    def __init__(self, payload: ChatLocationPayload):
-        self.location = Location(payload["location"])
-        self.address = payload["address"]
 
 
 class ChatPermissions:

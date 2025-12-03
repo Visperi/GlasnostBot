@@ -25,6 +25,7 @@ SOFTWARE.
 
 from .types.location import (
     Location as LocationPayload,
+    ChatLocation as ChatLocationPayload,
     Venue as VenuePayload,
     ProximityAlertTriggered as ProximityAlertTriggeredPayload
 )
@@ -49,6 +50,13 @@ class Location:
         self.live_period = payload.get("live_period", -1)
         self.heading = payload.get("heading", -1)
         self.proximity_alert_radius = payload.get("proximity_alert_radius", -1)
+
+
+class ChatLocation:
+
+    def __init__(self, payload: ChatLocationPayload):
+        self.location = Location(payload["location"])
+        self.address = payload["address"]
 
 
 class Venue:
