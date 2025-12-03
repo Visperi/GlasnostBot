@@ -401,7 +401,7 @@ class Message(MaybeInaccessibleMessage):
         self.message_thread_id = payload.get("message_thread_id", -1)
         self.direct_messages_topic = payload.get("direct_messages_topic")
         self.from_: Optional[User] = payload.get("from_")
-        self.sender_chat = payload.get("sender_chat")
+        self.sender_chat: Optional[Chat] = payload.get("sender_chat")
         self.sender_boost_count = payload.get("sender_boost_count", 0)
         self.sender_business_bot = payload.get("sender_business_bot")
         self.business_connection_id = payload.get("business_connection_id")
@@ -768,6 +768,20 @@ class Message(MaybeInaccessibleMessage):
             cumulative_offset += offset * 2
 
         return utf16_bytes.decode("utf-16-le")
+
+    @property
+    def sender(self) -> Union[User, Chat]:
+        """
+        Sender of the message.
+
+        :return: ``telegram.User`` if the message was sent by a user. ``telegram.Chat`` if the message was sent on
+                 behalf of a chat or the message was sent to a channel.
+        """
+        # 'from' field may contain fake data for messages sent on behalf of chat, so need to check this here
+        if not self.sender_chat:
+            return self.from_
+        else:
+            return self.sender_chat
 
     @property
     def original_sender(self) -> Optional[Union[User, str, Chat]]:

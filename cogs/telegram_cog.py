@@ -22,7 +22,7 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 """
 
-from typing import List, Optional
+from typing import List, Optional, Union
 from datetime import datetime, UTC, timedelta
 from pathlib import Path
 import logging
@@ -94,6 +94,23 @@ class TelegramCog(commands.Cog):
         upper_threshold_limit = datetime.now(UTC) - timedelta(days=threshold)
         self.database_handler.delete_by_age(upper_threshold_limit)
 
+    def fetch_message_sender_name(self, sender: Union[telegram.User, str, telegram.Chat]) -> str:
+        """
+        Fetch a display name for a message sender or forwarded message original sender.
+
+        :param sender: Telegram object to fetch the sender name for
+        :return: Display name of the message or original message sender.
+        """
+        if isinstance(sender, telegram.User):
+            if self.config.preferences.prefer_telegram_usernames and sender.username:
+                return sender.username
+            else:
+                return sender.full_name
+        elif isinstance(sender, telegram.Chat):
+            return sender.title
+        else:
+            return sender
+
     def create_discord_embed(self, message: telegram.Message) -> Optional[discord.Embed]:
         """
         Create a ``discord.Embed`` object from a Telegram message. If the Telegram does not have text content, and it
@@ -111,24 +128,14 @@ class TelegramCog(commands.Cog):
             embed_content = f"> {message.quote.markdown()}\n\n" + embed_content
 
         embed = discord.Embed(description=embed_content)
+
+        if self.config.preferences.display_message_sender:
+            embed.title = self.fetch_message_sender_name(message.sender)
+
         forwarded_from = message.original_sender
-
         if forwarded_from is not None:
-            if isinstance(forwarded_from, telegram.User):
-                if self.config.preferences.prefer_telegram_usernames and forwarded_from.username:
-                    sender_name = forwarded_from.username
-                else:
-                    sender_name = forwarded_from.full_name
-            elif isinstance(forwarded_from, telegram.Chat):
-                sender_name = forwarded_from.title
-            else:
-                sender_name = forwarded_from.sender_user_name  # type: ignore
-
-            forward_notification = f"Forwarded from {sender_name}"
-            if len(forward_notification) < 256:
-                embed.title = f"Forwarded from {sender_name}"
-            else:
-                embed.description = f"**{forward_notification}\n\n{embed.description}**"
+            forwarded_from_name = self.fetch_message_sender_name(forwarded_from)
+            embed.description = f"**Forwarded from {forwarded_from_name}**\n\n{embed.description}"
 
         if embed.description and len(embed.description) > 4096:
             raise ValueError(f"Too long message for Discord embed. "

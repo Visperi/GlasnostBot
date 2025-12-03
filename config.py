@@ -70,6 +70,7 @@ class __ConfigSection:
 class _Preferences(__ConfigSection):
 
     __slots__ = (
+        "display_message_sender",
         "prefer_telegram_usernames",
         "send_orphans_as_new_message",
         "message_cleanup_threshold",
@@ -86,7 +87,8 @@ class _Preferences(__ConfigSection):
 
     @classmethod
     def generate_default(cls):
-        return cls(dict(prefer_telegram_usernames=True,
+        return cls(dict(display_message_sender=False,
+                        prefer_telegram_usernames=True,
                         send_orphans_as_new_message=True,
                         message_cleanup_threshold=30,
                         update_age_threshold=600))
