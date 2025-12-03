@@ -23,7 +23,7 @@ SOFTWARE.
 """
 
 
-from .media import PhotoSize
+from .media import PhotoSize, Animation
 from .message_entity import MessageEntity
 from .types.games import (
     Game as GamePayload,
@@ -50,12 +50,15 @@ class Game:
         self.description = payload["title"]
         self.photo = [PhotoSize(p) for p in payload.get("photo", [])]
         self.text = payload.get("text")
-        self.animation = payload.get("animation")
 
         try:
             self.text_entities = [MessageEntity(t) for t in payload["text_entities"]]
         except KeyError:
             self.text_entities = []
+        try:
+            self.animation = Animation(payload["animation"])
+        except KeyError:
+            self.animation = None
 
 
 class Dice:
