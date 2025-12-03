@@ -23,7 +23,7 @@ SOFTWARE.
 """
 
 
-from typing import Optional, Union, List
+from typing import Optional, List
 
 from .types.api_response import (
     ApiResponseBase as ApiResponseBasePayload
@@ -53,14 +53,6 @@ class ApiResponseBase:
         self._error_code = payload.get("error_code")
         self._description = payload.get("description")
 
-        self.finalize()
-
-    def finalize(self) -> None:
-        """
-        Finalize the result field into valid Telegram object(s).
-        """
-        raise NotImplementedError(f"Finalize method not implemented in API response class {self.__class__.__name__}")
-
     @property
     def ok(self) -> bool:
         """
@@ -69,9 +61,9 @@ class ApiResponseBase:
         return self._ok
 
     @property
-    def result(self) -> Union[List[Update], File]:
+    def result(self) -> dict:
         """
-        Data returned by the Telegram API on successful requests.
+        Data returned by the Telegram API on successful request.
         """
         return self._result
 
@@ -95,9 +87,9 @@ class ApiResponse(ApiResponseBase):
     An API response for Telegram updates.
     """
 
-    def finalize(self):
-        if self._result is not None:
-            self._result = [Update(replace_dictionary_keys(u)) for u in self._result]
+    @property
+    def result(self) -> List[Update]:
+        return [Update(replace_dictionary_keys(u)) for u in self._result]
 
 
 class FileQueryResult(ApiResponseBase):
@@ -105,6 +97,6 @@ class FileQueryResult(ApiResponseBase):
     An API response for file queries.
     """
 
-    def finalize(self):
-        if self._result is not None:
-            self._result = File(self._result)
+    @property
+    def result(self) -> File:
+        return File(self._result)
