@@ -115,6 +115,8 @@ class Chat:
         self.username = payload.get("username")
         self.first_name = payload.get("first_name")
         self.last_name = payload.get("last_name")
+        self.is_forum = payload.get("is_forum", False)
+        self.is_direct_messages = payload.get("is_direct_messages", False)
 
 
 class ChatInviteLink:
