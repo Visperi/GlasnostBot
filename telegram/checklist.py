@@ -45,12 +45,16 @@ class ChecklistTask:
         self.id = payload["id"]
         self.text = payload["text"]
         self.text_entities = [MessageEntity(e) for e in payload.get("text_entities", [])]
-        self.completion_date = payload.get("completion_date", -1)
+        self.completion_date = payload.get("completion_date", 0)
 
         try:
             self.completed_by_user = User(payload["completed_by_user"])
         except KeyError:
             self.completed_by_user = None
+
+    @property
+    def is_completed(self):
+        return self.completion_date != 0
 
 
 class Checklist:
