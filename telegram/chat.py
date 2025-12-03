@@ -43,7 +43,7 @@ from .types.chat import (
     ChatMemberRestricted as ChatMemberRestrictedPayload,
     ChatMemberLeft as ChatMemberLeftPayload,
     ChatMemerBanned as ChatMemberBannedPayload,
-    Story as StoryPayload
+    Story as StoryPayload,
 )
 from .types.location import ChatLocation as ChatLocationPayload
 
@@ -109,14 +109,44 @@ class Chat:
     )
 
     def __init__(self, payload: ChatPayload) -> None:
+        """
+        Represents a chat in Telegram.
+
+        :param payload: A dictionary payload from Telegram API.
+        """
+
         self.id = payload["id"]
+        """
+        Unique identifier for the chat.
+        """
         self.type = payload["type"]
+        """
+        Type of the chat. Can have values private, group, supergroup or channel.
+        """
         self.title = payload.get("title")
+        """
+        Title for groups, superchannels and channels.
+        """
         self.username = payload.get("username")
+        """
+        Username for private chats, supergroups and channels if available.
+        """
         self.first_name = payload.get("first_name")
+        """
+        First name of the other party in private chats.
+        """
         self.last_name = payload.get("last_name")
+        """
+        Last name of the other party in private chats.
+        """
         self.is_forum = payload.get("is_forum", False)
+        """
+        True if the chat is a supergroup and has topics enabled, being a forum.
+        """
         self.is_direct_messages = payload.get("is_direct_messages", False)
+        """
+        True if the chat is a direct messages chat of a channel.
+        """
 
 
 class ChatInviteLink:
