@@ -37,9 +37,6 @@ class Contact:
     )
 
     def __init__(self, payload: ContactPayload):
-        self._update(payload)
-
-    def _update(self, payload: ContactPayload):
         self.phone_number = payload["phone_number"]
         self.first_name = payload["first_name"]
         self.last_name = payload.get("last_name")
