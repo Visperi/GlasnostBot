@@ -41,7 +41,7 @@ Below is a list of config sections and their variables and values.
 
 |    variable     | value type | function                                                                                                                     |
 |:---------------:|:----------:|------------------------------------------------------------------------------------------------------------------------------|
-| `logging_level` |   String   | Sets the minimum level of messages logged. Must be capitalized.                                                              |
+| `logging_level` |   String   | Sets the minimum level of messages logged. Can have values `DEBUG`, `INFO`, `WARNING`, `ERROR` or `CRITICAL`.                |
 | `database_path` |   String   | Path to a sqlite3 database file used for storing the message references. If not found, a new file is created at bot startup. |
 
 ### Credentials
@@ -81,7 +81,7 @@ If the bot is already in a group when changing these settings, you need to kick 
 
 |  variable  |    value type    | function                                                                                                                                                          |
 |:----------:|:----------------:|-------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| `telegram` |     Integer      | ID of a Telegram channel, group or chat to listen to. Only one listened channel is currently supported.                                                           |
+| `telegram` |     Integer      | ID of a Telegram channel, group or chat to listen to. Only one listened channel, group or chat is currently supported.                                            |
 | `discord`  | List of integers | List of Discord channel IDs to forward the Telegram messages to. The Discord bot must have a permission to send messages and read old messages in these channels. |
 
 ### Users
@@ -109,10 +109,10 @@ Preferences are used to control the Discord message forwarding behaviour.
 
 |           variable            | value type | function                                                                                                                                                                                                                                                                                                                      |
 |:-----------------------------:|:----------:|-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-|  `prefer_telegram_usernames`  |  Boolean   | Prefer Telegram usernames over sender real name in forwarded Telegram messages if possible. If the original message sender does not have username set, their real name is used instead. This setting has no effect on forwarded channel posts and messages sent on behalf of a channel, as they do not have user as a sender. |
+|  `prefer_telegram_usernames`  |  Boolean   | Prefer Telegram usernames over sender full name in forwarded Telegram messages if possible. If the original message sender does not have username set, their full name is used instead. This setting has no effect on forwarded channel posts and messages sent on behalf of a channel, as they do not have user as a sender. |
 | `send_orphans_as_new_message` |  Boolean   | Send edits and replies not found in the bot database as completely new messages. Do note that e.g. short replies to very old messages can look out of place if enabled, and some context should perhaps be given.                                                                                                             |
-|  `message_cleanup_threshold`  |  Integer   | Inclusive age in days for for Discord messages to be deleted from the database in 6 hour intervals. References at least this old in days will be deleted, and cannot be replied or edited in Discord anymore.                                                                                                                 |
-|    `update_age_threshold`     |  Integer   | Inclusive maximum age in seconds for hanging Telegram messages to forward to Discord. Messages can be left hanging e.g. due to lag spikes or bot downtimes.                                                                                                                                                                   |
+|  `message_cleanup_threshold`  |  Integer   | Inclusive age in days for for Discord messages to be deleted from the database in 6 hour intervals. References at least this old in days will be deleted, and cannot be replied or edited in Discord anymore. References to the deleted messages are handled as orphans.                                                      |
+|    `update_age_threshold`     |  Integer   | Inclusive maximum age in seconds for hanging Telegram messages to forward to Discord. Messages can be left hanging due to e.g. lag spikes or bot downtimes.                                                                                                                                                                   |
 
 ## Examples
 
