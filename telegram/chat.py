@@ -316,7 +316,12 @@ class ChatMemberRestricted(ChatMember):
         self.can_invite_users = payload["can_invite_users"]
         self.can_pin_messages = payload["can_pin_messages"]
         self.can_manage_topics = payload["can_manage_topics"]
-        self.until_date = payload["until_date"]  # 0 if restricted forever
+        self.until_date = payload["until_date"]
+
+
+    @property
+    def is_restricted_permanently(self):
+        return self.until_date == 0
 
 
 class ChatMemberLeft(ChatMember):
@@ -334,6 +339,10 @@ class ChatMemberBanned(ChatMember):
     def __init__(self, payload: ChatMemberBannedPayload):
         super().__init__(payload)
         self.until_date = payload["until_date"]  # 0 if permaban
+
+    @property
+    def is_banned_permanently(self):
+        return self.until_date == 0
 
 
 class ChatMemberUpdated:
