@@ -31,12 +31,11 @@ import copy
 import toml
 import discord
 import filetype
-from bots.telegram_bot import TelegramBot
 from discord.ext import commands, tasks
-from bots.discord_bot import DiscordBot
 
 import telegram
 from config import Config
+from bots import DiscordBot, TelegramBot
 from database_handler import DatabaseHandler
 
 
