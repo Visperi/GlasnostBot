@@ -175,8 +175,7 @@ class Update:
     @property
     def effective_message(self) -> Optional[Message]:
         """
-        A convenience method for fetching a Message object tied to the update. None if the update is not about a
-        Telegram message.
+        A ``telegram.Message`` object tied to the update, or None if the update s not about a Telegram message.
         """
         for msg_attr in (self.message,
                          self.edited_message,

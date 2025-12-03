@@ -43,15 +43,29 @@ class MessageOrigin:
     )
 
     def __init__(self, payload: MessageOriginPayload):
+        """
+        Origin of a message.
+
+        :param payload: A dictionary payload from Telegram API.
+        """
         self.type = payload["type"]
+        """
+        Type of the message origin. ``user`` if the message was sent by a known user, ``hidden_user`` if the message 
+        was sent by an unknown user, ``chat`` if the message was sent on behalf of a chat, or ``channel`` if the 
+        message was sent to a channel.
+        """
         self.date = payload["date"]
+        """
+        Date the message was originally sent in Unix time.
+        """
 
     @property
     def sender(self) -> Union[User, str, Chat]:
         """
-        :return: Original sender for the message. The origin type is ``telegram.User`` for messages originally sent by a
-                 known users, or ``Chat`` for messages in channel chats and messages sent behalf of chat into groups.
-                 For unknown users the origin is their Telegram username as a string.
+        Original sender for the message. The type is ``telegram.User`` for messages originally sent by a
+        known users, or ``Chat`` for messages in channel chats and messages sent behalf of chat into groups.
+        For unknown users the origin is their Telegram username as a string.
+
         :raises ValueError: If the origin type is unknown and correct origin attribute cannot be fetched.
         """
         if isinstance(self, MessageOriginUser):

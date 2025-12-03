@@ -59,7 +59,7 @@ class EntityType(Enum):
     @property
     def supports_markdown(self) -> bool:
         """
-        :return: True if the entity type supports Markdown formatting, False otherwise.
+        True if the entity type supports Markdown formatting, False otherwise.
         """
         return self not in [
             self.Mention,

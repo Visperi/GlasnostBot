@@ -59,6 +59,8 @@ class MediaCacheItem:
     @property
     def has_expired(self) -> bool:
         """
+        True if the file was created at least an hour ago and is expired. False otherwise.
+
         :return: True if the file was created at least an hour ago and is expired. False otherwise.
         """
         diff = datetime.now(UTC) - self.created
