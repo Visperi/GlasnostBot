@@ -23,7 +23,7 @@ SOFTWARE.
 """
 
 
-from typing import Optional, Any
+from typing import Optional, Union, List
 
 from .types.api_response import (
     ApiResponseBase as ApiResponseBasePayload
@@ -63,18 +63,30 @@ class ApiResponseBase:
 
     @property
     def ok(self) -> bool:
+        """
+        True if an API request was successful, False otherwise.
+        """
         return self._ok
 
     @property
-    def result(self) -> Any:
+    def result(self) -> Union[List[Update], File]:
+        """
+        Data returned by the Telegram API on successful requests.
+        """
         return self._result
 
     @property
     def error_code(self) -> Optional[int]:
+        """
+        Error code on unsuccessful API requests.
+        """
         return self._error_code
 
     @property
     def description(self) -> Optional[str]:
+        """
+        Description of the error on unsuccessful requests.
+        """
         return self._description
 
 
