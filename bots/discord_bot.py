@@ -71,6 +71,7 @@ class DiscordBot(commands.Bot):
         for cog in cogs:
             try:
                 await self.load_extension(cog)
+                _logger.debug(f"Loaded extension {cog}")
             except Exception as e:
                 _logger.error(f"Failed to load extension {cog}: ", exc_info=e)
 
