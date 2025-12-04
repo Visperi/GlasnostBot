@@ -48,11 +48,9 @@ class ErrorHandlerCog(commands.Cog):
                 await ctx.send("Only the bot owner can execute this command.")
             else:
                 await self._send_dm_help(ctx)
-        elif isinstance(error, commands.CommandInvokeError):
+        else:
             target_cog = ctx.message.content.split()[2]
             await ctx.send(f"Invalid cog: `{target_cog}`. Cogs must be managed with their import names.")
-        else:
-            _logger.error("Ignoring unexpected exception:", exc_info=error)
 
 
 async def setup(bot: DiscordBot):
