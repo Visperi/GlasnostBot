@@ -38,19 +38,33 @@ class ErrorHandlerCog(commands.Cog):
         pass
 
     @staticmethod
-    async def _send_dm_help(ctx: commands.Context):
-        await ctx.author.send(f"Hello {ctx.author.name}! My commands can be executed only in DMs.")
+    def fetch_extension_handling_error(ctx: commands.Context, error: commands.CommandInvokeError) -> str:
+        if isinstance(error.original, commands.ExtensionAlreadyLoaded):
+            message = "Extension {} is already loaded."
+        elif isinstance(error.original, commands.ExtensionNotFound):
+            message = "Extension {} not found."
+        elif isinstance(error.original, commands.ExtensionNotLoaded):
+            message = "Extension {} is not loaded."
+        elif isinstance(error.original, commands.ExtensionFailed):
+            message = "Failed to load extension {}."
+        else:
+            message = f"Unexpected cog related error: {error}"
+
+        cog_name = ctx.args[-1]
+        return message.format(f"`{cog_name}`")
 
     @commands.Cog.listener()
     async def on_command_error(self, ctx: commands.Context, error: commands.CommandInvokeError) -> None:
-        if isinstance(error, commands.CheckFailure):
-            if not ctx.guild:
-                await ctx.send("Only the bot owner can execute this command.")
-            else:
-                await self._send_dm_help(ctx)
+        if isinstance(error, commands.CommandNotFound):
+            return
+
+        if isinstance(error, commands.NotOwner):
+            await ctx.send("Only the bot owner can execute this command.")
+        elif isinstance(error, commands.CheckFailure) and ctx.guild:
+            # dm_only_commands is True and the command was executed in a channel
+            await ctx.author.send(f"Hello {ctx.author.name}. My commands can be executed only in DMs.")
         else:
-            target_cog = ctx.message.content.split()[2]
-            await ctx.send(f"Invalid cog: `{target_cog}`. Cogs must be managed with their import names.")
+            await ctx.send(self.fetch_extension_handling_error(ctx, error))
 
 
 async def setup(bot: DiscordBot):
