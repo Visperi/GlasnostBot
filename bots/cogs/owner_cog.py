@@ -41,15 +41,25 @@ class OwnerCog(commands.Cog, name="OwnerOnly",
     async def cog_check(self, ctx: commands.Context) -> bool:
         return await self.bot.is_owner(ctx.author)
 
+    @staticmethod
+    def resolve_extension_name(name: str) -> str:
+        if "." in name:
+            return name
+
+        if not name.endswith("_cog"):
+            name = name + "_cog"
+        return f"bots.cogs.{name}"
+
     @commands.group(name="extension")
     async def manage_extensions(self, ctx: commands.Context) -> None:
         """
-        Load, reload or unload an extension. Give extension names as their import names, e.g. cogs.my_cog.
+        Load, reload or unload an extension. Give extension names as their import names, e.g. bots.cogs.my_cog for
+        extension at bots/cogs/my_cog.py.
         """
         if ctx.invoked_subcommand is None:
             subcommand = ctx.subcommand_passed
             if subcommand is None:
-                await ctx.send("This command required extension management command `load`, `unload` or `reload` to "
+                await ctx.send("This command requires extension management command `load`, `unload` or `reload` to "
                                "manage cogs.")
             else:
                 await ctx.send(f"Invalid extension management command: `{ctx.subcommand_passed}`. "
@@ -64,6 +74,7 @@ class OwnerCog(commands.Cog, name="OwnerOnly",
         :param ctx:
         :param extension_name: Extension name to load.
         """
+        extension_name = self.resolve_extension_name(extension_name)
         await self.bot.load_extension(extension_name)
         await ctx.send(f"Successfully loaded extension `{extension_name}`.")
         _logger.info(f"Loaded a discord.py cog {extension_name}.")
@@ -76,6 +87,7 @@ class OwnerCog(commands.Cog, name="OwnerOnly",
         :param ctx:
         :param extension_name: Extension name to unload.
         """
+        extension_name = self.resolve_extension_name(extension_name)
         await self.bot.unload_extension(extension_name)
         await ctx.send(f"Successfully unloaded extension `{extension_name}`.")
         _logger.info(f"Unloaded a discord.py cog {extension_name}.")
@@ -88,8 +100,9 @@ class OwnerCog(commands.Cog, name="OwnerOnly",
         :param ctx:
         :param extension_name: Extension name to reload.
         """
+        extension_name = self.resolve_extension_name(extension_name)
         await self.bot.reload_extension(extension_name)
-        await ctx.send(f"Successfully reloaded extension `{extension_name}`")
+        await ctx.send(f"Successfully reloaded extension `{extension_name}`.")
         _logger.info(f"Reloaded a discord.py cog {extension_name}.")
 
     @commands.command(name="sync")
@@ -100,7 +113,7 @@ class OwnerCog(commands.Cog, name="OwnerOnly",
         :param guild_id: Guild ID to sync the commands for. If not provided, sync for all guilds.
         """
         await self.bot.tree.sync(guild=guild_id)
-        await ctx.send("Commands synced!")
+        await ctx.send("Commands synced.")
 
 
 async def setup(bot: DiscordBot):
