@@ -812,9 +812,16 @@ class Message(MaybeInaccessibleMessage):
         return self.entities or self.caption_entities
 
     @property
+    def is_forwarded_message(self) -> bool:
+        """
+        True if the message is a forwarded message and contains forward origin.
+        """
+        return self.forward_origin is not None
+
+    @property
     def contains_media(self) -> bool:
         """
-        True if the message contains any type of media, False otherwise.
+        True if the message contains any type of media.
         """
 
         for media_attr in (self.photo,

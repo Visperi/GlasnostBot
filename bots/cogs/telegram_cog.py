@@ -123,22 +123,14 @@ class TelegramCog(commands.Cog):
 
         embed_content = message.markdown()
         if message.quote:
-            # Quote the text that was quoted and replied with "Quote & Reply" option
             embed_content = f"> {message.quote.markdown()}\n\n" + embed_content
+        if message.is_forwarded_message:
+            forwarded_from_name = self.fetch_message_sender_name(message.original_sender)
+            embed_content = f"**Fowarded from {forwarded_from_name}**\n\n" + embed_content
 
         embed = discord.Embed(description=embed_content)
-
         if self.config.preferences.display_message_sender:
             embed.title = self.fetch_message_sender_name(message.sender)
-
-        forwarded_from = message.original_sender
-        if forwarded_from is not None:
-            forwarded_from_name = self.fetch_message_sender_name(forwarded_from)
-            embed.description = f"**Forwarded from {forwarded_from_name}**\n\n{embed.description}"
-
-        if embed.description and len(embed.description) > 4096:
-            raise ValueError(f"Too long message for Discord embed. "
-                             f"Got message of length {len(embed.description)} characters.")
 
         return embed
 
