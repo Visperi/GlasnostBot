@@ -61,7 +61,7 @@ class TelegramBot(telegram.Client):
 
     async def is_new_enough_message(self, update: telegram.Update):
         if update.is_edited_message:
-            # Allow edits always go through
+            # Allow edits always go through and let Telegram cog handle possible orphans
             return True
 
         message = update.effective_message

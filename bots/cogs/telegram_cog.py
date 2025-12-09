@@ -185,19 +185,22 @@ class TelegramCog(commands.Cog):
         embed = self.create_discord_embed(message)
         files = await self.fetch_message_files(message)
         message_id = message.message_id
+        message_age = datetime.now(UTC).timestamp() - message.date
 
-        discord_messages = await self.get_discord_messages(message_id)
-        if not discord_messages:
-            _logger.warning(f"Cannot edit Discord message with Telegram message ID {message_id}. "
-                            f"No messages exist in cache with such ID. Handling as orphans.")
-            await self._handle_orphan_messages(message_id, embed, files=files)
-            return
-
-        for discord_message in discord_messages:
-            if not files:
-                files = discord_message.attachments
-            await discord_message.edit(embed=embed, attachments=files)
-            self.database_handler.update_ts(message_id, datetime.now(UTC))
+        existing_discord_messages = await self.get_discord_messages(message_id)
+        if existing_discord_messages:
+            for discord_message in existing_discord_messages:
+                if not files:
+                    files = discord_message.attachments
+                await discord_message.edit(embed=embed, attachments=files)
+                self.database_handler.update_ts(message_id, datetime.now(UTC))
+        elif message_age < self.config.preferences.update_age_threshold:
+            _logger.warning(f"Cannot find and edit Discord message references with Telegram message ID {message_id}. "
+                            f"Handling the message as orphan.")
+            await self._handle_orphan_messages(message_id, embed=embed, files=files)
+        else:
+            _logger.warning(f"Cannot find and edit Discord message references with Telegram message ID {message_id} "
+                            f"and the message is older than update age threshold. Discarding the message.")
 
     def serialize_discord_message(self, tg_message_id: int, discord_message: discord.Message) -> None:
         """
@@ -240,7 +243,7 @@ class TelegramCog(commands.Cog):
             tg_message_id: int,
             embed: discord.Embed = None,
             text: str = None,
-            files: discord.File = None
+            files: List[discord.File] = None
     ) -> None:
         """
         Handle orphan messages not having matching references in the database. Sends a new message if
