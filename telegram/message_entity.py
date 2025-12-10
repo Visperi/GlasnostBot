@@ -66,8 +66,6 @@ class EntityType(Enum):
             self.Hashtag,
             self.Cashtag,
             self.BotCommand,
-            self.Email,
-            self.PhoneNumber,
             self.TextMention,
             self.CustomEmoji,
             self.ExpandableBlockQuote
@@ -194,6 +192,14 @@ class MessageEntity:
             EntityType.BlockQuote: {
                 "before": "> ",
                 "after": ""
+            },
+            EntityType.Email: {
+                "before": "<",
+                "after": ">"
+            },
+            EntityType.PhoneNumber: {
+                "before": "<",
+                "after": ">"
             }
         }
 
