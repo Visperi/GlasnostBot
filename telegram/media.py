@@ -71,6 +71,13 @@ class MediaBase:
 
 
 class File(MediaBase):
+    """
+    Represents a file ready to be downloaded. It is guaranteed that the File is downloadable for at least an hour
+    before it should be requested again from Telegram API by its file ID.
+
+    Attributes:
+        file_path: Path at the Telegram API to download the file.
+    """
 
     __slots__ = (
         "file_path"
@@ -82,6 +89,13 @@ class File(MediaBase):
 
 
 class PhotoSize(MediaBase):
+    """
+    Represents a single photo or thumbnail.
+
+    Attributes:
+        width: The photo width in pixels.
+        height: The photo height in pixels.
+    """
 
     __slots__ = (
         "width",
@@ -95,6 +109,14 @@ class PhotoSize(MediaBase):
 
 
 class Document(MediaBase):
+    """
+    Represents a generic file in Telegram API.
+
+    Attributes:
+        thumbnail: Thumbnail for the file, if defined by the sender.
+        file_name: Original filename for the file, defined by the sender.
+        mime_type: MIME type of the file, defined by the sender.
+    """
 
     __slots__ = (
         "thumbnail",
@@ -107,7 +129,18 @@ class Document(MediaBase):
         self.file_name = payload.get("file_name")
         self.mime_type = payload.get("mime_type")
 
+        try:
+            self.thumbnail = PhotoSize(payload["thumbnail"])
+        except KeyError:
+            self.thumbnail = None
+
 class PlaybackDocument(Document):
+    """
+    A base class for files that are not static and can be played.
+
+    Attributes:
+        duration: Duration of the file in seconds.
+    """
 
     __slots__ = (
         "duration"
@@ -119,6 +152,15 @@ class PlaybackDocument(Document):
 
 
 class Video(PlaybackDocument):
+    """
+    Represents a video file.
+
+    Attributes:
+        width: Width of the video in pixels.
+        height: Height of the video in pixels.
+        cover: The video cover art in a list of different size photos.
+        start_timestamp: Timestamp in seconds where the video is started at in Telegram chat.
+    """
 
     __slots__ = (
         "width",
@@ -136,6 +178,13 @@ class Video(PlaybackDocument):
 
 
 class Audio(PlaybackDocument):
+    """
+    Represents an audio file treated as music in Telegram.
+
+    Attributes:
+        performer: Performer of the file. Can be set by the sender or by audio tags.
+        title: Title of the file. Can se set by the sender or by audio tags.
+    """
 
     __slots__ = (
         "performer",
@@ -149,6 +198,13 @@ class Audio(PlaybackDocument):
 
 
 class Animation(PlaybackDocument):
+    """
+    Represents an animated file, that is GIF or H.264/MPEG-4 AVC video without sound.
+
+    Attributes:
+        width: Width of the file in pixels.
+        height: Height of the file in pixels.
+    """
 
     __slots__ = (
         "width",
@@ -162,6 +218,14 @@ class Animation(PlaybackDocument):
 
 
 class VideoNote(MediaBase):
+    """
+    Represents a video message.
+
+    Attributes:
+        length: Diameter of the video in pixels.
+        duration: Duration of the video in seconds.
+        thumbnail: The video thumbnail, if defined by the sender.
+    """
 
     __slots__ = (
         "length",
@@ -181,6 +245,13 @@ class VideoNote(MediaBase):
 
 
 class Voice(MediaBase):
+    """
+    Represents a voice message.
+
+    Attributes:
+        duration: Duration of the audio in seconds.
+        mime_type: MIME type of the file, if defined by the sender.
+    """
 
     __slots__ = (
         "duration",
@@ -194,6 +265,17 @@ class Voice(MediaBase):
 
 
 class MaskPosition:
+    """
+    Describes a position for a mask where it should be placed on faces by default.
+
+    Attributes:
+        point: Part of a face relative to which the mask should be placed. Can be "forehead", "eyes", "mouth" or "chin".
+        x_shift: Shift by X-axis measured in widths of the mask scaled to the face size, from left to right.
+                 For example, choosing -1.0 will place mask just to the left of the default mask position.
+        y_shift: Shift by Y-axis measured in heights of the mask scaled to the face size, from top to bottom.
+                 For example, 1.0 will place the mask just below the default mask position.
+        scale: Mask scaling coefficient. For example, 2.0 doubles the size.
+    """
 
     __slots__ = (
         "point",
@@ -209,7 +291,27 @@ class MaskPosition:
         self.scale = payload["scale"]
 
 
+@flatten_handlers
 class Sticker(MediaBase):
+    """
+    Represents a sticker.
+
+    Attributes:
+        type: Type of the sticker. Can be "regular", "mask" or "custom_emoji". Independent of the sticker format.
+        width: Width of the sticker in pixels.
+        height: Height of the sticker in pixels.
+        is_animated: True, if the sticker is animated.
+        is_video: True, if the sticker is a video sticker.
+        thumbnail: Thumbnail if the sticker is in WEBP or JPG format.
+        emoji: Emoji associated with the sticker.
+        set_name: Name of the sticker set the sticker belongs to.
+        premium_animation: Premium animation for premium regular stickers.
+        mask_position: Placement if a mask for mask stickers.
+        custom_emoji_id: Unique identifier for custom emoji stickers.
+        needs_repainting: True if the sticker must be repainted in messages. If True, the sticker is repainted to a
+                          text color in messages, the color of the Telegram Premium badge in emoji status, white color
+                          on chat photos, or another appropriate color in other places.
+    """
     _HANDLERS = []
 
     __slots__ = (
@@ -262,6 +364,16 @@ class Sticker(MediaBase):
 
 
 class StickerSet:
+    """
+    Represents a sticker set.
+
+    Attributes:
+        name: Name of the sticker set.
+        title: Title of the sticker set.
+        sticker_type: Type of the stickers in the sticker set. Can be "regular", "mask" or "custom_emoji".
+        stickers: List of ``telegram.Sticker`` in the sticker set.
+        thumbnail: Thumbnail for the sticker set if set. Ca be in format WEBP, TGS or WEBM.
+    """
 
     __slots__ = (
         "name",
@@ -283,8 +395,21 @@ class StickerSet:
             self.thumbnail = None
 
 
-@flatten_handlers
 class InputSticker:
+    """
+    Represents a sticker to be added to a sticker set.
+
+    Attributes:
+        sticker: The sticker object. Can be a file ID if the sticker already exists in Telegram servers, or an HTTP URL
+                 to get the file from internet. Animated stickers and video stickers cannot be added via URLs.
+        format: File format of the sticker. Must be "static" for WEBP and PNG files, "animated" for TGS files or
+                "video" for WEBM files.
+        emoji_list: List of 1-20 emojis associated with the sticker.
+        mask_position: ``telegram.MaskPosition`` object describing the position where a mask should be placed on faces.
+                       For "mask" stickers only.
+        keywords: List of 0-20 search keywords for the sticker with total length up to 64 characters. For "regular" and
+                  "custom_emoji" stickers only.
+    """
     _HANDLERS = []
 
     __slots__ = (
@@ -308,6 +433,12 @@ class InputSticker:
 
 
 class PaidMedia:
+    """
+    A base class for paid media in a message. Paid media can be accessed by paying Telegram stars.
+
+    Attributes:
+        type: Type of the paid media. Can be "preview", "photo" or "video".
+    """
 
     __slots__ = (
         "type"
@@ -318,6 +449,14 @@ class PaidMedia:
 
 
 class PaidMediaPreview(PaidMedia):
+    """
+    A preview or a paid media that cannot be accessed before payment.
+
+    Attributes:
+        width: Media width in pixels.
+        height: Media height in pixels.
+        duration: Duration of the media in seconds, if it is a playable file.
+    """
 
     __slots__ = (
         "width",
@@ -329,10 +468,16 @@ class PaidMediaPreview(PaidMedia):
         super().__init__(payload)
         self.width = payload.get("width")
         self.height = payload.get("height")
-        self.duration = payload.get("duration")
+        self.duration = payload.get("duration", 0)
 
 
 class PaidMediaPhoto(PaidMedia):
+    """
+    A paid media that is a photo.
+
+    Attributes:
+        photo: List of the photo in different sizes.
+    """
 
     __slots__ = (
         "photo"
@@ -344,6 +489,12 @@ class PaidMediaPhoto(PaidMedia):
 
 
 class PaidMediaVideo(PaidMedia):
+    """
+    A paid media that is a video file.
+
+    Attributes:
+        video: The video file.
+    """
 
     __slots__ = (
         "video"
@@ -355,6 +506,13 @@ class PaidMediaVideo(PaidMedia):
 
 
 class PaidMediaInfo:
+    """
+    Describes a paid media added to a message.
+
+    Attributes:
+        star_count: Number of Telegram stars that must be paid to get access to the media.
+        paid_media: List of the media that can be accessed by the payment.
+    """
 
     __slots__ = (
         "star_count",
