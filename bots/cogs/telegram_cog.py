@@ -134,17 +134,24 @@ class TelegramCog(commands.Cog):
 
         return embed
 
-    async def fetch_message_files(self, message: telegram.Message) -> Optional[List[discord.File]]:
+    async def fetch_message_files(self, message: telegram.Message, max_file_size: int = 10) -> List[discord.File]:
         """
         Fetch all files present on a Telegram message and convert them to ``discord.File`` objects.
 
         :param message: The telegram message.
+        :param max_file_size: Maximum file size in megabytes that can be sent to Discord. Files exceeding this limit
+                              will be discarded.
         :return: A list of files in the message as ``discord.File`` objects.
         """
         discord_files = []
         telegram_files = message.get_all_media()
 
         for file in telegram_files:
+            if file.file_size > max_file_size * 1024 * 1024:
+                _logger.warning(f"Received a file bigger than maximum limit of {max_file_size} MB. "
+                                f"Discarding the file.")
+                continue
+
             file_bytes, filename = await self.telegram_bot.download_file(file)
             with file_bytes:
                 if not Path(filename).suffix:
@@ -156,7 +163,7 @@ class TelegramCog(commands.Cog):
                 discord_file = discord.File(file_bytes, filename=filename, spoiler=message.has_media_spoiler)
             discord_files.append(discord_file)
 
-        return discord_files or None
+        return discord_files
 
     async def on_message(self, message: telegram.Message) -> None:
         """
@@ -167,6 +174,9 @@ class TelegramCog(commands.Cog):
         await self.discord_bot.wait_until_ready()
         embed = self.create_discord_embed(message)
         files = await self.fetch_message_files(message)
+        if not embed and not files:
+            _logger.warning("Received a file only message and all files exceed the maximum Discord file size limit.")
+            return
 
         if message.reply_to_message:
             # TODO: Properly handle messages that do not come from the same chat and are ExternalReplyInfo
