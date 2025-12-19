@@ -138,6 +138,20 @@ class MessageEntity:
         filled = tmp._replace(netloc=netloc, path=path)
         return str(urlunparse(filled))
 
+    @staticmethod
+    def text_is_url(text) -> bool:
+        """
+        Check if a text is a complete URL.
+
+        :param text: The text.
+        :return: True if the text is URL, False otherwise.
+        """
+        try:
+            result = urlparse(text)
+            return all([result.scheme, result.netloc])
+        except KeyError:
+            return False
+
     def markdown(self, text: str, make_url_to_hyperlink: bool) -> Tuple[str, int]:
         """
         Convert entity to Markdown syntax with given text.
@@ -209,7 +223,12 @@ class MessageEntity:
         if self.type == EntityType.Codeblock:
             before_text = before_text.format(self.language or "")
         elif self.type == EntityType.TextLink:
-            after_text = after_text.format(self.url)
+            if self.text_is_url(text):
+                markdown_syntax = markdowns[EntityType.Url]
+                before_text = markdown_syntax["before"]
+                after_text = markdown_syntax["after"]
+            else:
+                after_text = after_text.format(self.url)
         elif self.type == EntityType.Url and make_url_to_hyperlink:
             url = self._complete_url(text)
             if text != url:
