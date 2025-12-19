@@ -738,12 +738,12 @@ class Message(MaybeInaccessibleMessage):
     def _handle_reply_markup(self, value):
         self.reply_markup = InlineKeyboardMarkup(value)
 
-    def markdown(self, make_urls_to_hyperlink: bool = True, allow_hyperlink_text_schema: bool = False) -> Optional[str]:
+    def markdown(self, complete_partial_urls: bool = True, allow_hyperlink_text_schema: bool = False) -> Optional[str]:
         """
         Convert the message and its entities to Markdown.
 
-        :param make_urls_to_hyperlink: Make URLs in text format to hyperlinks with the original text. If a hyperlink
-                                       cannot be made, keep them in the original format.
+        :param complete_partial_urls: Make URLs in text format to hyperlinks with the original text if they are not
+                                      already complete URLs.
         :param allow_hyperlink_text_schema: Allow hyperlink texts to contain the URL schema. Some Markdown processors
                                             do not render hyperlinks properly when there is a URL schema in the
                                             hyperlink text. If False, such links are formatted as plain URLs instead.
@@ -766,7 +766,7 @@ class Message(MaybeInaccessibleMessage):
             entity_start = entity.offset * 2 + cumulative_offset
             entity_end = entity_start + entity.length * 2
             entity_text = utf16_bytes[entity_start:entity_end].decode("utf-16-le")
-            markdown, offset = entity.nested_markdown(entity_text, offset_group[1:], make_urls_to_hyperlink, allow_hyperlink_text_schema)
+            markdown, offset = entity.nested_markdown(entity_text, offset_group[1:], complete_partial_urls, allow_hyperlink_text_schema)
             utf16_bytes[entity_start:entity_end] = markdown.encode("utf-16-le")
             cumulative_offset += offset * 2
 

@@ -152,14 +152,13 @@ class MessageEntity:
         except KeyError:
             return False
 
-    def markdown(self, text: str, make_url_to_hyperlink: bool, allow_hyperlink_text_schema: bool = False) -> Tuple[str, int]:
+    def markdown(self, text: str, complete_partial_url: bool, allow_hyperlink_text_schema: bool = False) -> Tuple[str, int]:
         """
         Convert entity to Markdown syntax with given text.
 
         :param text: Content for the Markdown conversion.
-        :param make_url_to_hyperlink: Make ``EntityType.Url`` entities to hyperlinks. The original text will not be
-                                      modified. The original text is returned if the URL is already complete and a
-                                      hyperlink cannot be made.
+        :param complete_partial_url: Complete ``EntityType.Url`` entity to a hyperlink with full URL if the text is not
+                                     a complete URL. The original text will not be modified.
         :param allow_hyperlink_text_schema: Allow hyperlink text to contain the URL schema. Some Markdown processors
                                             do not render hyperlinks properly when there is a URL schema in the
                                             hyperlink text. If False, such link is formatted as plain URL instead.
@@ -232,7 +231,7 @@ class MessageEntity:
                 after_text = markdown_syntax["after"]
             else:
                 after_text = after_text.format(self.url)
-        elif self.type == EntityType.Url and make_url_to_hyperlink:
+        elif self.type == EntityType.Url and complete_partial_url:
             url = self._complete_url(text)
             if text != url:
                 markdown_syntax = markdowns[EntityType.TextLink]
@@ -243,23 +242,23 @@ class MessageEntity:
 
     def nested_markdown(self,
                         text: str, message_entities: List['MessageEntity'],
-                        make_urls_to_hyperlinks: bool,
+                        complete_partial_urls: bool,
                         allow_hyperlink_text_schema: bool = False):
         """
         Apply nested markdown to the message entity.
 
         :param text: Text to add the markdown for.
         :param message_entities: List of ``MessageEntity`` objects to combine with this message entity.
-        :param make_urls_to_hyperlinks: Make bare text urls to hyperlinks.
+        :param complete_partial_urls: Make bare text urls to hyperlinks if their texts are not complete URLs.
         :param allow_hyperlink_text_schema: Allow hyperlink text to contain the URL schema. Some Markdown processors
                                             do not render hyperlinks properly when there is a URL schema in the
                                             hyperlink text. If False, such link is formatted as plain URL instead.
         :return: The text with all given message entity markdowns applied and the length increase compared to
                  the original text.
         """
-        output, cumulative_offset = self.markdown(text, make_urls_to_hyperlinks)
+        output, cumulative_offset = self.markdown(text, complete_partial_urls)
         for entity in message_entities:
-            output, added_offset = entity.markdown(output, make_urls_to_hyperlinks, allow_hyperlink_text_schema)
+            output, added_offset = entity.markdown(output, complete_partial_urls, allow_hyperlink_text_schema)
             cumulative_offset += added_offset
 
         return output, cumulative_offset
