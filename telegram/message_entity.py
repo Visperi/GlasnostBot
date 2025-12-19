@@ -241,9 +241,10 @@ class MessageEntity:
         return f"{before_text}{text}{after_text}", len(before_text) + len(after_text)
 
     def nested_markdown(self,
-                        text: str, message_entities: List['MessageEntity'],
+                        text: str,
+                        message_entities: List['MessageEntity'],
                         complete_partial_urls: bool,
-                        allow_hyperlink_text_schema: bool = False):
+                        allow_hyperlink_text_schema: bool = False) -> Tuple[str, int]:
         """
         Apply nested markdown to the message entity.
 
@@ -256,7 +257,7 @@ class MessageEntity:
         :return: The text with all given message entity markdowns applied and the length increase compared to
                  the original text.
         """
-        output, cumulative_offset = self.markdown(text, complete_partial_urls)
+        output, cumulative_offset = self.markdown(text, complete_partial_urls, allow_hyperlink_text_schema)
         for entity in message_entities:
             output, added_offset = entity.markdown(output, complete_partial_urls, allow_hyperlink_text_schema)
             cumulative_offset += added_offset
