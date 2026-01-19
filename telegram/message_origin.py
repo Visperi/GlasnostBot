@@ -24,6 +24,8 @@ SOFTWARE.
 
 
 from typing import Union
+from abc import ABC, abstractmethod
+
 from .chat import Chat
 from .user import User
 from .types.message_origin import (
@@ -35,7 +37,7 @@ from .types.message_origin import (
 )
 
 
-class MessageOrigin:
+class MessageOrigin(ABC):
 
     __slots__ = (
         "type",
@@ -60,24 +62,14 @@ class MessageOrigin:
         """
 
     @property
+    @abstractmethod
     def sender(self) -> Union[User, str, Chat]:
         """
         Original sender for the message. The type is ``telegram.User`` for messages originally sent by a
         known users, or ``Chat`` for messages in channel chats and messages sent behalf of chat into groups.
         For unknown users the origin is their Telegram username as a string.
-
-        :raises ValueError: If the origin type is unknown and correct origin attribute cannot be fetched.
         """
-        if isinstance(self, MessageOriginUser):
-            return self.sender_user
-        elif isinstance(self, MessageOriginHiddenUser):
-            return self.sender_user_name
-        elif isinstance(self, MessageOriginChat):
-            return self.sender_chat
-        elif isinstance(self, MessageOriginChannel):
-            return self.chat
-        else:
-            raise ValueError(f"Unknown MessageOrigin instance type: {type(self)}")
+        raise NotImplementedError(f"sender method not implemented in class {type(self)}.")
 
 
 class MessageOriginUser(MessageOrigin):
@@ -90,6 +82,10 @@ class MessageOriginUser(MessageOrigin):
         super().__init__(payload)
         self.sender_user = User(payload["sender_user"])
 
+    @property
+    def sender(self):
+        return self.sender_user
+
 
 class MessageOriginHiddenUser(MessageOrigin):
 
@@ -100,6 +96,10 @@ class MessageOriginHiddenUser(MessageOrigin):
     def __init__(self, payload: MessageOriginHiddenUserPayload):
         super().__init__(payload)
         self.sender_user_name = payload["sender_user_name"]
+
+    @property
+    def sender(self):
+        return self.sender_user_name
 
 
 class MessageOriginChat(MessageOrigin):
@@ -113,6 +113,10 @@ class MessageOriginChat(MessageOrigin):
         super().__init__(payload)
         self.sender_chat = Chat(payload["sender_chat"])
         self.author_signature = payload.get("author_signature")
+
+    @property
+    def sender(self):
+        return self.sender_chat
 
 
 class MessageOriginChannel(MessageOrigin):
@@ -128,3 +132,7 @@ class MessageOriginChannel(MessageOrigin):
         self.chat = Chat(payload["chat"])
         self.message_id = payload["message_id"]
         self.author_signature = payload.get("author_signature")
+
+    @property
+    def sender(self):
+        return self.chat

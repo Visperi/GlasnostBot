@@ -87,6 +87,7 @@ class ExternalReplyInfo:
     )
 
     def __init__(self, payload: ExternalReplyInfoPayload):
+        # TODO: Implement proper message origin class initialization instead of the base class
         self.origin = MessageOrigin(payload["origin"])
         self.chat = payload.get("chat")
         self.message_id = payload.get("message_id", -1)
